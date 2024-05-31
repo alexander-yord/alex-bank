@@ -1,0 +1,5 @@
+*config.ini
+.DS_Store
+back-end/__pycache__/
+back-end/venv/
+*__pycache__*
