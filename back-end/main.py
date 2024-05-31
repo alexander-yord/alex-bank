@@ -15,7 +15,6 @@ app.include_router(login.router)
 app.include_router(myaccount.router)
 app.include_router(account.router)
 
-
 origins = ["*"]
 
 app.add_middleware(
@@ -25,6 +24,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 async def home():
