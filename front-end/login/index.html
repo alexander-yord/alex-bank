@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="../index.html">
+              <img src="../img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a href="../signup/index.html">Sign Up</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div class="content">
+            <h1>Log In</h1> <br>
+            <a href="../signup/index.html">Don't have an account? Sign Up</a> <br><br>
+
+            <form @submit.prevent="LogIn">
+                <label for="account_id">Account Id:</label> <br>
+                <input type="text" id="account_id" v-model="account_id"> <br>
+                <label for="password">Password:</label> <br>
+                <input type="password" id="password" v-model="password"> <br>
+                <button type="submit">Log In </button>
+            </form>
+        </div>
+
+        <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    account_id: '',
+                    password: ''
+                };
+            },
+            methods: {
+                async LogIn() {
+                    const url = `${API_BASE_URL}/login/${this.account_id}`;
+                    
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ password: this.password })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Login failed');
+                        }
+
+                        const data = await response.json();
+
+                        // Save data to session storage
+                        sessionStorage.setItem('account_id', data.account_id);
+                        sessionStorage.setItem('first_name', data.first_name);
+                        sessionStorage.setItem('last_name', data.last_name);
+                        sessionStorage.setItem('user_role', data.user_role);
+                        sessionStorage.setItem('token', data.token);
+
+                        alert('Login successful');
+                        window.location.href = "../index.html"; // Redirect to home page
+                        // Optionally redirect to another page
+                        // window.location.href = '/dashboard.html';
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Login failed');
+                    }
+                }
+            }
+        }).mount('#app');
+        </script>
+    </div>
+</body>
+</html>

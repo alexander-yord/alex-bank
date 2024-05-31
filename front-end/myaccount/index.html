@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="../index.html">
+              <img src="../img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a href="../login/index.html">Log In</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div v-if="isLoggedIn" class="content">
+            <h1>Hello, {{first_name}} {{last_name}}!</h1> 
+            <h3>Account ID: {{account_id}}</h3> <br>
+            <button v-on:click="LogOut()">Log Out</button>
+        </div>
+
+        <div v-else class="content">
+            You are not logged in. 
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data () {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"), 
+                    last_name: sessionStorage.getItem("last_name")
+                };
+            }, 
+            methods: {
+                LogOut() {
+                    sessionStorage.clear()
+                    alert("You succesfully logged out!")
+                    window.location.href = "../index.html"; // Redirect to home page
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>

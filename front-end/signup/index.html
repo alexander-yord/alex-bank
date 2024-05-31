@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="../index.html">
+              <img src="../img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a href="../login/index.html">Log In</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div class="content">
+            <h1>Create an Account</h1>
+            <a href="../login/index.html">Have an account? Log In</a> <br><br>
+
+            <form class="form-container" @submit.prevent="createAccount">
+                <div class="form-group">
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="text" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number: <i>(opt.)</i></label>
+                    <input type="text" id="phone" maxlength="15">
+                </div>
+                <div class="form-group">
+                    <label for="country">Country of Residence:</label>
+                    <select id="country">
+                        <option value="BGR">Bulgaria</option>
+                        <option value="USA">United States</option>
+                        <option value="OTH">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="address">Permanent Address: <i>(opt.)</i></label>
+                    <textarea id="address"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="repeat-password">Repeat Password:</label>
+                    <input type="password" id="repeat-password" required>
+                </div>
+                <div class="form-group">
+                    <div>
+                        <button type="submit">Create Account</button>
+                    </div>
+                </div>
+            </form>
+            
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+          data() {
+            return {
+              // Any required data properties can go here
+            };
+          },
+          methods: {
+            async createAccount() {
+              try {
+                const firstName = document.getElementById('first_name').value;
+                const lastName = document.getElementById('last_name').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const country = document.getElementById('country').value;
+                const address = document.getElementById('address').value;
+                const password = document.getElementById('password').value;
+                const repeatPassword = document.getElementById('repeat-password').value;
+
+                if (password !== repeatPassword) {
+                  alert('Passwords do not match');
+                  return;
+                }
+
+                const response = await fetch(API_BASE_URL + "/signup", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: phone,
+                    country: country,
+                    address: address,
+                    password: password
+                  })
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  sessionStorage.setItem('account_id', data.account_id);
+                  sessionStorage.setItem('first_name', data.first_name);
+                  sessionStorage.setItem('last_name', data.last_name);
+                  sessionStorage.setItem('user_role', data.user_role);
+                  sessionStorage.setItem('token', data.token);
+                  alert('Account created successfully!');
+                  window.location.href = "../index.html"; // Redirect to home page
+                } else {
+                  alert('Failed to create account');
+                }
+              } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred');
+              }
+            }
+          }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
