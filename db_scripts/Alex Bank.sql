@@ -4,10 +4,12 @@ CREATE TABLE `accounts` (
   `last_name` varchar(255),
   `email` varchar(255),
   `phone` varchar(15),
+  `country_code` char(3),
   `address` text,
   `user_role` char(1),
   `verification` char(1),
-  `account_group` varchar(3)
+  `account_group` varchar(3),
+  `created_dt` timestamp
 );
 
 CREATE TABLE `user_roles` (

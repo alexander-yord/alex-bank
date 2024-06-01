@@ -13,9 +13,10 @@ async def signup(acc_info: s.NewAccount = None) -> s.LoggedInUser:
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    stmt = "INSERT INTO accounts (first_name, last_name, email, phone, address, user_role, verification, " \
-           "account_group) VALUES (%s, %s, %s, %s, %s, 'U', 'N', 'FTC')"
-    db.cursor.execute(stmt, (acc_info.first_name, acc_info.last_name, acc_info.email, acc_info.phone, acc_info.address))
+    stmt = "INSERT INTO accounts (first_name, last_name, email, phone, country_code, address, user_role, " \
+           "verification, account_group) VALUES (%s, %s, %s, %s, %s, %s, 'U', 'N', 'FTC')"
+    db.cursor.execute(stmt, (acc_info.first_name, acc_info.last_name, acc_info.email, acc_info.phone,
+                             acc_info.country, acc_info.address))
     db.cnx.commit()
 
     stmt2 = "SELECT account_id FROM accounts WHERE first_name = %s AND last_name = %s ORDER BY 1 DESC"

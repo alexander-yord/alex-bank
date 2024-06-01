@@ -125,7 +125,7 @@
                   sessionStorage.setItem('last_name', data.last_name);
                   sessionStorage.setItem('user_role', data.user_role);
                   sessionStorage.setItem('token', data.token);
-                  alert('Account created successfully!');
+                  alert(`Account ${data.account_id} created successfully!`);
                   window.location.href = "../index.html"; // Redirect to home page
                 } else {
                   alert('Failed to create account');

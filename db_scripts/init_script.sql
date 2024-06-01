@@ -31,8 +31,8 @@ values
 alter table `accounts` AUTO_INCREMENT=2000000;
 
 -- default user
-insert into `accounts` (`first_name`, `last_name`, `user_role`, `verification`, `account_group`)
-values ('Admin', 'Admin', 'A', 'Y', 'EMP');
+insert into `accounts` (`first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
+values ('Admin', 'Admin', 'BGR', 'A', 'Y', 'EMP');
 
 -- default user firstpass 
 insert into `login_credentials` (`account_id`, `password`) 
