@@ -18,10 +18,9 @@ async def login(account_id: int, credentials: s.Password) -> s.LoggedInUser:
 
     id_tuple = (account_id,)
     db.cursor.execute(stmt, id_tuple)
-    row = db.cursor.fetchall()[0]
-
     if db.cursor.rowcount == 0:
-        raise HTTPException(404, "Account not found")
+        raise HTTPException(404, "This account ID does not exist.")
+    row = db.cursor.fetchall()[0]
 
     # checks if passwords match
     if credentials.password == row[1]:

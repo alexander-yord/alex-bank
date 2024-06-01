@@ -8,7 +8,7 @@ cnx = db.cnx
 cursor = db.cursor
 db.verify_connection()
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 app.include_router(signup.router)
 app.include_router(login.router)

@@ -3,3 +3,4 @@
 back-end/__pycache__/
 back-end/venv/
 *__pycache__*
+*.idea*
