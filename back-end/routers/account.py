@@ -20,8 +20,12 @@ def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(
     if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']):
         raise HTTPException(401, "User does not have privileges")
 
-    stmt = "SELECT account_id, first_name, last_name, email, phone, country_code, " \
-           "address, user_role, verification, account_group FROM accounts"
+    stmt = "SELECT a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, " \
+           "a.address, a.user_role, ur.description, a.verification, v.description, a.account_group, " \
+           "ag.group_name, ag.group_description, created_dt FROM accounts a " \
+           "JOIN user_roles ur ON ur.role = a.user_role " \
+           "JOIN verifications v ON v.verification_status = a.verification " \
+           "JOIN account_groups ag ON ag.group_code = a.account_group"
     db.cursor.execute(stmt)
     result = [{
         "account_id": row[0],
@@ -31,17 +35,22 @@ def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(
         "phone": row[4],
         "country_code": row[5],
         "address": row[6],
-        "user_role": row[7],
-        "verification": row[8],
-        "account_group": row[9]
+        "user_role_code": row[7],
+        "user_role": row[8],
+        "verification_code": row[9],
+        "verification": row[10],
+        "account_group_code": row[11],
+        "account_group": row[12],
+        "account_group_description": row[13],
+        "created_dt": row[14]
     } for row in db.cursor.fetchall()]
 
     if account_group:  # is not empty
-        result = [account for account in result if account.get("account_group") in account_group]
+        result = [account for account in result if account.get("account_group_code") in account_group]
     if verification:  # is not empty
-        result = [account for account in result if account.get("verification") in verification]
+        result = [account for account in result if account.get("verification_code") in verification]
     if user_role:  # is not empty
-        result = [account for account in result if account.get("user_role") in user_role]
+        result = [account for account in result if account.get("user_role_code") in user_role]
     if country_code:  # is not empty
         result = [account for account in result if account.get("country_code") in country_code]
 

@@ -178,3 +178,85 @@ label {
         width: 100%;
     }
 }
+
+/* Container for the carousel */
+.carousel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 20px;
+    padding: 20px;
+    background-color: rgb(254, 254, 254); /* Match with existing background */
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+/* Styling for each card in the carousel */
+.carousel-card {
+    scroll-snap-align: start;
+    background-color: white;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 10px;
+    width: 300px; /* Fixed size */
+    height: 200px; /* Fixed size */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    box-sizing: border-box;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    flex: none; /* Prevent shrinking */
+    transition: transform 0.2s, box-shadow 0.2s; /* Smooth transition */
+    cursor: pointer; /* Pointer cursor for clickable effect */
+    text-decoration: none; /* Remove underline from links */
+    color: initial; /* Reset link color */
+}
+
+/* Hover effect for the card */
+.carousel-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+/* Account ID styling */
+.carousel-card .account-id {
+    font-size: 12px;
+    color: gray;
+    margin-bottom: 10px;
+}
+
+/* First and last name styling */
+.carousel-card .first-name,
+.carousel-card .last-name {
+    font-size: 16px;
+    color: black;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Role and group styling */
+.carousel-card .role-group {
+    font-size: 14px;
+    color: black;
+    margin-bottom: 10px;
+}
+
+/* Create date styling */
+.carousel-card .create-date {
+    font-size: 12px;
+    color: gray;
+    align-self: flex-end;
+}
+
+/* Media query for responsive design */
+@media (max-width: 600px) {
+    .carousel-card {
+        width: 100%;
+        height: auto;
+    }
+}
+
+
+
+
