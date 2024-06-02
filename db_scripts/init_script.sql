@@ -18,7 +18,8 @@ insert into `verifications` (`verification_status`, `description`)
 values 
 	('Y', 'Verified'), 
     ('N', 'Uverified'), 
-    ('R', 'Revoked Verification');
+    ('R', 'Revoked Verification'), 
+    ('C', 'Contacted for Verification');
 
 -- account groups 
 insert into `account_groups` (`group_code`, `group_name`, `group_description`, `default_YN`)

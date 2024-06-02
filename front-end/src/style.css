@@ -65,7 +65,7 @@ body {
 
 /* Main content with 10% margin on left and right */
 .content {
-    margin: 0 10%;
+    margin: 70px 10% 0 10%;
     background-color: rgb(254, 254, 254); 
     padding: 20px;
     box-sizing: border-box;
@@ -76,6 +76,9 @@ body {
     background-color: rgb(131, 152, 162);
     width: 100%;
     padding: 0;
+    position: fixed; 
+    top: 0; 
+    z-index: 1000; 
 }
 
 .navbar .wrapper {

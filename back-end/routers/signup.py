@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Header, Depends, Request
-from typing import Annotated, Dict, Set, Any
+from fastapi import APIRouter, HTTPException
+from typing import Annotated
 from dependencies import database as db, helpers as h, schemas as s
 
 router = APIRouter(
@@ -8,8 +8,8 @@ router = APIRouter(
 )
 
 
-@router.post("/")
-async def signup(acc_info: s.NewAccount = None) -> s.LoggedInUser:
+@router.post("/", response_model=s.LoggedInUser)
+async def signup(acc_info: s.NewAccount = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -42,19 +42,3 @@ async def signup(acc_info: s.NewAccount = None) -> s.LoggedInUser:
         "token": token
     }
     return result
-
-
-# @router.get("/dd-options")  # drop-down options
-# async def provide_drop_down_options_for_signup_page():
-#     if not db.cnx.is_connected():
-#         db.cnx, db.cursor = db.connect()
-#     stmt = "SELECT role, description FROM user_roles"
-#     db.cursor.execute(stmt)
-#     rows = db.cursor.fetchall()
-#
-#     options = dict()
-#
-#     for row in rows:
-#         options.update({str(row[1]): str(row[0])})
-#
-#     return options

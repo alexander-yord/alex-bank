@@ -9,9 +9,9 @@ router = APIRouter(
 )
 
 
-@router.get("/{account_id}")
+@router.get("/{account_id}", response_model=s.MyAccount)
 async def get_account_info(account_id: int,
-                           token: Annotated[str | None, Header(convert_underscores=False)] = None) -> s.MyAccount:
+                           token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
     if not h.verify_authorization(account_id, token):

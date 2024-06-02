@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class LoggedInUser(BaseModel):
@@ -32,3 +32,25 @@ class NewAccount(BaseModel):
     address: Optional[str] = None
     password: str
 
+
+class UserRole(BaseModel):
+    role: str
+    description: str
+
+
+class Verification(BaseModel):
+    status_code: str
+    verification_status: str
+
+
+class AccountGroup(BaseModel):
+    group_name: str
+    group_code: str
+    group_description: str
+    default_yn: str
+
+
+class DropDownOptions(BaseModel):
+    user_role: List[UserRole]
+    verifications: List[Verification]
+    account_groups: List[AccountGroup]
