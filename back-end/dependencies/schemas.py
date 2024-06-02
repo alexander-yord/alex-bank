@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List
+from fastapi import Query
 
 
 class LoggedInUser(BaseModel):
@@ -54,3 +55,10 @@ class DropDownOptions(BaseModel):
     user_role: List[UserRole]
     verifications: List[Verification]
     account_groups: List[AccountGroup]
+
+
+class BroadAccountFilters(BaseModel):
+    country_code: Optional[List[str]] = Query(None)
+    user_role: Optional[List[str]] = Query(None)
+    verification: Optional[List[str]] = Query(None)
+    account_group: Optional[List[str]] = Query(None)

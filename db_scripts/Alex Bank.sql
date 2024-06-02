@@ -9,7 +9,7 @@ CREATE TABLE `accounts` (
   `user_role` char(1),
   `verification` char(1),
   `account_group` varchar(3),
-  `created_dt` timestamp
+  `created_dt` timestamp DEFAULT (now())
 );
 
 CREATE TABLE `user_roles` (
@@ -31,7 +31,7 @@ CREATE TABLE `login_sessions` (
   `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `account_id` integer,
   `token` varchar(512),
-  `create_dt` timestamp
+  `create_dt` timestamp DEFAULT (now())
 );
 
 CREATE TABLE `currencies` (
@@ -74,7 +74,7 @@ CREATE TABLE `applications` (
   `application_id` integer PRIMARY KEY AUTO_INCREMENT,
   `account_id` integer,
   `product_id` integer,
-  `application_dt` timestamp,
+  `application_dt` timestamp DEFAULT (now()),
   `standard_yn` char(1),
   `amount` float,
   `special_notes` text,

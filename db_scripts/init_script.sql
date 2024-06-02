@@ -17,7 +17,7 @@ values
 insert into `verifications` (`verification_status`, `description`)
 values 
 	('Y', 'Verified'), 
-    ('N', 'Uverified'), 
+    ('N', 'Unverified'), 
     ('R', 'Revoked Verification'), 
     ('C', 'Contacted for Verification');
 
