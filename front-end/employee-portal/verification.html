@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="../index.html">
+              <img src="../img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)" href="index.html">Employee Portal</a></li>
+                <li><a v-if="!isLoggedIn" href="../login/index.html">Log In</a></li>
+                <li><a v-if="isLoggedIn" href="../myaccount/index.html">My Account</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && Object.keys(this.account_data).length" class="content">
+            <h2>Account Verification: {{ account_data.first_name }} {{ account_data.last_name }}</h2> 
+            Account ID: {{ account_data.account_id }} | {{ account_data.country }}{{ account_data.address ? ', ' + account_data.address : '' }}
+
+            <br><br>
+            <div v-if="account_data.verification_code == 'N'" class="container">
+                <ul class="progressbar">
+                    <li class="active">Account Created</li>
+                    <li>Account Contacted</li>
+                    <li>Account Verified</li>
+                </ul>
+            </div>
+            <div v-if="account_data.verification_code == 'C'" class="container">
+                <ul class="progressbar">
+                    <li class="active">Account Created</li>
+                    <li class="active">Account Contacted</li>
+                    <li>Account Verified</li>
+                </ul>
+            </div>
+            <div v-if="account_data.verification_code == 'Y'" class="container">
+                <ul class="progressbar">
+                    <li class="active">Account Created</li>
+                    <li class="active">Account Contacted</li>
+                    <li class="active">Account Verified</li>
+                </ul>
+            </div>
+            <div v-if="account_data.verification_code == 'R'" class="container">
+                <ul class="progressbar">
+                    <li class="active">Account Created</li>
+                    <li class="active">Account Contacted</li>
+                    <li class="active">Account Verified</li>
+                    <li class="active-revoked">Verification Revoked</li>
+                </ul>
+            </div>
+            <br><br> 
+            
+            <div class="button-row">
+                <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Mark as Contacted</button>
+                <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Mark as Verified</button>
+                <button v-if="['N', 'Y', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('R')" style="border-color: rgb(204, 82, 82); background: rgb(204, 82, 82);">
+                    Revoke Verification
+                </button>
+            </div>
+            
+            <br><br>
+            <div class="data-form-container editable-form">
+                <div class="form-group full-width">
+                    <h2>Contact Information</h2>
+                </div>
+                <button class="pencil-button" v-on:click="toggleEdit">
+                    <img src="../img/pencil-solid.svg" alt="Edit">
+                </button>
+                <div class="form-group">
+                    <label for="name">Email:</label>
+                    <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditable">
+                </div>
+                <div class="form-group">
+                    <label for="email">Phone:</label>
+                    <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditable">
+                </div>
+                <div class="form-group">
+                    <label for="bio">Address:</label>
+                    <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditable"></textarea>
+                </div>
+                <div class="form-group">
+                    <button v-if="isEditable" class="submit-button" type="submit">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-else-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && !Object.keys(this.account_data).length" class="content">
+            <div style="text-align: center; color: red;"><h2>This account does not exist.</h2></div>
+        </div>
+
+        <div v-else class="content">
+            <div style="text-align: center; color: red;"><h2>You are not logged in.</h2></div>
+        </div> 
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+    
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    page_account_id: null, 
+                    contact_data: {},
+                    initial_contact_data: {},
+                    account_data: {},
+                    isEditable: false
+                };
+            },
+            mounted() {
+                this.load_account_data();
+            },
+            methods: {
+                async load_account_data() {
+                    try {
+                        const queryString = window.location.search;
+                        const urlParams = new URLSearchParams(queryString);
+                        const accountID = urlParams.get('account_id');
+                        this.page_account_id = accountID;
+                        const response = await fetch(`${API_BASE_URL}/account/${accountID}/verification?emp_account_id=${this.account_id}`, {
+                            method: "GET",
+                            headers: { "token": sessionStorage.getItem("token") }
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.account_data = data;
+                        this.initial_contact_data = {
+                            "phone": data["phone"], 
+                            "email": data["email"], 
+                            "address": data["address"]
+                        }
+                        this.contact_data = {
+                            "phone": data["phone"], 
+                            "email": data["email"], 
+                            "address": data["address"]
+                        }
+                        console.log(account_data)
+                    } catch (error) {
+                        console.error('Error fetching unverified accounts:', error);
+                    }
+                }, 
+                toggleEdit() {
+                    if (this.isEditable) {
+                        if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
+                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                return;
+                            } else {
+                                this.contact_data = this.initial_contact_data;
+                            }
+                        } 
+                    } 
+                this.isEditable = !this.isEditable;
+                },
+            async verifyAccount(new_status) {
+                if (new_status=='R') {
+                    if (!confirm("You are about to revoke the verification of an account. Are you want to?")){
+                        return;
+                    }
+                }
+                try {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verify?emp_account_id=${this.account_id}&new_verification_code=${new_status}`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }
+                    });
+                    console.log(response)
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    console.log('Account verification response:', data);
+                    // Handle the response data as needed
+                    alert("Verification Status Succesfully Updated!")
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Error verifying account:', error);
+                }
+                }
+            }
+        }).mount('#app');
+    </script>
+    
+
+</body>
+</html>

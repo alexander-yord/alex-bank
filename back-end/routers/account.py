@@ -39,6 +39,7 @@ def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(
         "user_role": row[8],
         "verification_code": row[9],
         "verification": row[10],
+        "verification_emoji": h.verification_emoji(row[9]),
         "account_group_code": row[11],
         "account_group": row[12],
         "account_group_description": row[13],
@@ -58,8 +59,57 @@ def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(
 
 
 @router.get("/{account_id}")
-async def get_account_info(account_no: int, token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def get_account_info(account_no: int, emp_account_id: int,
+                           token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    # if not db.cnx.is_connected():
+    #     db.cnx, db.cursor = db.connect()
+    # if not h.verify_authorization(emp_account_id, token):
+    #     raise HTTPException(401, "User is not authorized")
+    # if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']):
+    #     raise HTTPException(401, "User does not have privileges")
+
     raise HTTPException(501)
+
+
+@router.get("/{account_id}/verification")
+async def get_info_for_verification_page(account_id: int, emp_account_id: int,
+                                         token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(emp_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']):
+        raise HTTPException(401, "User does not have privileges")
+
+    stmt = """
+    SELECT account_id, first_name, last_name, email, phone, 
+    CASE 
+        WHEN country_code = 'BGR' THEN 'Bulgaria' 
+        WHEN country_code = 'USA' THEN 'United States' 
+        WHEN country_code = 'OTH' THEN 'Other' 
+        ELSE country_code END
+    AS country,
+    address, verification, v.description
+    FROM accounts a
+    JOIN verifications v ON a.verification = v.verification_status
+    WHERE a.account_id = %s"""
+
+    db.cursor.execute(stmt, (account_id, ))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, "Account does not exist")
+    row = db.cursor.fetchone()
+    return {
+        "account_id": int(row[0]),
+        "first_name": row[1],
+        "last_name":  row[2],
+        "email": row[3],
+        "phone": row[4],
+        "country": row[5],
+        "address": row[6],
+        "verification_code": row[7],
+        "verification": row[8],
+        "verification_emoji": h.verification_emoji(row[7])
+    }
 
 
 @router.post("/new")
@@ -68,7 +118,7 @@ async def create_account():
 
 
 @router.post("/{account_id}/verify")
-async def verify_account(account_id: int, emp_account_id: int,
+async def verify_account(account_id: int, emp_account_id: int, new_verification_code: str,
                          token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
@@ -81,7 +131,12 @@ async def verify_account(account_id: int, emp_account_id: int,
     if not db.cursor.rowcount == 1:
         raise HTTPException(404, "Account not found")
 
-    stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
-    db.cursor.execute(stmt, (account_id, ))
+    db.cursor.execute("SELECT verification_status FROM verifications WHERE verification_status = %s",
+                      (new_verification_code,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(409, "Not a valid verification_code")
+
+    stmt = "UPDATE accounts SET verification = %s WHERE account_id = %s"
+    db.cursor.execute(stmt, (new_verification_code, account_id))
     db.cnx.commit()
     return {"status": "Success!"}

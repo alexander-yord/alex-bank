@@ -46,3 +46,12 @@ def check_user_privilege(account_id, roles: list):
 
     return cursor.rowcount == 1
 
+
+def verification_emoji(verification_status):
+    emojis ={
+        "Y": "✅",
+        "N": "🟡",
+        "C": "📩",
+        "R": "🚫"
+    }
+    return emojis.get(verification_status)
