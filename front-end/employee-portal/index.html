@@ -31,7 +31,7 @@
             <h3>Logged in as {{first_name}} {{last_name}} (Account ID: {{account_id}})</h3> <br>
 
             <div class="button-row">
-                <h2>Unverified Accounts</h2> 
+                <h2>Accounts</h2> 
                 <div class="search-container">
                     <input type="text" id="search-input" placeholder="Go to Account ID..." />
                     <button id="search-button" @click="performSearch">
@@ -39,8 +39,9 @@
                     </button>
                 </div>
             </div>
+            Unverified Accounts: <br>
             <div class="carousel-container">
-                <a :href="'verification.html?account_id='+account.account_id" class="carousel-card" v-for="account in unverified_accounts">
+                <a :href="'account.html?account_id='+account.account_id" class="carousel-card" v-for="account in unverified_accounts">
                     <div class="account-id">Account ID: {{account.account_id}}</div>
                     <div class="first-name">{{account.first_name}}</div>
                     <div class="last-name">{{account.last_name}} <abbr :title="account.verification">{{account.verification_emoji}}</abbr></div>
@@ -81,7 +82,7 @@
             methods: {
                 async fetchUnverifiedAccounts() {
                     try {
-                        const response = await fetch(`${API_BASE_URL}/account/?emp_account_id=${this.account_id}&verification=N&verification=C`, {
+                        const response = await fetch(`${API_BASE_URL}/account?emp_account_id=${this.account_id}&verification=N&verification=C`, {
                             method: "GET",
                             headers: { "token": sessionStorage.getItem("token") }
                         });

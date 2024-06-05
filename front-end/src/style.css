@@ -453,3 +453,34 @@ button img {
     height: 20px;
 }
 
+.card-row {
+    display: flex;
+    gap: 20px; /* Adjust the gap as needed */
+    flex-wrap: wrap;
+}
+
+.card {
+    flex: 1;
+    /* border: 1px solid #ccc; Optional: Add borders to cards */
+    /* padding: 20px; Optional: Add padding inside the cards */
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); Optional: Add shadow for better visual separation */
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    position: relative; /* Added to allow absolute positioning of the pencil button */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: rgb(254, 254, 254);
+}
+
+.form-group-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Ensure form groups take full width inside the card */
+}
+
+.form-group-row.full-width {
+    width: 100%;
+}

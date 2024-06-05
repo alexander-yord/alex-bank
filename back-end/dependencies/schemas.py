@@ -34,6 +34,17 @@ class NewAccount(BaseModel):
     password: str
 
 
+class AmendAccount(BaseModel):
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    country_code: Optional[str] = None
+    address: Optional[str] = None
+
+
+class AmendAccountGroup(BaseModel):
+    account_group_code: str
+
+
 class UserRole(BaseModel):
     role: str
     description: str

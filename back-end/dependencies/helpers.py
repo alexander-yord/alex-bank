@@ -18,6 +18,8 @@ def verify_authorization(account_id, authorization):  # verifies that the token 
         cnx, cursor = db.connect()
     stmt = "SELECT account_id FROM login_sessions WHERE token = %s "
     cursor.execute(stmt, (authorization, ))
+    if cursor.rowcount == 0:
+        return False
     row = cursor.fetchall()[0]
     return True if row[0] == account_id else False
 
