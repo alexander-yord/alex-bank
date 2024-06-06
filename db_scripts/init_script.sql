@@ -39,11 +39,40 @@ values ('Admin', 'Admin', 'BGR', 'A', 'Y', 'EMP');
 insert into `login_credentials` (`account_id`, `password`) 
 values (2000000, 'qwerty');
 
+-- Ensure the Event Scheduler is enabled
+SET GLOBAL event_scheduler = ON;
+
+-- Create the event to delete old login sessions
+CREATE EVENT IF NOT EXISTS delete_old_login_sessions
+ON SCHEDULE EVERY 1 HOUR
+DO
+  DELETE FROM login_sessions
+  WHERE create_dt < NOW() - INTERVAL 2 HOUR;
+
+
 -- document profiles 
 insert into `document_profiles` (`doc_profile_id`, `description`)
 values 
-	('APP', 'Application Certificate'), 
-    ('APR', 'Account Proof');
+	('CON', 'Contract'), 
+    ('AWP', 'Account Worthiness Proof');
+
+-- product statuses
+INSERT INTO product_statuses (code, status_name, status_description) VALUES
+	('APL', 'Applied', 'Application submitted'),
+	('REV', 'Reviewed', 'Application is under review'),
+	('APR', 'Approved', 'Application is approved'),
+	('DEN', 'Denied', 'Application is denied'),
+	('CNL', 'Cancelled', 'The application or the exchange of the underlying was cancelled'),
+	('AMD', 'Amended', 'An employee made a change, and the client has to agree to it'),
+	('SGN', 'Signing', 'Contract sent for signing'),
+	('AWT', 'Awaiting Begin Date', 'Awaiting Begin Date'),
+	('NOR', 'Normal', 'Exchange of the underlying occurred and the end date is not reached yet'),
+	('TRG', 'Triggered', 'An instrument condition has been triggered'),
+	('DUE', 'Final Exchange Due', 'Final exchange is due'),
+	('CMP', 'Complete', 'Complete'),
+	('ORD', 'Overdue', 'Overdue'),
+	('WOF', 'Written Off', 'Written Off');
+
     
 -- product category 'Loans'
 insert into `product_categories` (`category_id`, `category_name`, `description`)
@@ -58,6 +87,7 @@ values
 	('LON', 'Small 3-Month Loan',  'Loan of less than BGN 100 with term of 3 month', NULL, 'BGN', 1, 0.0100, 100.0, '2024-05-25', NULL), 
     ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 1 month', NULL, 'BGN', 1, 0.0100, 500.0, '2024-05-25', NULL), 
     ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 3 month', NULL, 'BGN', 1, 0.0200, 500.0, '2024-05-25', NULL);
+
 
 
 

@@ -76,10 +76,9 @@ CREATE TABLE `applications` (
   `product_id` integer,
   `application_dt` timestamp DEFAULT (now()),
   `standard_yn` char(1),
-  `amount` float,
+  `amount_requested` float,
   `special_notes` text,
   `collateral` varchar(255),
-  `application_certificate` integer,
   `approved_yn` char(1),
   `approval_dt` timestamp
 );
@@ -89,14 +88,22 @@ CREATE TABLE `product_instance` (
   `application_id` integer,
   `account_id` integer,
   `approved_by` integer,
-  `final_amount` float,
-  `final_yield` float,
+  `amount` float,
+  `yield` float,
+  `status_code` varchar(3),
+  `contract_id` integer,
   `expcted_revenue` float,
   `product_start_date` date,
   `product_end_date` date,
   `special_notes` text,
   `actual_end_date` date,
   `actual_revenue` float
+);
+
+CREATE TABLE `product_statuses` (
+  `code` varchar(3) PRIMARY KEY,
+  `status_name` varchar(255),
+  `status_description` varchar(255)
 );
 
 CREATE TABLE `documents` (
@@ -154,8 +161,6 @@ ALTER TABLE `product_instance` ADD FOREIGN KEY (`application_id`) REFERENCES `ap
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`approved_by`) REFERENCES `accounts` (`account_id`);
 
-ALTER TABLE `applications` ADD FOREIGN KEY (`application_certificate`) REFERENCES `documents` (`document_id`);
-
 ALTER TABLE `products` ADD FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`category_id`);
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
@@ -177,3 +182,7 @@ ALTER TABLE `worthiness_check_steps` ADD FOREIGN KEY (`account_group_code`) REFE
 ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`wc_step_uid`) REFERENCES `worthiness_check_steps` (`step_uid`);
 
 ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`prime_uid`) REFERENCES `account_worthiness` (`prime_uid`);
+
+ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `documents` (`document_id`);
+
+ALTER TABLE `product_instance` ADD FOREIGN KEY (`status_code`) REFERENCES `product_statuses` (`code`);
