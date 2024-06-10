@@ -210,3 +210,25 @@ async def update_account_group(account_id: int, usr_account_id: int, data: s.Ame
 @router.patch("/{account_id}/credentials")
 async def update_account_credentials(account_id: int):
     pass
+
+
+@router.get("/{account_id}/products")
+async def get_account_products():
+    pass
+
+
+@router.post("/{account_id}/product/{product_id}")
+async def product_sale():
+    pass
+
+
+@router.get("/{account_id}/product/{product_uid}")
+async def get_product():
+    pass
+
+
+@router.patch("/{account_id}/product/{product_uid}")
+async def update_product():
+    pass
+
+

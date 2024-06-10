@@ -77,7 +77,9 @@ INSERT INTO product_statuses (code, status_name, status_description) VALUES
 -- product category 'Loans'
 insert into `product_categories` (`category_id`, `category_name`, `description`)
 values 
-	('LON', 'Loan', 'Loans in which Alex Bank Lends Money Out to the Loan Applicant');
+	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.'), 
+    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.'), 
+    ('DER', 'Exotic Derivatives', 'Instruments whose price depends on the performance of some underlying asset or condition.');
 
 -- products Small and Medium Short-Term BGN Loans
 insert into `products` (`category_id`, `name`, `description`, `terms_and_conditions`, 

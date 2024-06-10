@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+<div id="app">
+  <nav class="navbar">
+    <div class="wrapper">
+      <a href="../index.html">
+        <img src="../img/alex_bank.png" alt="Logo">
+      </a>
+        <ul v-if="isLoggedIn">
+          <li><a href="../employee-portal/index.html" v-if="['A', 'C', 'E'].includes(user_role)">Employee Portal</a></li> 
+          <li><a href="../myaccount/index.html">My Account</a></li>
+        </ul>
+        <ul v-else>
+          <li><a href="../signup/index.html">Sign Up</a></li>
+          <li><a href="../login/index.html">Log In</a></li>
+        </ul>
+    </div>
+  </nav>
+
+  <div class="content">
+    <h1>Our Products</h1>
+    <div class="product-grid">
+        <a v-for="cat in product_categories.reverse()" href="" class="product-card">
+            <img :src="'../img/products/'+cat.category_id+'.png'" alt="Product Image">
+            <div class="product-title">{{cat.category_name}}</div>
+            <div class="product-description">{{cat.category_description}}.</div>
+        </a>
+    </div>
+    
+  </div>
+  
+</div>
+
+<script>
+  const { createApp } = Vue;
+  createApp({
+    data() {
+      return {
+        isLoggedIn: isLoggedIn(), 
+        user_role: sessionStorage.getItem('user_role'), 
+        looksForCategories: true, 
+        product_categories: []
+      };
+    },
+    mounted() {
+        this.fetchProductCategories();
+    },
+    methods: {
+        async fetchProductCategories() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/product/categories`, {
+                    method: "GET"
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                this.product_categories = data;
+                } catch (error) {
+                    console.error('Error fetching unverified accounts:', error);
+                }
+            }
+    }
+  }).mount('#app');
+</script>
+</body>
+</html>

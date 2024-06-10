@@ -485,3 +485,69 @@ button img {
     width: 100%;
 }
 
+/* Add these styles to the existing stylesheet */
+
+/* Container for the grid of product cards */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px;
+    background-color: rgb(254, 254, 254); /* Match with existing background */
+}
+
+/* Media query for tablets (2 cards per row) */
+@media (max-width: 900px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Media query for mobile devices (1 card per row) */
+@media (max-width: 600px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Styling for each product card */
+.product-card {
+    background-color: white;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Ensure content stays within card */
+    transition: transform 0.2s, box-shadow 0.2s; /* Smooth transition */
+    text-decoration: none; /* Remove underline from links */
+    color: initial; /* Reset link color */
+    display: flex;
+    flex-direction: column;
+    cursor: pointer; /* Pointer cursor for clickable effect */
+}
+
+/* Hover effect for the product card */
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+/* Wide aspect ratio image at the top of the product card */
+.product-card img {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Title of the product */
+.product-card .product-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 15px;
+}
+
+/* Short description of the product */
+.product-card .product-description {
+    font-size: 14px;
+    margin: 0 15px 15px 15px;
+}
+

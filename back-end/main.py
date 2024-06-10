@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from dependencies import database as db
-from routers import myaccount, login, signup, account, frontend
+from routers import myaccount, login, signup, account, frontend, products
 from fastapi.middleware.cors import CORSMiddleware
 
 # DB connection and cursor
@@ -14,6 +14,7 @@ app.include_router(signup.router)
 app.include_router(login.router)
 app.include_router(myaccount.router)
 app.include_router(account.router)
+app.include_router(products.router)
 app.include_router(frontend.router)
 
 origins = ["*"]

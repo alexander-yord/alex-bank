@@ -73,3 +73,24 @@ class BroadAccountFilters(BaseModel):
     user_role: Optional[List[str]] = Query(None)
     verification: Optional[List[str]] = Query(None)
     account_group: Optional[List[str]] = Query(None)
+
+
+class Product(BaseModel):
+    product_id: int
+    category_id: str
+    category_name: str
+    name: str
+    description: str
+    terms_and_conditions: Optional[str] = None
+    currency: Optional[str] = None
+    term: Optional[int] = None
+    yield_: Optional[float] = None
+    max_amount: Optional[float] = None
+    available_from: Optional[str] = None
+    available_till: Optional[str] = None
+
+
+class ProductCategory(BaseModel):
+    category_id: str
+    category_name: str
+    category_description: str
