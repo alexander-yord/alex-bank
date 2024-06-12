@@ -20,10 +20,12 @@
         <img src="../img/alex_bank.png" alt="Logo">
       </a>
         <ul v-if="isLoggedIn">
+          <li><a href="index.html">Products</a></li>
           <li><a href="../employee-portal/index.html" v-if="['A', 'C', 'E'].includes(user_role)">Employee Portal</a></li> 
           <li><a href="../myaccount/index.html">My Account</a></li>
         </ul>
         <ul v-else>
+          <li><a href="index.html">Products</a></li>
           <li><a href="../signup/index.html">Sign Up</a></li>
           <li><a href="../login/index.html">Log In</a></li>
         </ul>
@@ -32,47 +34,82 @@
 
   <div class="content">
     <h1>Our Products</h1>
-    <div class="product-grid">
-        <a v-for="cat in product_categories.reverse()" href="" class="product-card">
-            <img :src="'../img/products/'+cat.category_id+'.png'" alt="Product Image">
-            <div class="product-title">{{cat.category_name}}</div>
-            <div class="product-description">{{cat.category_description}}.</div>
+
+    <div v-if="page_is_for_category_id != null" class="product-grid">
+        <a v-for="prod in products" href="#" class="product-card">
+            <!-- <img :src="'../img/products/' + prod.category_id + '.png'" alt="Product Image"> -->
+            <div class="product-title">{{ prod.name }}</div>
+            <div class="product-description">{{ prod.description }}.</div>
         </a>
     </div>
-    
+    <div v-else class="product-grid">
+        <a v-for="cat in product_categories.slice().reverse()" :key="cat.category_id" :href="'index.html?category_id='+cat.category_id" class="product-card">
+            <img :src="'../img/products/' + cat.category_id + '.png'" alt="Product Image">
+            <div class="product-title">{{ cat.category_name }}</div>
+            <div class="product-description">{{ cat.category_description }}.</div>
+        </a>
+    </div>
   </div>
-  
 </div>
 
 <script>
   const { createApp } = Vue;
+
   createApp({
     data() {
       return {
-        isLoggedIn: isLoggedIn(), 
-        user_role: sessionStorage.getItem('user_role'), 
-        looksForCategories: true, 
-        product_categories: []
+        isLoggedIn: isLoggedIn(),
+        user_role: sessionStorage.getItem('user_role'),
+        product_categories: [],
+        page_is_for_category_id: null, 
+        products: []
       };
     },
-    mounted() {
-        this.fetchProductCategories();
+    async mounted() {
+      await this.fetchProductCategories();
+      this.getCategory();
+      await this.fetchProducts();
     },
     methods: {
-        async fetchProductCategories() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/product/categories`, {
+      async fetchProductCategories() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/product/categories`, {
+            method: "GET"
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const data = await response.json();
+          this.product_categories = data;
+        } catch (error) {
+          console.error('Error fetching product categories:', error);
+        }
+      },
+      getCategory() {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+        const category_id = params.get("category_id");
+        this.page_is_for_category_id = category_id;  // Set the correct property
+      }, 
+      async fetchProducts() {
+        try {
+            if (this.page_is_for_category_id != null) {
+                const response = await fetch(`${API_BASE_URL}/product/products?category_id=${this.page_is_for_category_id}`, {
                     method: "GET"
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                this.product_categories = data;
-                } catch (error) {
-                    console.error('Error fetching unverified accounts:', error);
-                }
+                this.products = data; 
             }
+            else {
+                return ;
+            }
+        } catch (error) {
+            console.error('Error fetching product categories:', error);
+        }
+      }
     }
   }).mount('#app');
 </script>

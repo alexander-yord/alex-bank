@@ -31,7 +31,7 @@ async def get_product_categories():
 
 
 @router.get("/products", response_model=List[s.Product])
-async def list_products(category: Optional[str] = None, only_active_yn: str = 'Y'):
+async def list_products(category_id: Optional[str] = None, only_active_yn: str = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -42,6 +42,7 @@ async def list_products(category: Optional[str] = None, only_active_yn: str = 'Y
                    p.currency, p.term, p.yield, p.max_amount, p.available_from, p.available_till
             FROM products p
             JOIN product_categories pc ON pc.category_id = p.category_id
+            WHERE 1=1
             """
         else:
             sql = """
@@ -52,9 +53,9 @@ async def list_products(category: Optional[str] = None, only_active_yn: str = 'Y
             WHERE p.available_from <= NOW() AND nvl(available_till, NOW()) >= NOW()
             """
 
-        if category:
-            sql += " AND pc.category_name = %s"
-            db.cursor.execute(sql, (category,))
+        if category_id is not None:
+            sql += " AND pc.category_id = %s"
+            db.cursor.execute(sql, (category_id,))
         else:
             db.cursor.execute(sql)
 
