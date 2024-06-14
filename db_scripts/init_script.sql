@@ -83,14 +83,29 @@ values
 
 -- products Small and Medium Short-Term BGN Loans
 insert into `products` (`category_id`, `name`, `description`, `terms_and_conditions`, 
-`currency`, `term`, `yield`, `max_amount`, `available_from`, `available_till`)
+`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`)
 values 
-	('LON', 'Small 1-Month Loan',  'Loan of less than BGN 100 with term of 1 month', NULL, 'BGN', 1, 0.0000, 100.0, '2024-05-25', NULL), 
-	('LON', 'Small 3-Month Loan',  'Loan of less than BGN 100 with term of 3 month', NULL, 'BGN', 1, 0.0100, 100.0, '2024-05-25', NULL), 
-    ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 1 month', NULL, 'BGN', 1, 0.0100, 500.0, '2024-05-25', NULL), 
-    ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 3 month', NULL, 'BGN', 1, 0.0200, 500.0, '2024-05-25', NULL);
+	('LON', 'Small 1-Month Loan',  'Loan of less than BGN 100 with term of 1 month', NULL, 'BGN', 1, 0.0000, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+	('LON', 'Small 3-Month Loan',  'Loan of less than BGN 100 with term of 3 month', NULL, 'BGN', 3, 0.0100, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+    ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 1 month', NULL, 'BGN', 1, 0.0100, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+    ('LON', 'Medium 3-Month Loan', 'Loan of less than BGN 500 with term of 3 month', NULL, 'BGN', 3, 0.0200, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL);
 
+-- product status update trigger 
+DELIMITER //
 
+CREATE TRIGGER before_product_instance_update
+BEFORE UPDATE ON product_instance
+FOR EACH ROW
+BEGIN
+  IF NEW.status_code != OLD.status_code THEN
+    INSERT INTO product_status_updates (product_uid, was_status, is_code, update_dt)
+    VALUES (OLD.product_uid, OLD.status_code, NEW.status_code, NOW());
+  END IF;
+END;
+
+//
+
+DELIMITER ;
 
 
 

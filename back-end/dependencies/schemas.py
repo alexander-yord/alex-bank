@@ -84,8 +84,10 @@ class Product(BaseModel):
     terms_and_conditions: Optional[str] = None
     currency: Optional[str] = None
     term: Optional[int] = None
-    yield_: Optional[float] = None
-    max_amount: Optional[float] = None
+    percentage: Optional[float] = None
+    monetary_amount: Optional[float] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
     available_till: Optional[str] = None
 
@@ -94,3 +96,15 @@ class ProductCategory(BaseModel):
     category_id: str
     category_name: str
     category_description: str
+
+
+class NewProduct(BaseModel):
+    amount_requested: float
+    collateral: Optional[str] = None
+    standard_yn: str
+    special_notes: Optional[str] = None
+
+
+
+
+

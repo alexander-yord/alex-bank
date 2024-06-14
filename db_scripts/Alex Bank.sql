@@ -58,8 +58,10 @@ CREATE TABLE `products` (
   `terms_and_conditions` text,
   `currency` varchar(3),
   `term` integer COMMENT '(in months)',
-  `yield` float,
-  `max_amount` float,
+  `percentage` float,
+  `monetary_amount` float,
+  `percentage_label` varchar(255),
+  `mon_amt_label` varchar(255),
   `available_from` datetime,
   `available_till` datetime
 );
@@ -104,6 +106,13 @@ CREATE TABLE `product_statuses` (
   `code` varchar(3) PRIMARY KEY,
   `status_name` varchar(255),
   `status_description` varchar(255)
+);
+
+CREATE TABLE `product_status_updates` (
+  `product_uid` integer,
+  `was_status` varchar(3),
+  `is_code` varchar(3),
+  `update_dt` timestamp DEFAULT (now())
 );
 
 CREATE TABLE `documents` (
@@ -186,3 +195,9 @@ ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`prime_uid`) REFERENCES 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `documents` (`document_id`);
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`status_code`) REFERENCES `product_statuses` (`code`);
+
+ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
+
+ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `product_statuses` (`code`);
+
+ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `product_statuses` (`code`);

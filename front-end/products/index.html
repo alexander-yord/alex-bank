@@ -36,7 +36,7 @@
     <h1>Our Products</h1>
 
     <div v-if="page_is_for_category_id != null" class="product-grid">
-        <a v-for="prod in products" href="#" class="product-card">
+        <a v-for="prod in products" :href="'info.html?product_id='+prod.product_id" class="product-card">
             <!-- <img :src="'../img/products/' + prod.category_id + '.png'" alt="Product Image"> -->
             <div class="product-title">{{ prod.name }}</div>
             <div class="product-description">{{ prod.description }}.</div>

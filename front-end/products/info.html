@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+<div id="app">
+  <nav class="navbar">
+    <div class="wrapper">
+      <a href="../index.html">
+        <img src="../img/alex_bank.png" alt="Logo">
+      </a>
+        <ul v-if="isLoggedIn">
+          <li><a href="index.html">Products</a></li>
+          <li><a href="../employee-portal/index.html" v-if="['A', 'C', 'E'].includes(user_role)">Employee Portal</a></li> 
+          <li><a href="../myaccount/index.html">My Account</a></li>
+        </ul>
+        <ul v-else>
+          <li><a href="index.html">Products</a></li>
+          <li><a href="../signup/index.html">Sign Up</a></li>
+          <li><a href="../login/index.html">Log In</a></li>
+        </ul>
+    </div>
+  </nav>
+
+  <div v-if="Object.keys(product_info).length != 0" class="content">
+    <div class="product-info-row">
+        <div class="product-image">
+            <img :src="'../img/products/'+product_info.category_id+'.jpeg'" class="product-img" alt="Product Image">
+        </div>
+        <div class="product-details">
+            <h1 style="margin-top: 0px !important;">{{product_info.name}}</h1>
+            <h3>{{product_info.description}}</h3>
+            <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{product_info.percentage}}</div> <br>
+            <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount}}</div> 
+            <button v-if="!show_appl_form" id="show-appl-button" @click="showApplication()">Apply for {{product_info.category_name}}</button>
+            <form v-if="show_appl_form" id="appl-form" class="form-container full-width">
+                <div class="form-group full-width">
+                    <h3>{{product_info.category_name}} Application</h3>
+                </div>
+                <div class="form-group">
+                    <label for="appl_amt">Amount Requested: </label> 
+                    <input type="number" id="appl_amt" v-model="appl_amount" step="0.01">
+                </div>
+                <div class="form-group" style="display: inline;">
+                    <span style="display: inline;">Customize Product: </span>
+                    <input type="radio" name="appl_cust" value="yes" v-model="appl_cust" value="N" style="display: inline;" >
+                    <label for="standard_n" style="display: inline;" >Yes</label>
+                    <input type="radio" name="appl_cust" value="no" v-model="appl_cust" value="Y" style="display: inline;" checked>
+                    <label for="standard_y" style="display: inline;">No</label>
+                    <br>
+                    <span>*Please include any customization requests in the special notes field.</span>
+                </div>
+                <div class="form-group">
+                    <label for="appl_collateral"><abbr title="Read the Terms and Conditions to see if a collateral amount is required">Collateral:</abbr></label> 
+                    <textarea v-model="appl_collateral" placeholder="Describe & Value Your Collateral"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="appl_notes">Special Notes:</label>
+                    <textarea v-model="appl_notes" placeholder="Details on customization requests"></textarea>
+                </div>
+                <div class="form-group">
+                    <button @click.prevent="submitApplication">Submit Application</button>
+                </div>
+            </form>
+        </div>
+        <br>
+        <h3>Terms and Conditions</h3>
+        <p v-html="product_info.terms_and_conditions"></p>
+    </div>
+  </div>  
+  <div v-else class="content">
+    <div style="text-align: center; color: red;"><h2>This product does not exist.</h2></div>
+  </div>
+</div>
+
+<script>
+  const { createApp } = Vue;
+
+  createApp({
+    data() {
+      return {
+        isLoggedIn: isLoggedIn(),
+        user_role: sessionStorage.getItem('user_role'),
+        product_info: {},
+        page_is_for_product_id: null, 
+        show_appl_form: false, 
+        appl_cust: "Y", 
+        appl_amount: 0,
+        appl_collateral: null,
+        appl_notes: null
+      };
+    },
+    async mounted() {
+      this.getProduct();
+      await this.fetchProduct();
+    },
+    methods: {
+      getProduct() {
+        const url = new URL(window.location.href);
+        const params = new URLSearchParams(url.search);
+        const product_id = params.get("product_id");
+        this.page_is_for_product_id = product_id;  // Set the correct property
+      }, 
+      async fetchProduct() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/product/${this.page_is_for_product_id}`, {
+                method: "GET"
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            // Check if terms_and_conditions is not null or undefined before attempting to replace newline characters
+            if (data.terms_and_conditions) {
+                data.terms_and_conditions = data.terms_and_conditions.replace(/\n/g, '<br>');
+            } else {
+                data.terms_and_conditions = ''; // Set to an empty string or provide a default message if necessary
+            }
+            this.product_info = data;
+            this.appl_amount = data.monetary_amount;
+        } catch (error) {
+            console.error('Error fetching product categories:', error);
+        }
+      }, 
+      showApplication() {
+        this.show_appl_form = true; 
+        return ;
+      }, 
+      async submitApplication() {
+        try {
+            appl_params = {
+                "amount_requested": this.appl_amount, 
+                "collateral": this.appl_collateral, 
+                "standard_yn": this.appl_cust, 
+                "special_notes": this.appl_notes
+            }
+            console.log(appl_params);
+            const response = await fetch(`${API_BASE_URL}/account/${sessionStorage.getItem("account_id")}/product/${this.page_is_for_product_id}?usr_account_id=${sessionStorage.getItem("account_id")}`, {
+                method: "POST", 
+                headers: {
+                    "Content-Type": "application/json",
+                    "token": sessionStorage.getItem("token")
+                }, 
+                body: JSON.stringify(appl_params)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                product_uid = data.product_uid;
+                alert(`Product ${product_uid} successfully created!`);
+                console.log(product_uid);
+                window.location.href = "../myaccount/index.html";
+            } else {
+                console.error('Error:', data);
+                alert('Failed to submit application. Please check your inputs.');
+            }
+        } catch (error) {
+            console.error('Error fetching product categories:', error);
+        }
+      }
+    }
+  }).mount('#app');
+</script>
+</body>
+</html>

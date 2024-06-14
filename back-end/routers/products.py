@@ -39,7 +39,8 @@ async def list_products(category_id: Optional[str] = None, only_active_yn: str =
         if only_active_yn == 'N':
             sql = """
             SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.yield, p.max_amount, p.available_from, p.available_till
+                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+                   p.available_from, p.available_till
             FROM products p
             JOIN product_categories pc ON pc.category_id = p.category_id
             WHERE 1=1
@@ -47,7 +48,8 @@ async def list_products(category_id: Optional[str] = None, only_active_yn: str =
         else:
             sql = """
             SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.yield, p.max_amount, p.available_from, p.available_till
+                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+                   p.available_from, p.available_till
             FROM products p
             JOIN product_categories pc ON pc.category_id = p.category_id
             WHERE p.available_from <= NOW() AND nvl(available_till, NOW()) >= NOW()
@@ -72,10 +74,12 @@ async def list_products(category_id: Optional[str] = None, only_active_yn: str =
                 terms_and_conditions=prod[5],
                 currency=prod[6],
                 term=prod[7],
-                yield_=prod[8],
-                max_amount=prod[9],
-                available_from=str(prod[10].strftime('%Y-%m-%d')),
-                available_till=str(prod[11].strftime('%Y-%m-%d')) if prod[11] is not None else None
+                percentage=prod[8],
+                monetary_amount=prod[9],
+                percentage_label=prod[10],
+                mon_amt_label=prod[11],
+                available_from=str(prod[12].strftime('%Y-%m-%d')),
+                available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None
             )
             product_list.append(product)
 
@@ -94,7 +98,8 @@ async def info_about_product(product_id: int):
     try:
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-               p.currency, p.term, p.yield, p.max_amount, p.available_from, p.available_till
+               p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+               p.available_from, p.available_till
         FROM products p
         JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
@@ -115,10 +120,12 @@ async def info_about_product(product_id: int):
             terms_and_conditions=product[5],
             currency=product[6],
             term=product[7],
-            yield_=product[8],
-            max_amount=product[9],
-            available_from=str(product[10].strftime('%Y-%m-%d')),
-            available_till=str(product[11].strftime('%Y-%m-%d')) if product[11] is not None else None
+            percentage=product[8],
+            monetary_amount=product[9],
+            percentage_label=product[10],
+            mon_amt_label=product[11],
+            available_from=str(product[12].strftime('%Y-%m-%d')),
+            available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None
         )
 
         return product_data

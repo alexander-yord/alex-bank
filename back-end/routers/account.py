@@ -218,8 +218,44 @@ async def get_account_products():
 
 
 @router.post("/{account_id}/product/{product_id}")
-async def product_sale():
-    pass
+async def product_sale(account_id: int, product_id: int, usr_account_id: int, data: s.NewProduct,
+                       token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Account {account_id} does not exist")
+    print(data.standard_yn)
+    standard_yn = 'N' if data.standard_yn not in ['Y', 'N'] else data.standard_yn
+
+    stmt = """
+    INSERT INTO applications (account_id, product_id, standard_yn, amount_requested, special_notes, collateral)
+    VALUES (%s, %s, %s, %s, %s, %s);
+    """
+
+    db.cursor.execute(stmt, (account_id, product_id, standard_yn, data.amount_requested, data.special_notes,
+                             data.collateral))
+    db.cnx.commit()
+
+    db.cursor.execute("SELECT LAST_INSERT_ID()")
+    application_id = db.cursor.fetchone()[0]
+
+    stmt2 = """
+    INSERT INTO product_instance (application_id, account_id, status_code)
+    VALUES (%s, %s, 'APL')
+    """
+    db.cursor.execute(stmt2, (application_id, account_id))
+    db.cnx.commit()
+
+    db.cursor.execute("SELECT LAST_INSERT_ID()")
+    product_uid = db.cursor.fetchone()[0]
+
+    return {"status": "Success!",
+            "product_uid": product_uid}
 
 
 @router.get("/{account_id}/product/{product_uid}")

@@ -27,6 +27,7 @@ button:hover {
 
 /* Styling for inputs */
 input[type="text"],
+input[type="number"],
 input[type="password"],
 textarea {
     background-color: rgb(254, 254, 254);
@@ -551,3 +552,43 @@ button img {
     margin: 0 15px 15px 15px;
 }
 
+.product-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: top;
+}
+
+.product-image {
+    flex: 1 1 40%;
+    max-width: 40%; /* Ensure it does not exceed 40% */
+}
+
+.product-details {
+    flex: 1 1 50%;
+    max-width: 60%; /* Ensure it does not exceed 60% */
+}
+
+.product-img {
+    width: 100%;
+    height: auto; /* Maintain aspect ratio */
+    object-fit: cover; /* Cover the container */
+    border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+    .product-info-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .product-image, .product-details {
+        flex: 1 1 100%; /* Full width on narrow screens */
+        max-width: 100%;
+    }
+
+    .product-img {
+        width: 100%;
+        height: auto;
+    }
+}
