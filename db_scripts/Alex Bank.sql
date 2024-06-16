@@ -82,6 +82,7 @@ CREATE TABLE `applications` (
   `special_notes` text,
   `collateral` varchar(255),
   `approved_yn` char(1),
+  `approved_by` integer,
   `approval_dt` timestamp
 );
 
@@ -89,12 +90,11 @@ CREATE TABLE `product_instance` (
   `product_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `application_id` integer,
   `account_id` integer,
-  `approved_by` integer,
   `amount` float,
   `yield` float,
   `status_code` varchar(3),
   `contract_id` integer,
-  `expcted_revenue` float,
+  `expected_revenue` float,
   `product_start_date` date,
   `product_end_date` date,
   `special_notes` text,
@@ -168,8 +168,6 @@ ALTER TABLE `documents` ADD FOREIGN KEY (`document_profile`) REFERENCES `documen
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`approved_by`) REFERENCES `accounts` (`account_id`);
-
 ALTER TABLE `products` ADD FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`category_id`);
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
@@ -201,3 +199,5 @@ ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`product_uid`) REFERENCES 
 ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `product_statuses` (`code`);
 
 ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `product_statuses` (`code`);
+
+ALTER TABLE `applications` ADD FOREIGN KEY (`approved_by`) REFERENCES `accounts` (`account_id`);

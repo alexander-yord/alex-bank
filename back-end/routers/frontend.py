@@ -46,3 +46,19 @@ async def provide_drop_down_options():
     return {"user_role": roles,
             "verifications": verifications,
             "account_groups": account_groups}
+
+
+@router.get("/statuses")
+async def provide_available_product_statuses(current_status: str):
+    res = h.available_next_status(current_status)
+    if res == "XXX":
+        raise HTTPException(404, f"Status code {current_status} does not exist")
+    return res
+
+
+@router.get("/status-progression")
+async def provide_status_progression(current_status: str):
+    res = h.status_progressions(current_status)
+    if res == "XXX":
+        raise HTTPException(404, f"Status code {current_status} does not exist")
+    return res

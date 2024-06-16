@@ -122,7 +122,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup()">
+                        <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup">
                             Change Group
                         </button>
                     </div>
@@ -300,10 +300,9 @@
                     window.location.reload();
                 }, 
                 async updateAccountGroup () {
-                    if (this.account_group.account_group_code !== this.initial_account_group.account_group_code) {
+                    if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
                         return ;
                     }
-
                     const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.account_id}`, {
                             method: "PATCH",
                             headers: {
@@ -316,7 +315,7 @@
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                    alert("Contact information succesfully updated!")
+                    alert("Account group succesfully updated!")
                     window.location.reload();
                 }
             }

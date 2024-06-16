@@ -2,7 +2,6 @@ from . import database as db
 import random
 import string
 
-
 cursor = db.cursor
 cnx = db.cnx
 CHARACTERS = string.ascii_letters + string.digits
@@ -17,7 +16,7 @@ def verify_authorization(account_id, authorization):  # verifies that the token 
     if not cnx.is_connected():
         cnx, cursor = db.connect()
     stmt = "SELECT account_id FROM login_sessions WHERE token = %s "
-    cursor.execute(stmt, (authorization, ))
+    cursor.execute(stmt, (authorization,))
     if cursor.rowcount == 0:
         return False
     row = cursor.fetchall()[0]
@@ -50,10 +49,76 @@ def check_user_privilege(account_id, roles: list):
 
 
 def verification_emoji(verification_status):
-    emojis ={
+    emojis = {
         "Y": "✅",
         "N": "🟡",
         "C": "📩",
         "R": "🚫"
     }
     return emojis.get(verification_status)
+
+
+def available_next_status(current_status: str):
+    global cnx, cursor
+    if not cnx.is_connected():
+        cnx, cursor = db.connect()
+
+    cursor.execute("SELECT code, status_name, status_description FROM product_statuses")
+    res = cursor.fetchall()
+
+    statuses = {status[0]: {"status_name": status[1], "status_description": status[2]} for status in res}
+
+    if current_status not in statuses:
+        return "XXX"
+
+    next_status_map = {
+        "APL": ["REV", "APR", "DEN", "AMD", "CNL"],
+        "REV": ["APR", "DEN", "AMD", "CNL"],
+        "AMD": ["APR", "CNL"],
+        "APR": ["SGN", "CNL"],
+        "SGN": ["AWT", "CNL"],
+        "AWT": ["NOR", "CNL"],
+        "NOR": ["TRG", "DUE"],
+        "TRG": ["DUE"],
+        "DUE": ["CMP", "ORD"],
+        "ORD": ["CMP", "WOF"],
+        "CNL": [],
+        "CMP": [],
+        "WOF": []
+    }
+
+    next_statuses = next_status_map.get(current_status, [])
+    return {key: statuses[key] for key in next_statuses if key in statuses}
+
+
+def status_progressions(current_status: str):
+    global cnx, cursor
+    if not cnx.is_connected():
+        cnx, cursor = db.connect()
+
+    cursor.execute("SELECT code, status_name, status_description FROM product_statuses")
+    res = cursor.fetchall()
+
+    statuses = {status[0]: {"status_name": status[1], "status_description": status[2]} for status in res}
+
+    if current_status not in statuses:
+        return "XXX"
+
+    next_status_map = {
+        "APL": ["REV", "APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "REV": ["APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "AMD": ["APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "APR": ["SGN", "AWT", "NOR", "DUE", "CMP"],
+        "SGN": ["AWT", "NOR", "DUE", "CMP"],
+        "AWT": ["NOR", "DUE", "CMP"],
+        "NOR": ["DUE", "CMP"],
+        "TRG": ["DUE", "CMP"],
+        "DUE": ["CMP"],
+        "ORD": ["CMP"],
+        "CNL": [],
+        "CMP": [],
+        "WOF": []
+    }
+
+    next_statuses = next_status_map.get(current_status, [])
+    return [statuses[key] for key in next_statuses if key in statuses]

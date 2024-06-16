@@ -105,6 +105,63 @@ class NewProduct(BaseModel):
     special_notes: Optional[str] = None
 
 
+class StatusUpdates(BaseModel):
+    status_code: str
+    status_name: str
+    status_description: str
+    status_update_dt: str
+
+
+class ProductInstancePublic(BaseModel):
+    product_uid: int
+    account_id: int
+    statuses: List[StatusUpdates]
+    amount: Optional[float] = None
+    contract_id: Optional[int] = None
+    product_start_date: Optional[str] = None
+    product_end_date: Optional[str] = None
+    actual_end_date: Optional[str] = None
+    special_notes: Optional[str] = None
+    application_id: int
+    approved_by: Optional[int] = None
+    amount_requested: float
+    appl_special_notes: Optional[str] = None
+    collateral: Optional[str] = None
+    approved_yn: Optional[str] = None
+    approval_dt: Optional[str] = None
+
+
+class ProductInstancePrivate(BaseModel):
+    product_uid: int
+    account_id: int
+    statuses: List[StatusUpdates]
+    amount: Optional[float] = None
+    contract_id: Optional[int] = None
+    product_start_date: Optional[str] = None
+    product_end_date: Optional[str] = None
+    actual_end_date: Optional[str] = None
+    special_notes: Optional[str] = None
+    application_id: int
+    approved_by: Optional[int] = None
+    amount_requested: float
+    appl_special_notes: Optional[str] = None
+    collateral: Optional[str] = None
+    approved_yn: Optional[str] = None
+    approval_dt: Optional[str] = None
+    yield_: Optional[float] = 0
+    actual_revenue: Optional[float] = None
+
+
+class AmendProductInstance(BaseModel):
+    amount: Optional[float] = None
+    yield_: Optional[float] = None  # 'yield' is a reserved keyword in Python, hence the underscore
+    contract_id: Optional[int] = None
+    expected_revenue: Optional[float] = None
+    product_start_date: Optional[str] = None
+    product_end_date: Optional[str] = None
+    special_notes: Optional[str] = None
+    actual_end_date: Optional[str] = None
+    actual_revenue: Optional[float] = None
 
 
 
