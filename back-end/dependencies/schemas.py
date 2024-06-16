@@ -116,6 +116,7 @@ class ProductInstancePublic(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
     product_start_date: Optional[str] = None
@@ -129,12 +130,14 @@ class ProductInstancePublic(BaseModel):
     collateral: Optional[str] = None
     approved_yn: Optional[str] = None
     approval_dt: Optional[str] = None
+    standard: str
 
 
 class ProductInstancePrivate(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
     product_start_date: Optional[str] = None
@@ -150,6 +153,8 @@ class ProductInstancePrivate(BaseModel):
     approval_dt: Optional[str] = None
     yield_: Optional[float] = 0
     actual_revenue: Optional[float] = None
+    expected_revenue: Optional[float] = None
+    standard: str
 
 
 class AmendProductInstance(BaseModel):

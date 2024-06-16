@@ -120,13 +120,7 @@
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             const data = await response.json();
-            
-            // Check if terms_and_conditions is not null or undefined before attempting to replace newline characters
-            if (data.terms_and_conditions) {
-                data.terms_and_conditions = data.terms_and_conditions.replace(/\n/g, '<br>');
-            } else {
-                data.terms_and_conditions = ''; // Set to an empty string or provide a default message if necessary
-            }
+
             this.product_info = data;
             this.appl_amount = data.monetary_amount;
         } catch (error) {

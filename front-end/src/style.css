@@ -27,6 +27,7 @@ button:hover {
 
 /* Styling for inputs */
 input[type="text"],
+input[type="date"],
 input[type="number"],
 input[type="password"],
 textarea {
@@ -476,6 +477,11 @@ button img {
     background-color: rgb(254, 254, 254);
 }
 
+.card-title {
+    width: 100%;
+    margin: 0px;
+}
+
 .form-group-row {
     display: flex;
     flex-direction: column;
@@ -601,15 +607,14 @@ button img {
 .column {
     box-sizing: border-box;
     padding: 10px;
-    border: 1px solid #ccc;
 }
 
 .first-column {
-    flex: 0 0 40%;
+    flex: 0 0 30%;
 }
 
 .second-column {
-    flex: 0 0 59%;
+    flex: 0 0 69%;
 }
 
 /* Ensure the columns stack on smaller screens */
@@ -624,7 +629,7 @@ button img {
     padding-left: 45px;
     list-style: none;
 }
-  .StepProgress::before {
+.StepProgress::before {
     display: inline-block;
     content: '';
     position: absolute;
@@ -633,23 +638,23 @@ button img {
     width: 10px;
     height: 100%;
     border-left: 2px solid #CCC;
-  }
-  .StepProgress-item {
+}
+.StepProgress-item {
     position: relative;
     counter-increment: list;
-  }
-  .StepProgress-item:not(:last-child) {
+}
+.StepProgress-item:not(:last-child) {
     padding-bottom: 20px;
-  }
-  .StepProgress-item::before {
+}
+.StepProgress-item::before {
     display: inline-block;
     content: '';
     position: absolute;
     left: -30px;
     height: 100%;
     width: 10px;
-  }
-  .StepProgress-item::after {
+}
+.StepProgress-item::after {
     content: '';
     display: inline-block;
     position: absolute;
@@ -660,22 +665,22 @@ button img {
     border: 2px solid #CCC;
     border-radius: 50%;
     background-color: #FFF;
-  }
-  .StepProgress-item.is-done::before {
-    border-left: 2px solid green;
-  }
-  .StepProgress-item.is-done::after {
+}
+.StepProgress-item.is-done::before {
+    border-left: 2px solid rgb(58, 172, 93);
+}
+.StepProgress-item.is-done::after {
     content: "✔";
     font-size: 10px;
     color: #FFF;
     text-align: center;
-    border: 2px solid green;
-    background-color: green;
-  }
-  .StepProgress-item.current::before {
-    border-left: 2px solid green;
-  }
-  .StepProgress-item.current::after {
+    border: 2px solid rgb(58, 172, 93);
+    background-color: rgb(58, 172, 93);
+}
+.StepProgress-item.current::before {
+    border-left: 2px solid rgb(58, 172, 93);
+}
+.StepProgress-item.current::after {
     content: counter(list);
     padding-top: 1px;
     width: 19px;
@@ -684,12 +689,11 @@ button img {
     left: -40px;
     font-size: 14px;
     text-align: center;
-    color: green;
-    border: 2px solid green;
+    color: rgb(58, 172, 93);
+    border: 2px solid rgb(58, 172, 93);
     background-color: white;
-  }
-  .StepProgress strong {
+ }
+.StepProgress strong {
     display: block;
-  }
-
+}
 

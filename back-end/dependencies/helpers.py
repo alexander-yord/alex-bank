@@ -66,7 +66,8 @@ def available_next_status(current_status: str):
     cursor.execute("SELECT code, status_name, status_description FROM product_statuses")
     res = cursor.fetchall()
 
-    statuses = {status[0]: {"status_name": status[1], "status_description": status[2]} for status in res}
+    statuses = {status[0]: {"status_code": status[0], "status_name": status[1], "status_description": status[2]}
+                for status in res}
 
     if current_status not in statuses:
         return "XXX"
@@ -88,7 +89,7 @@ def available_next_status(current_status: str):
     }
 
     next_statuses = next_status_map.get(current_status, [])
-    return {key: statuses[key] for key in next_statuses if key in statuses}
+    return [statuses[key] for key in next_statuses if key in statuses]
 
 
 def status_progressions(current_status: str):
