@@ -105,6 +105,7 @@ CREATE TABLE `product_instance` (
 CREATE TABLE `product_statuses` (
   `code` varchar(3) PRIMARY KEY,
   `status_name` varchar(255),
+  `call_to_action` varchar(255),
   `status_description` varchar(255)
 );
 

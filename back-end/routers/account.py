@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header, Depends, Request, Query
 from typing import Annotated, Optional, List, Union
-from dependencies import database as db, helpers as h, schemas as s
+from dependencies import database as db, helpers as h, schemas as s, mail as m
 
 router = APIRouter(
     prefix="/account",
@@ -114,6 +114,11 @@ async def get_account_info(account_id: int, usr_account_id: int,
 async def create_account():
     raise HTTPException(501)
 
+
+@router.post("/verify")
+async def verify_account(account_id: int):
+    m.send_verification_email(account_id)
+    return {"message": "Success!"}
 
 @router.patch("/{account_id}/verification")
 async def change_account_verification_status(account_id: int, emp_account_id: int, new_verification_code: str,
