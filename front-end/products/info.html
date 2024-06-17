@@ -40,15 +40,15 @@
         <div class="product-details">
             <h1 style="margin-top: 0px !important;">{{product_info.name}}</h1>
             <h3>{{product_info.description}}</h3>
-            <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{product_info.percentage}}</div> <br>
-            <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount}}</div> 
+            <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
+            <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> 
             <button v-if="!show_appl_form" id="show-appl-button" @click="showApplication()">Apply for {{product_info.category_name}}</button>
             <form v-if="show_appl_form" id="appl-form" class="form-container full-width">
                 <div class="form-group full-width">
                     <h3>{{product_info.category_name}} Application</h3>
                 </div>
                 <div class="form-group">
-                    <label for="appl_amt">Amount Requested: </label> 
+                    <label for="appl_amt">Amount Requested: (in {{product_info.currency}}) </label> 
                     <input type="number" id="appl_amt" v-model="appl_amount" step="0.01">
                 </div>
                 <div class="form-group" style="display: inline;">
@@ -128,6 +128,10 @@
         }
       }, 
       showApplication() {
+        if (!this.isLoggedIn) {
+          alert("You need to first log in.");
+          return ;
+        }
         this.show_appl_form = true; 
         return ;
       }, 
