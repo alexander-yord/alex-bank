@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="src/style.css">
+  <script src="src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="index.html">
+              <img src="img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a href="login/index.html">Log In</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div class="content">
+            <br>
+            <div style="width:284px;">
+                Hi! Our records indicate that you recently created an account with Alex Bank or you recently updated your email. If this is your email, please 
+            </div> <br>
+            <div style="margin: auto;">
+                <button>Verify Email!</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data () {
+                return {
+                    token: this.getToken()
+                    // isLoggedIn: isLoggedIn(),
+                    // account_id: sessionStorage.getItem("account_id"),
+                    // first_name: sessionStorage.getItem("first_name"), 
+                    // last_name: sessionStorage.getItem("last_name")
+                };
+            }, 
+            methods: {
+                getToken() {
+                    const url = new URL(window.location.href);
+                    const params = new URLSearchParams(url.search);
+                    return params.get("token");
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
