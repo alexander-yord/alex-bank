@@ -115,10 +115,39 @@ async def create_account():
     raise HTTPException(501)
 
 
-@router.post("/verify")
-async def verify_account(account_id: int):
+@router.post("/{account_id}/send-verification-email")
+async def send_verification_email(account_id: int, usr_account_id: int,
+                         token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+    if not db.cursor.rowcount == 1:
+        raise HTTPException(404, "Account not found")
     m.send_verification_email(account_id)
     return {"message": "Success!"}
+
+
+@router.post("/verify")
+async def verify_account(token: str):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    stmt = "SELECT account_id FROM login_sessions WHERE token = %s"
+    db.cursor.execute(stmt, (token,))
+    if db.cursor.rowcount == 1:
+        account_id = db.cursor.fetchone()[0]
+        stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
+        db.cursor.execute(stmt, (account_id,))
+        db.cnx.commit()
+
+        return {"status": "Success"}
+    else:
+        raise HTTPException(404, "Token not found")
+
 
 @router.patch("/{account_id}/verification")
 async def change_account_verification_status(account_id: int, emp_account_id: int, new_verification_code: str,
@@ -139,6 +168,8 @@ async def change_account_verification_status(account_id: int, emp_account_id: in
     if db.cursor.rowcount == 0:
         raise HTTPException(409, "Not a valid verification_code")
 
+    if new_verification_code == 'C':
+        m.send_verification_email(account_id)
     stmt = "UPDATE accounts SET verification = %s WHERE account_id = %s"
     db.cursor.execute(stmt, (new_verification_code, account_id))
     db.cnx.commit()

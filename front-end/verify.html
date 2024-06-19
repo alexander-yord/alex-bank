@@ -31,7 +31,7 @@
                 Hi! Our records indicate that you recently created an account with Alex Bank or you recently updated your email. If this is your email, please 
             </div> <br>
             <div style="margin: auto;">
-                <button>Verify Email!</button>
+                <button @click="verify">Verify Email!</button>
             </div>
         </div>
 
@@ -44,17 +44,34 @@
             data () {
                 return {
                     token: this.getToken()
-                    // isLoggedIn: isLoggedIn(),
-                    // account_id: sessionStorage.getItem("account_id"),
-                    // first_name: sessionStorage.getItem("first_name"), 
-                    // last_name: sessionStorage.getItem("last_name")
                 };
             }, 
+            mounted () {
+                this.getToken()
+            },
             methods: {
                 getToken() {
                     const url = new URL(window.location.href);
                     const params = new URLSearchParams(url.search);
                     return params.get("token");
+                }, 
+                async verify() {
+                    const response = await fetch(`${API_BASE_URL}/account/verify?token=${this.token}`, {
+                        method: "POST", 
+                        headers: {
+                            "Content-Type": "application/json"
+                        }, 
+                        body: {}
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert("Account sucesssfully verified!");
+                        widnow.location.reload();
+                    }
+                    else {
+                        alert("Something went wrong!");
+                    }
+                    console.log(data);
                 }
             }
         }).mount('#app');

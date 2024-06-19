@@ -1,12 +1,17 @@
-from . import database as db
+from . import database as db, helpers as h
 import configparser
 import sys
 import os
 import smtplib
 from email.message import EmailMessage
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 def send_verification_email(account_id):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
     try:
         cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
         cfile.read(os.path.join(sys.path[0], "config.ini"))
@@ -18,17 +23,51 @@ def send_verification_email(account_id):
 
     except Exception as err:
         print(err)
-        return;
+        return ;
 
     # Create the email message
+    stmt = "SELECT account_id, first_name, last_name, email FROM accounts WHERE account_id = %s"
+    db.cursor.execute(stmt, (account_id,))
+    res = db.cursor.fetchone()
+    account_data = {
+        "account_id": res[0],
+        "first_name": res[1],
+        "last_name": res[2],
+        "email": res[3]
+    }
 
-    body = "Yo, hello!"
+    token = h.generate_authorization()
+    stmt = "INSERT into login_sessions (account_id, token) values (%s, %s)"
+    account_token_tuple = (account_id, token)
+    db.cursor.execute(stmt, account_token_tuple)
+    db.cnx.commit()
 
-    msg = EmailMessage()
+    html = f"""
+    <html>
+      <body>
+        <p>Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}),<br>
+          This email is from Alex Bank regarding verification of your email. <br>
+          If you made this request, please click on the link below: </p>
+        <p><a href="https://alex-bank.com/verify.html?token={token}">Verify Your Alex Bank Account</a></p>
+        <p> If you did not make such request, please ignore this email. </p>
+      </body>
+    </html>
+    """
+    body = f"""Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}, \n"
+    This email is from Alex Bank regarding verification of your email. If you made this request, please click on the link below: \n
+    https://alex-bank.com/verify.html?token={token} \n
+    If you did not make such request, please ignore this email.
+    """
+
+    msg = MIMEMultipart("alternative")
     msg['From'] = smtp_user
-    msg['To'] = "alex05.yordanov@gmail.com"
-    msg['Subject'] = "Test from the server"
-    msg.set_content(body)
+    msg['To'] = account_data.get("email")
+    msg['Subject'] = f"{account_data.get('first_name')} - Verify Your Email"
+
+    part1 = MIMEText(body, "plain")
+    part2 = MIMEText(html, "html")
+    msg.attach(part1)
+    msg.attach(part2)
 
     # Send the email
     try:
@@ -39,5 +78,3 @@ def send_verification_email(account_id):
         print('Email sent successfully.')
     except Exception as e:
         print(f'Failed to send email: {e}')
-
-
