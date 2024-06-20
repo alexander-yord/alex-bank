@@ -64,8 +64,8 @@
             <br><br> 
             
             <div class="button-row">
-                <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Mark as Contacted</button>
-                <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Mark as Verified</button>
+                <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Send Verification Email</button>
+                <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Verify</button>
                 <button v-if="['N', 'Y', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('R')" style="border-color: rgb(204, 82, 82); background: rgb(204, 82, 82);">
                     Revoke Verification
                 </button>

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header, Depends, Request, Query
 from typing import Annotated, Optional, List, Union
-from dependencies import database as db, helpers as h, schemas as s
+from dependencies import database as db, helpers as h, schemas as s, mail as m
 
 router = APIRouter(
     prefix="/product",
@@ -288,6 +288,8 @@ async def update_product_status(product_uid: int, usr_account_id: int, new_statu
         """
         db.cursor.execute(stmt, ('Y' if current_status == 'APR' else 'N', usr_account_id, product_uid))
         db.cnx.commit()
+    elif new_status == 'SGN':
+        m.send_contract_email(product_uid)
 
     return {"status": "Success!"}
 
@@ -358,6 +360,13 @@ def update_product_instance(
     return {"message": "Product updated successfully"}
 
 
+@router.post("/{product_uid}/send-contract")
+async def send_contract(product_uid: int, email: str = None):
+    try:
+        m.send_contract_email(product_uid, email)
+        return {"message": "Success!"}
+    except Exception as err:
+        return {"message": err}
 
 
 

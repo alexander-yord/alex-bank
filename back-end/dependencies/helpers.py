@@ -63,7 +63,7 @@ def available_next_status(current_status: str):
     if not cnx.is_connected():
         cnx, cursor = db.connect()
 
-    cursor.execute("SELECT code, status_name, status_description FROM product_statuses")
+    cursor.execute("SELECT code, call_to_action, status_description FROM product_statuses")
     res = cursor.fetchall()
 
     statuses = {status[0]: {"status_code": status[0], "status_name": status[1], "status_description": status[2]}
