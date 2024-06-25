@@ -20,9 +20,10 @@
               <img src="../img/alex_bank.png" alt="Logo">
             </a>
               <ul>
-                <li><a v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)" href="index.html">Employee Portal</a></li>
-                <li><a v-if="!isLoggedIn" href="../login/index.html">Log In</a></li>
-                <li><a v-if="isLoggedIn" href="../myaccount/index.html">My Account</a></li>
+                <li><a href="../products/index.html">Products</a></li>
+                <li v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)"><a href="index.html">Employee Portal</a></li>
+                <li v-if="!isLoggedIn" ><a href="../login/index.html">Log In</a></li>
+                <li v-if="isLoggedIn" ><a href="../myaccount/index.html">My Account</a></li>
               </ul>
           </div>
         </nav>
@@ -141,6 +142,23 @@
                     </div>
                 </div>
             </div>
+            <br> 
+
+
+            <div>
+                <h2>Products:</h2>
+            </div>
+            <div class="product-grid" v-if="Object.keys(products).length">
+                <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
+                    <img :src="'../img/products/'+prod.category_id+'.png'"> 
+                    <div class="product-title">{{prod.name}}</div>
+                    <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
+                    <div class="product-description">{{prod.description}}</div>
+                </a>
+            </div>
+            <div v-else>
+                This account has no products. 
+            </div>
             
         </div>
 
@@ -161,7 +179,7 @@
             data() {
                 return {
                     isLoggedIn: isLoggedIn(),
-                    account_id: sessionStorage.getItem("account_id"),
+                    usr_account_id: sessionStorage.getItem("account_id"),
                     first_name: sessionStorage.getItem("first_name"),
                     last_name: sessionStorage.getItem("last_name"),
                     user_role: sessionStorage.getItem("user_role"),
@@ -173,11 +191,14 @@
                     account_group: {}, 
                     initial_account_group: {},
                     isEditableF1: false, 
-                    isEditableF2: false
+                    isEditableF2: false, 
+                    isEditableF3: false,
+                    products: {}
                 };
             },
             mounted() {
-                this.load_account_data();
+                this.load_account_data(), 
+                this.loadAccountProducts();
             },
             methods: {
                 async load_account_data() {
@@ -186,7 +207,7 @@
                         const urlParams = new URLSearchParams(queryString);
                         const accountID = urlParams.get('account_id');
                         this.page_account_id = accountID;
-                        const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.account_id}`, {
+                        const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
                             method: "GET",
                             headers: { "token": sessionStorage.getItem("token") }
                         });
@@ -224,7 +245,33 @@
                     } catch (error) {
                         console.error('Error fetching account data:', error);
                     }
-                }, 
+                },
+                async loadAccountProducts() {
+                    try {
+                        const queryString = window.location.search;
+                        const urlParams = new URLSearchParams(queryString);
+                        const account_id = urlParams.get('account_id');
+
+                        const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
+                            method: "GET", 
+                            headers: {
+                                "token": sessionStorage.getItem("token")
+                            }
+                        });
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            console.log(`Error fetching account products: ${result}`)
+                            return;
+                        }
+                        this.products = result;
+                        console.log(result);
+                        return;
+
+                    } catch (error) {
+                        console.error('Error fetching account products: ', error)
+                    }
+                },
                 toggleEdit() {
                     if (this.isEditableF1) {
                         if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
@@ -256,7 +303,7 @@
                         }
                     }
                     try {
-                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.account_id}&new_verification_code=${new_status}`, {
+                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",
@@ -284,7 +331,7 @@
                             differences[key] = this.contact_data[key];
                         }
                     }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",
@@ -303,7 +350,7 @@
                     if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
                         return ;
                     }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",

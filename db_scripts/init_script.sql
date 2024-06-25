@@ -31,6 +31,9 @@ values
 -- user increment starting value
 alter table `accounts` AUTO_INCREMENT=2000000;
 
+-- product instance increment starting value
+alter table `product_instance` AUTO_INCREMENT=300000;
+
 -- default user
 insert into `accounts` (`first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
 values ('Admin', 'Admin', 'BGR', 'A', 'Y', 'EMP');
@@ -48,7 +51,6 @@ ON SCHEDULE EVERY 1 HOUR
 DO
   DELETE FROM login_sessions
   WHERE create_dt < NOW() - INTERVAL 2 HOUR;
-
 
 -- document profiles 
 insert into `document_profiles` (`doc_profile_id`, `description`)
@@ -80,10 +82,11 @@ values
 	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.'), 
     ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.'), 
     ('DER', 'Exotic Derivatives', 'Instruments whose price depends on the performance of some underlying asset or condition.');
-
--- product status update trigger 
+ 
+ 
 DELIMITER //
 
+-- product status update trigger
 CREATE TRIGGER before_product_instance_update
 BEFORE UPDATE ON product_instance
 FOR EACH ROW
@@ -92,8 +95,33 @@ BEGIN
     INSERT INTO product_status_updates (product_uid, was_status, is_code, update_dt)
     VALUES (OLD.product_uid, OLD.status_code, NEW.status_code, NOW());
   END IF;
-END;
+END;  
+//
 
+-- Create the event to update product instance status to DUE
+CREATE EVENT IF NOT EXISTS update_product_instance_status
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_DATE + INTERVAL 1 DAY + INTERVAL 1 MINUTE
+DO
+BEGIN
+    UPDATE product_instance
+    SET status_code = 'DUE'
+    WHERE product_end_date = CURDATE()
+    AND status_code IN ('NOR', 'TRG');
+END;
+//
+
+-- Create the event to update product instance status to ORD 7 days after it was DUE
+CREATE EVENT IF NOT EXISTS update_due_to_ord_status
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_DATE + INTERVAL 1 DAY + INTERVAL 1 MINUTE
+DO
+BEGIN
+    UPDATE product_instance
+    SET status_code = 'ORD'
+    WHERE status_code = 'DUE'
+    AND CURDATE() = DATE_ADD(product_end_date, INTERVAL 7 DAY);
+END;
 //
 
 DELIMITER ;

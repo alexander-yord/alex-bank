@@ -1,5 +1,10 @@
-from fastapi import APIRouter, HTTPException, Header, Depends, Request, Query
+import os
+import sys
+import configparser
+from pathlib import Path
+from fastapi.responses import FileResponse
 from typing import Annotated, Optional, List, Union
+from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query
 from dependencies import database as db, helpers as h, schemas as s, mail as m
 
 router = APIRouter(
@@ -140,9 +145,68 @@ async def get_product_instances():
     pass
 
 
-@router.get("/instances")
-async def get_product_instances():
-    pass
+@router.get("/instances/", response_model=List[s.ProductCard])
+async def get_product_instances(usr_account_id: int,
+                                status_code: Optional[List[str]] = Query(None),
+                                product_id: Optional[int] = None,
+                                product_uid: Optional[int] = None,
+                                contract_id: Optional[int] = None,
+                                token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
+        raise HTTPException(401, "User does not have privileges")
+
+    query = """
+        SELECT 
+            pi.product_uid, pi.application_id, pi.contract_id, appl.approved_by,
+            p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
+            pi.status_code, ps.status_name, p.category_id, p.currency
+        FROM product_instance pi
+        JOIN applications appl ON appl.application_id = pi.application_id
+        JOIN products p ON p.product_id = appl.product_id
+        JOIN product_statuses ps ON ps.code = pi.status_code
+        WHERE 1=1
+    """
+
+    params = []
+
+    if product_id is not None:
+        query += " AND appl.product_id = %s"
+        params.append(product_id)
+
+    if status_code is not None:
+        query += " AND pi.status_code IN (%s)" % ','.join(['%s'] * len(status_code))
+        params.extend(status_code)
+
+    if product_uid is not None:
+        query += " AND pi.product_uid = %s"
+        params.append(product_uid)
+
+    if contract_id is not None:
+        query += " AND pi.contract_id = %s"
+        params.append(contract_id)
+
+    db.cursor.execute(query, params)
+    rows = db.cursor.fetchall()
+
+    result = [s.ProductCard(
+        product_uid=row[0],
+        application_id=row[1],
+        contract_id=row[2],
+        approved_by=row[3],
+        name=row[4],
+        description=row[5],
+        amount=row[6],
+        status_code=row[7],
+        status_name=row[8],
+        category_id=row[9],
+        currency=row[10]
+    ) for row in rows]
+
+    return result
 
 
 @router.get("/instance/{product_uid}",
@@ -153,11 +217,12 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
         db.cnx, db.cursor = db.connect()
     if not h.verify_authorization(usr_account_id, token):
         raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
-        raise HTTPException(401, "User does not have privileges")
-    db.cursor.execute("SELECT * FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
+    account_id = db.cursor.fetchone()[0]
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+        raise HTTPException(401, "User does not have privileges")
 
     stmt = """
     SELECT product_uid, is_code, status_name, status_description, update_dt FROM
@@ -253,6 +318,7 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
             collateral=res[15],
             approved_yn=res[16],
             approval_dt=str(res[17]) if res[17] is not None else None,
+            yield_=res[18],
             product_id=res[20],
             standard=res[22]
         )
@@ -360,15 +426,98 @@ def update_product_instance(
     return {"message": "Product updated successfully"}
 
 
-@router.post("/{product_uid}/send-contract")
+@router.post("/instance/{product_uid}/send-contract")
 async def send_contract(product_uid: int, email: str = None):
     try:
         m.send_contract_email(product_uid, email)
         return {"message": "Success!"}
     except Exception as err:
-        return {"message": err}
+        return {"message": str(err)}
 
 
+@router.get("/instance/{product_uid}/contract/", response_class=FileResponse)
+async def download_file(product_uid: int, usr_account_id: int,
+                        token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+
+    try:
+        cfile = configparser.ConfigParser()
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
+        UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=500, detail=str(err))
+
+    db.cursor.execute("SELECT contract_id, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    if db.cursor.rowcount != 1:
+        raise HTTPException(404, f"Product {product_uid} does not exist")
+    res = db.cursor.fetchone()
+    contract_id, account_id = res[0], res[1]
+
+    file_path = Path(UPLOAD_DIR) / f"upload-{contract_id}.pdf"
+
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+        raise HTTPException(401, "User does not have privileges")
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(file_path, media_type='application/pdf', filename=f"upload-{contract_id}.pdf")
 
 
+@router.post("/instance/{product_uid}/contract")
+async def submit_signed_contract(product_uid: int, usr_account_id: int, file: UploadFile = File(...),
+                                 token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
 
+        UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+    except Exception as err:
+        print(err)
+        raise HTTPException(500, err)
+
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    # Check if the file is a PDF
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+    # Check if the file size is less than 10MB
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+    db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    if db.cursor.rowcount != 1:
+        raise HTTPException(404, f"Product {product_uid} not found.")
+    account_id = db.cursor.fetchone()[0]
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+        raise HTTPException(401, "User does not have privileges")
+
+    stmt = "INSERT INTO documents (document_profile) VALUES ('CON')"
+    db.cursor.execute(stmt)
+    db.cnx.commit()
+
+    db.cursor.execute("SELECT LAST_INSERT_ID()")
+    document_id = db.cursor.fetchone()[0]
+    new_file_name = f"upload-{document_id}.pdf"
+
+    print(os.path.dirname(__file__))
+    # Save the file to the ../tmp/ folder
+    file_location = os.path.join(UPLOAD_DIR, new_file_name)
+    with open(file_location, "wb") as f:
+        f.write(content)
+
+    stmt = "UPDATE documents SET document_name = %s WHERE document_id = %s"
+    db.cursor.execute(stmt, (new_file_name, document_id))
+    db.cnx.commit()
+
+    stmt = "UPDATE product_instance SET contract_id = 1 WHERE product_uid = %s"
+    db.cursor.execute(stmt, (product_uid,))
+    db.cnx.commit()
+
+    return {"filename": new_file_name}

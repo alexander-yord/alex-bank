@@ -128,18 +128,64 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Styling for select elements */
+/* Positioning the select element */
+.custom-select {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
 select {
+    appearance: none; /* Hide default arrow */
+    -webkit-appearance: none; /* Hide default arrow in Safari */
+    -moz-appearance: none; /* Hide default arrow in Firefox */
     background-color: rgb(254, 254, 254);
     color: rgb(131, 152, 162);
     border: 1px solid rgb(200, 200, 200);
-    padding: 10px;
+    padding: 30px;
     font-size: 16px;
     border-radius: 5px;
     margin: 10px 0;
+    height: 36px;
     width: 100%;
     max-width: 300px;
     box-sizing: border-box;
+    padding-right: 40px; /* Add some padding to the right to make room for the arrow */
+}
+
+.custom-select::before,
+.custom-select::after {
+  --size: 0.3rem;
+  position: absolute;
+  content: "";
+  right: 1rem;
+  pointer-events: none;
+}
+
+.custom-select::before {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-bottom: var(--size) solid black;
+  top: 40%;
+}
+
+.custom-select::after {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-top: var(--size) solid black;
+  top: 55%;
+}
+
+
+/* Add disabled style for select */
+select:disabled {
+    background-color: #f0f0f0;
+}
+
+/* Focus styling for select elements */
+select:focus {
+    border-color: rgb(131, 152, 162);
+    outline: none;
 }
 
 /* Styling for options within select */
@@ -148,11 +194,6 @@ select option {
     color: rgb(131, 152, 162);
 }
 
-/* Focus styling for select elements */
-select:focus {
-    border-color: rgb(131, 152, 162);
-    outline: none;
-}
 
 .form-container {
     display: flex;

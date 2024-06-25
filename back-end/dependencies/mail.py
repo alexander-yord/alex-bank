@@ -119,7 +119,9 @@ def create_loan_contract(product_uid: int):
             address = "Not Specified"
     else:
         if res[8] != "" and res[8] is not None:
-            address = res[9] + ", " + res[10]
+            address = res[8] + ", " + res[10]
+        else:
+            address = "in " + res[10]
 
     product_info = {
         "now": res[0],
@@ -191,8 +193,8 @@ def create_loan_contract(product_uid: int):
 
     # Signature area
     signature_lines = [
-        "Lender's Signature: ______________________",
-        "Date: _______________",
+        "Lender's Signature: Alex Bank",
+        f"Date: {product_info.get('now')}",
         "Borrower's Signature: ___________________",
         "Date: _______________",
     ]
@@ -205,7 +207,7 @@ def create_loan_contract(product_uid: int):
     # Build the PDF
     doc.build(flowables)
     buffer.seek(0)
-    return buffer
+    return buffer, product_info
 
 
 def send_contract_email(product_uid: int, email: str = None):
@@ -230,11 +232,21 @@ def send_contract_email(product_uid: int, email: str = None):
         print(err)
         return ;
 
+    pdf_file, data = create_loan_contract(product_uid)
+
     # Email content
     from_email = 'smpt.alex.bank.com@gmail.com'
     to_email = email
-    subject = 'Test Email with PDF Contract Attachment'
-    body = 'This is a test email sent from Python with a PDF attachment.'
+    subject = 'Your Alex Bank Contract'
+    body = f"""
+    Dear {data.get("first_name")} {data.get("last_name")}, \n
+    
+    Please find attached, your Loan contract with Alex Bank. When you sign it, please submit on the website of 
+    Alex Bank. 
+    
+    Sincerely, 
+    Alex Bank
+    """
 
     # Create the email message
     msg = EmailMessage()
@@ -244,7 +256,7 @@ def send_contract_email(product_uid: int, email: str = None):
     msg.set_content(body)
 
     # Create PDF and attach it to the email
-    pdf_buffer = create_loan_contract(product_uid)
+    pdf_buffer = pdf_file
     pdf_name = 'loan_contract.pdf'
     msg.add_attachment(pdf_buffer.read(), maintype='application', subtype='pdf', filename=pdf_name)
 

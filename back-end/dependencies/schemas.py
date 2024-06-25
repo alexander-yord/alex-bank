@@ -130,6 +130,7 @@ class ProductInstancePublic(BaseModel):
     collateral: Optional[str] = None
     approved_yn: Optional[str] = None
     approval_dt: Optional[str] = None
+    yield_: Optional[float] = 0
     standard: str
 
 
@@ -168,5 +169,18 @@ class AmendProductInstance(BaseModel):
     actual_end_date: Optional[str] = None
     actual_revenue: Optional[float] = None
 
+
+class ProductCard(BaseModel):
+    product_uid: int
+    application_id: int
+    contract_id: Optional[int] = None
+    approved_by: Optional[int] = None
+    name: str
+    description: str
+    amount: float
+    status_code: str
+    status_name: str
+    category_id: str
+    currency: str
 
 

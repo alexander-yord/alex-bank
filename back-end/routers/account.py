@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Header, Depends, Request, Query
-from typing import Annotated, Optional, List, Union
+from fastapi import APIRouter, HTTPException, Header, Query
+from typing import Annotated, Optional, List
 from dependencies import database as db, helpers as h, schemas as s, mail as m
 
 router = APIRouter(
@@ -117,7 +117,7 @@ async def create_account():
 
 @router.post("/{account_id}/send-verification-email")
 async def send_verification_email(account_id: int, usr_account_id: int,
-                         token: Annotated[str | None, Header(convert_underscores=False)] = None):
+                                  token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
     if not h.verify_authorization(usr_account_id, token):
@@ -156,7 +156,8 @@ async def change_account_verification_status(account_id: int, emp_account_id: in
         db.cnx, db.cursor = db.connect()
     if not h.verify_authorization(emp_account_id, token):
         raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']):
+    if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']) and \
+        (new_verification_code != 'C' or account_id != emp_account_id):
         raise HTTPException(401, "User does not have privileges")
 
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id, ))
@@ -244,13 +245,52 @@ async def update_account_group(account_id: int, usr_account_id: int, data: s.Ame
 
 
 @router.patch("/{account_id}/credentials")
-async def update_account_credentials(account_id: int):
+async def update_account_credentials():
     pass
 
 
 @router.get("/{account_id}/products")
-async def get_account_products():
-    pass
+async def get_account_products(account_id: int, usr_account_id: int,
+                               token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+        raise HTTPException(401, "User does not have privileges")
+
+    stmt = """
+        SELECT 
+            pi.product_uid, pi.application_id, pi.contract_id, appl.approved_by,
+            p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
+            pi.status_code, ps.status_name, p.category_id, p.currency
+        FROM product_instance pi
+        JOIN applications appl ON appl.application_id = pi.application_id
+        JOIN products p ON p.product_id = appl.product_id
+        JOIN product_statuses ps ON ps.code = pi.status_code
+        WHERE pi.account_id = %s
+    """
+
+    db.cursor.execute(stmt, (account_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"No product found for account {account_id}.")
+    rows = db.cursor.fetchall()
+
+    result = [s.ProductCard(
+        product_uid=row[0],
+        application_id=row[1],
+        contract_id=row[2],
+        approved_by=row[3],
+        name=row[4],
+        description=row[5],
+        amount=row[6],
+        status_code=row[7],
+        status_name=row[8],
+        category_id=row[9],
+        currency=row[10]
+    ) for row in rows]
+
+    return result
 
 
 @router.post("/{account_id}/product/{product_id}")
