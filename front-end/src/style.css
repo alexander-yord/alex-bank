@@ -1,7 +1,21 @@
-/* General page styling */
+:root {
+    --color-bg-light: rgb(254, 254, 254);
+    --color-bg-dark: rgb(131, 152, 162);
+    --color-text-light: rgb(254, 254, 254);
+    --color-text-dark: rgb(131, 152, 162);
+    --color-border-light: rgb(200, 200, 200);
+    --color-accent-green: rgb(58, 172, 93);
+    --color-accent-red: rgb(204, 82, 82);
+    --color-grey-light: #bebebe;
+    --color-grey-dark: #979797;
+    --color-bg-disabled: #f0f0f0;
+    --color-border-disabled: #ccc;
+    --color-black: #000;
+}
+
 body {
-    background-color: rgb(131, 152, 162);
-    color: rgb(254, 254, 254);
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-light);
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -9,20 +23,20 @@ body {
 
 /* Styling for buttons */
 button {
-    background-color: rgb(131, 152, 162);
-    color: rgb(254, 254, 254);
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-light);
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     font-size: 16px;
     border-radius: 5px;
-    width:100%;
+    width: 100%;
     max-width: 300px;
     margin: 10px 0;
 }
 
 button:hover {
-    background-color: rgb(200, 200, 200);
+    background-color: var(--color-border-light);
 }
 
 /* Styling for inputs */
@@ -31,9 +45,9 @@ input[type="date"],
 input[type="number"],
 input[type="password"],
 textarea {
-    background-color: rgb(254, 254, 254);
-    color: rgb(131, 152, 162);
-    border: 1px solid rgb(200, 200, 200);
+    background-color: var(--color-text-light);
+    color: var(--color-text-dark);
+    border: 1px solid var(--color-border-light);
     padding: 10px;
     font-size: 16px;
     border-radius: 5px;
@@ -46,13 +60,13 @@ textarea {
 input[type="text"]:focus,
 input[type="password"]:focus,
 textarea:focus {
-    border-color: rgb(131, 152, 162);
+    border-color: var(--color-bg-dark);
     outline: none;
 }
 
 /* Styling for checkboxes */
 input[type="checkbox"] {
-    accent-color: rgb(131, 152, 162);
+    accent-color: var(--color-bg-dark);
     width: 20px;
     height: 20px;
     margin: 10px 0;
@@ -61,21 +75,21 @@ input[type="checkbox"] {
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    color: #000;
-    background-color: rgb(254, 254, 254);
+    color: var(--color-black);
+    background-color: var(--color-bg-light);
 }
 
 /* Main content with 10% margin on left and right */
 .content {
     margin: 74px 10% 0 10%;
-    background-color: rgb(254, 254, 254); 
+    background-color: var(--color-bg-light); 
     padding: 20px;
     box-sizing: border-box;
 }
 
 /* Navbar styles */
 .navbar {
-    background-color: rgb(131, 152, 162);
+    background-color: var(--color-bg-dark);
     width: 100%;
     padding: 0;
     position: fixed; 
@@ -87,13 +101,13 @@ body {
     margin: 0 10%;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Align logo to the left and menu to the right */
+    justify-content: space-between;
     padding: 10px 0;
 }
 
 .navbar img {
     height: 50px;
-    margin-right: 20px;
+    margin: 0px 20px;
 }
 
 .navbar ul {
@@ -105,12 +119,12 @@ body {
 
 .navbar li {
     margin-right: 20px;
-    color: white;
+    color: var(--color-text-light);
     font-weight: bold;
 }
 
 .navbar a {
-    color: white;
+    color: var(--color-text-light);
     text-decoration: none;
 }
 
@@ -120,7 +134,7 @@ body {
 
 /* General link styles */
 a {
-    color: rgb(131, 152, 162);
+    color: var(--color-bg-dark);
     text-decoration: none;
 }
 
@@ -136,12 +150,12 @@ a:hover {
 }
 
 select {
-    appearance: none; /* Hide default arrow */
-    -webkit-appearance: none; /* Hide default arrow in Safari */
-    -moz-appearance: none; /* Hide default arrow in Firefox */
-    background-color: rgb(254, 254, 254);
-    color: rgb(131, 152, 162);
-    border: 1px solid rgb(200, 200, 200);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--color-bg-light);
+    color: var(--color-bg-dark);
+    border: 1px solid var(--color-border-light);
     padding: 30px;
     font-size: 16px;
     border-radius: 5px;
@@ -150,50 +164,45 @@ select {
     width: 100%;
     max-width: 300px;
     box-sizing: border-box;
-    padding-right: 40px; /* Add some padding to the right to make room for the arrow */
+    padding-right: 40px;
 }
 
 .custom-select::before,
 .custom-select::after {
-  --size: 0.3rem;
-  position: absolute;
-  content: "";
-  right: 1rem;
-  pointer-events: none;
+    --size: 0.3rem;
+    position: absolute;
+    content: "";
+    right: 1rem;
+    pointer-events: none;
 }
 
 .custom-select::before {
-  border-left: var(--size) solid transparent;
-  border-right: var(--size) solid transparent;
-  border-bottom: var(--size) solid black;
-  top: 40%;
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-bottom: var(--size) solid var(--color-black);
+    top: 40%;
 }
 
 .custom-select::after {
-  border-left: var(--size) solid transparent;
-  border-right: var(--size) solid transparent;
-  border-top: var(--size) solid black;
-  top: 55%;
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-top: var(--size) solid var(--color-black);
+    top: 55%;
 }
 
-
-/* Add disabled style for select */
 select:disabled {
-    background-color: #f0f0f0;
+    background-color: var(--color-bg-disabled);
 }
 
-/* Focus styling for select elements */
 select:focus {
-    border-color: rgb(131, 152, 162);
+    border-color: var(--color-bg-dark);
     outline: none;
 }
 
-/* Styling for options within select */
 select option {
-    background-color: rgb(254, 254, 254);
-    color: rgb(131, 152, 162);
+    background-color: var(--color-bg-light);
+    color: var(--color-bg-dark);
 }
-
 
 .form-container {
     display: flex;
@@ -222,25 +231,23 @@ label {
     }
 }
 
-/* Container for the carousel */
 .carousel-container {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     gap: 20px;
     padding: 20px;
-    background-color: rgb(254, 254, 254); /* Match with existing background */
-    white-space: nowrap; /* Prevent wrapping */
+    background-color: var(--color-bg-light);
+    white-space: nowrap;
 }
 
-/* Styling for each card in the carousel */
 .carousel-card {
     scroll-snap-align: start;
-    background-color: white;
-    border: 1px solid rgb(200, 200, 200);
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-border-light);
     border-radius: 10px;
-    width: 300px; /* Fixed size */
-    height: 200px; /* Fixed size */
+    width: 300px;
+    height: 200px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 15px;
     box-sizing: border-box;
@@ -248,51 +255,45 @@ label {
     flex-direction: column;
     justify-content: space-between;
     font-family: Arial, sans-serif;
-    flex: none; /* Prevent shrinking */
-    transition: transform 0.2s, box-shadow 0.2s; /* Smooth transition */
-    cursor: pointer; /* Pointer cursor for clickable effect */
-    text-decoration: none; /* Remove underline from links */
-    color: initial; /* Reset link color */
+    flex: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: initial;
 }
 
-/* Hover effect for the card */
 .carousel-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     text-decoration: none;
 }
 
-/* Account ID styling */
 .carousel-card .account-id {
     font-size: 12px;
-    color: gray;
+    color: var(--color-grey-light);
     margin-bottom: 10px;
 }
 
-/* First and last name styling */
 .carousel-card .first-name,
 .carousel-card .last-name {
     font-size: 16px;
-    color: black;
+    color: var(--color-black);
     font-weight: bold;
     margin-bottom: 5px;
 }
 
-/* Role and group styling */
 .carousel-card .role-group {
     font-size: 14px;
-    color: black;
+    color: var(--color-black);
     margin-bottom: 10px;
 }
 
-/* Create date styling */
 .carousel-card .create-date {
     font-size: 12px;
-    color: gray;
+    color: var(--color-grey-light);
     align-self: flex-end;
 }
 
-/* Media query for responsive design */
 @media (max-width: 600px) {
     .carousel-card {
         width: 100%;
@@ -302,22 +303,21 @@ label {
 
 .container {
     width: 100%;
-    position: relative; /* Ensuring relative positioning */
+    position: relative;
     z-index: 1;
 }
 
 .progressbar {
     counter-reset: step;
-    list-style-type: none; /* Ensures no default list styles */
-    padding: 0; /* Removes default padding */
-    margin: 0; /* Removes default margin */
-    display: flex; /* Use flexbox for better control over layout */
-    justify-content: space-between; /* Ensures equal spacing */
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
 }
 
 .progressbar li {
-    float: none; /* Removed float as flexbox is used */
-    flex: 1; /* Takes up equal space */
+    flex: 1;
     position: relative;
     text-align: center;
 }
@@ -327,66 +327,66 @@ label {
     counter-increment: step;
     width: 30px;
     height: 30px;
-    border: 2px solid #bebebe;
+    border: 2px solid var(--color-grey-light);
     display: block;
     margin: 0 auto 10px auto;
     border-radius: 50%;
     line-height: 27px;
-    background: white;
-    color: #bebebe;
+    background: var(--color-bg-light);
+    color: var(--color-grey-light);
     text-align: center;
     font-weight: bold;
     position: relative;
-    z-index: 1; /* Ensure it's above the connecting line */
+    z-index: 1;
 }
 
 .progressbar li:after {
     content: '';
     position: absolute;
-    width: 100%; /* Cover the full width of the parent */
+    width: 100%;
     height: 3px;
-    background: #979797;
+    background: var(--color-grey-dark);
     top: 15px;
-    left: 50%; /* Start from the center */
-    z-index: 0; /* Below the step indicators */
-    transform: translateX(-50%); /* Adjust to align with the center */
+    left: 50%;
+    z-index: 0;
+    transform: translateX(-50%);
 }
 
 .progressbar li:first-child:after {
-    left: 50%; /* Adjust the left position */
-    width: 50%; /* Start the line at the center of the first element */
-    transform: translateX(0); /* No translation needed */
+    left: 50%;
+    width: 50%;
+    transform: translateX(0);
 }
 
 .progressbar li:last-child:after {
-    left: 50%; /* Adjust the left position */
-    width: 50%; /* End the line at the center of the last element */
+    left: 50%;
+    width: 50%;
     transform: translateX(-100%);
 }
 
 .progressbar li.active:before {
-    border-color: rgb(58, 172, 93);
-    background: rgb(58, 172, 93);
-    color: white;
+    border-color: var(--color-accent-green);
+    background: var(--color-accent-green);
+    color: var(--color-text-light);
 }
 
 .progressbar li.active-revoked:before {
-    border-color: rgb(204, 82, 82);
-    background: rgb(204, 82, 82);
-    color: white;
+    border-color: var(--color-accent-red);
+    background: var(--color-accent-red);
+    color: var(--color-text-light);
 }
 
 .progressbar li.active:after {
-    background: #3aac5d;
+    background: var(--color-accent-green);
 }
 
 .progressbar li.active-revoked:after {
-    background: rgb(204, 82, 82);
+    background: var(--color-accent-red);
 }
 
 input[readonly],
 textarea[readonly] {
-    background-color: #f0f0f0;
+    background-color: var(--color-bg-disabled);
     cursor: not-allowed;
 }
 
@@ -402,8 +402,8 @@ button img {
     top: 10px;
     right: 10px;
     cursor: pointer;
-    width: 24px; /* Adjust to match the pencil icon size */
-    height: 24px; /* Adjust to match the pencil icon size */
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -419,53 +419,47 @@ button img {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* .form-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-} */
-
 .data-form-container {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    position: relative; /* Added to allow absolute positioning of the pencil button */
+    position: relative;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: rgb(254, 254, 254);
+    background-color: var(--color-bg-light);
 }
 
 .button-row {
     display: flex;
-    justify-content: space-between; /* Evenly space the buttons */
+    justify-content: space-between;
     padding: 20px;
 }
 
 .action-button {
-    background-color: rgb(131, 152, 162);
-    color: rgb(254, 254, 254);
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-light);
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     font-size: 16px;
     border-radius: 5px;
-    flex: 1; /* Make buttons take equal space */
-    margin: 0 10px; /* Margin between buttons */
-    max-width: 200px; /* Optional: to limit the maximum width */
+    flex: 1;
+    margin: 0 10px;
+    max-width: 200px;
     text-align: center;
 }
 
 .action-button:first-child {
-    margin-left: 0; /* Remove left margin for the first button */
+    margin-left: 0;
 }
 
 .action-button:last-child {
-    margin-right: 0; /* Remove right margin for the last button */
+    margin-right: 0;
 }
 
 .action-button:hover {
-    background-color: rgb(200, 200, 200);
+    background-color: var(--color-border-light);
 }
 
 .search-container {
@@ -477,45 +471,45 @@ button img {
 #search-input {
     padding: 10px;
     font-size: 16px;
-    border: 2.5px solid #ccc;
-    border-radius: 5px 0 0 5px; /* Rounded corners on the left */
-    flex: 1; /* Take up remaining space */
+    border: 1px solid var(--color-border-disabled);
+    border-radius: 5px 0 0 5px;
+    flex: 1;
+}
+
+#search-input:focus {
+    border-color: var(--color-bg-dark);
 }
 
 #search-button {
     width: 50px;
     padding: 10px;
     border: none;
-    background-color: rgb(131, 152, 162);
-    border-radius: 0 5px 5px 0; /* Rounded corners on the right */
+    background-color: var(--color-bg-dark);
+    border-radius: 0 5px 5px 0;
     cursor: pointer;
 }
 
 #search-button img {
-    width: 20px;
-    height: 20px;
+    width: 17px;
+    height: 17px;
 }
 
 .card-row {
     display: flex;
-    gap: 20px; /* Adjust the gap as needed */
+    gap: 20px;
     flex-wrap: wrap;
 }
 
 .card {
     flex: 1;
-    /* border: 1px solid #ccc; Optional: Add borders to cards */
-    /* padding: 20px; Optional: Add padding inside the cards */
-    /* box-shadow: 0 2px 5px rgba(0,0,0,0.1); Optional: Add shadow for better visual separation */
-
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    position: relative; /* Added to allow absolute positioning of the pencil button */
+    position: relative;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: rgb(254, 254, 254);
+    background-color: var(--color-bg-light);
 }
 
 .card-title {
@@ -526,7 +520,7 @@ button img {
 .form-group-row {
     display: flex;
     flex-direction: column;
-    width: 100%; /* Ensure form groups take full width inside the card */
+    width: 100%;
 }
 
 .form-group-row.full-width {
@@ -541,7 +535,7 @@ button img {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     padding: 20px;
-    background-color: rgb(254, 254, 254); /* Match with existing background */
+    background-color: var(--color-bg-light);
 }
 
 /* Media query for tablets (2 cards per row) */
@@ -560,40 +554,36 @@ button img {
 
 /* Styling for each product card */
 .product-card {
-    background-color: white;
-    border: 1px solid rgb(200, 200, 200);
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-border-light);
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden; /* Ensure content stays within card */
-    transition: transform 0.2s, box-shadow 0.2s; /* Smooth transition */
-    text-decoration: none; /* Remove underline from links */
-    color: initial; /* Reset link color */
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    color: initial;
     display: flex;
     flex-direction: column;
-    cursor: pointer; /* Pointer cursor for clickable effect */
+    cursor: pointer;
 }
 
-/* Hover effect for the product card */
 .product-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     text-decoration: none;
 }
 
-/* Wide aspect ratio image at the top of the product card */
 .product-card img {
     width: 100%;
-    height: auto; /* Maintain aspect ratio */
+    height: auto;
 }
 
-/* Title of the product */
 .product-card .product-title {
     font-size: 18px;
     font-weight: bold;
     margin: 15px;
 }
 
-/* Short description of the product */
 .product-card .product-description {
     font-size: 14px;
     margin: 0 15px 15px 15px;
@@ -608,18 +598,18 @@ button img {
 
 .product-image {
     flex: 1 1 40%;
-    max-width: 40%; /* Ensure it does not exceed 40% */
+    max-width: 40%;
 }
 
 .product-details {
     flex: 1 1 50%;
-    max-width: 60%; /* Ensure it does not exceed 60% */
+    max-width: 60%;
 }
 
 .product-img {
     width: 100%;
-    height: auto; /* Maintain aspect ratio */
-    object-fit: cover; /* Cover the container */
+    height: auto;
+    object-fit: cover;
     border-radius: 10px;
 }
 
@@ -630,7 +620,7 @@ button img {
     }
 
     .product-image, .product-details {
-        flex: 1 1 100%; /* Full width on narrow screens */
+        flex: 1 1 100%;
         max-width: 100%;
     }
 
@@ -658,7 +648,6 @@ button img {
     flex: 0 0 69%;
 }
 
-/* Ensure the columns stack on smaller screens */
 @media (max-width: 768px) {
     .first-column, .second-column {
         flex: 0 0 100%;
@@ -678,7 +667,7 @@ button img {
     left: 15px;
     width: 10px;
     height: 100%;
-    border-left: 2px solid #CCC;
+    border-left: 2px solid var(--color-border-disabled);
 }
 .StepProgress-item {
     position: relative;
@@ -703,23 +692,23 @@ button img {
     left: -37px;
     width: 12px;
     height: 12px;
-    border: 2px solid #CCC;
+    border: 2px solid var(--color-border-disabled);
     border-radius: 50%;
-    background-color: #FFF;
+    background-color: var(--color-bg-light);
 }
 .StepProgress-item.is-done::before {
-    border-left: 2px solid rgb(58, 172, 93);
+    border-left: 2px solid var(--color-accent-green);
 }
 .StepProgress-item.is-done::after {
     content: "✔";
     font-size: 10px;
-    color: #FFF;
+    color: var(--color-text-light);
     text-align: center;
-    border: 2px solid rgb(58, 172, 93);
-    background-color: rgb(58, 172, 93);
+    border: 2px solid var(--color-accent-green);
+    background-color: var(--color-accent-green);
 }
 .StepProgress-item.current::before {
-    border-left: 2px solid rgb(58, 172, 93);
+    border-left: 2px solid var(--color-accent-green);
 }
 .StepProgress-item.current::after {
     content: counter(list);
@@ -730,11 +719,10 @@ button img {
     left: -40px;
     font-size: 14px;
     text-align: center;
-    color: rgb(58, 172, 93);
-    border: 2px solid rgb(58, 172, 93);
-    background-color: white;
- }
+    color: var(--color-accent-green);
+    border: 2px solid var(--color-accent-green);
+    background-color: var(--color-bg-light);
+}
 .StepProgress strong {
     display: block;
 }
-

@@ -16,6 +16,7 @@ async def provide_drop_down_options():
     roles = list()
     verifications = list()
     account_groups = list()
+    statuses = list()
 
     db.cursor.execute("SELECT role, description FROM user_roles")
     rows = db.cursor.fetchall()
@@ -43,9 +44,21 @@ async def provide_drop_down_options():
             "default_yn": str(row[0])
         })
 
+    db.cursor.execute("SELECT code, status_name, call_to_action, status_description FROM product_statuses")
+    rows = db.cursor.fetchall()
+    for row in rows:
+        statuses.append(s.Statuses(
+            status_code=row[0],
+            status_name=row[1],
+            call_to_action=row[2],
+            status_description=row[3],
+            show=True
+        ))
+
     return {"user_role": roles,
             "verifications": verifications,
-            "account_groups": account_groups}
+            "account_groups": account_groups,
+            "statuses": statuses}
 
 
 @router.get("/statuses")

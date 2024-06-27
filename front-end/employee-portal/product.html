@@ -1,388 +1,441 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alex Bank</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
-  <meta name="theme-color" content="rgb(131, 152, 162)" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="../src/style.css">
-  <script src="../src/functions.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../src/employee-portal.css">
+    <title>Alex Bank</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+    <meta name="theme-color" content="rgb(131, 152, 162)" />
+    <link rel="stylesheet" href="../src/style.css">
+    <script src="../src/functions.js"></script>
+    <title>Employee Portal</title>
 </head>
-
 <body>
     <div id="app">
-        <nav class="navbar">
-          <div class="wrapper">
-            <a href="../index.html">
-              <img src="../img/alex_bank.png" alt="Logo">
-            </a>
-              <ul>
-                <li><a v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)" href="index.html">Employee Portal</a></li>
-                <li><a v-if="!isLoggedIn" href="../login/index.html">Log In</a></li>
-                <li><a v-if="isLoggedIn" href="../myaccount/index.html">My Account</a></li>
-              </ul>
-          </div>
-        </nav>
-
-        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)" class="content">
-            <div v-if="product_info != null">
-                <h2>{{product_info.name}}</h2>
-                <span>Prouct UID: {{product_data.product_uid}} | Account ID: <a :href="'account.html?account_id='+product_data.account_id">{{product_data.account_id}}</a> </span>
-                <div class="two-column-container">
-                    <div class="column first-column">
-                        <div>
-                            <ul class="StepProgress">
-                                <li v-for="status in product_data.statuses.slice(0, -1)" class="StepProgress-item is-done"><strong>{{status.status_name}}</strong>
-                                    {{status.status_update_dt}}
-                                </li>
-                                <li v-if="product_status_progression.length != 0" class="StepProgress-item current"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
-                                    {{product_data.statuses.at(-1).status_update_dt}}
-                                </li>
-                                <li v-else class="StepProgress-item is-done"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
-                                    {{product_data.statuses.at(-1).status_update_dt}}
-                                </li>
-                                <li v-for="status in product_status_progression" class="StepProgress-item"> <strong>{{status.status_name}}</strong>
-                                </li>
-                            </ul> 
-                            </div>
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)">
+            <div class="sidebar">
+                <div class="sidebar-content">
+                    <div>
+                        <h2><a style="color: #000 !important; text-decoration: none; cursor: pointer;" href="index.html"><span><img height="20px" src="../img/alex_bank.png"> </span>Employee Portal</a></h2>
                     </div>
-                    <div class="column second-column">
-                        <div class="card">
-                            <h3 class="card-title">Product Information</h3>
-                            <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
-                            <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> 
-                        </div> <br>
-                        <div class="card">
-                            <h3 class="card-title">Available Product Actions</h3>
-                            <div class="button-row" style="width: 100%; padding: 0px;">
-                                <span v-if="available_actions.length == 0">There are no more actions that could be performed on this product.</span>
-                                <button v-for="action in available_actions" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                    <div class="accordion">
+                        <div class="accordion-group" data-group="group1" v-if="['A', 'C'].includes(user_role)">
+                            <div class="accordion-header"><span><img src="../assets/chart-simple-solid.svg"></span> <span class="accordion-body-title">Executive Reports</span></div>
+                            <div class="accordion-body">
+                                <p><a>Report 1</a></p>
+                                <p><a>Report 2</a></p>
                             </div>
-                        </div> <br>
-                        <div class="card">
-                            <h3 class="card-title">Product Details</h3>
-                            <button class="pencil-button" @click="toggleEdit1">
-                                <img src="../img/pencil-solid.svg" alt="Edit">
-                            </button>
-                            <details>
-                                <summary>Application Details</summary>
-                                <p><b>Amount Requested:</b> {{product_info.currency}}{{product_data.amount_requested.toFixed(2)}}</p>
-                                <p><b>Collateral:</b> {{product_data.collateral}}</p>
-                                <p><b>Client Notes ({{product_data.standard}} Product):</b> {{product_data.appl_special_notes}}</p>
-                            </details>
-                            <div class="form-container" style="width:100%;">
-                                <div class="form-group">
-                                    <label for="amount">Amount:</label>
-                                    <input type="number" v-model="product_det.amount" id="amount" :disabled="!isEditable1">
-                                </div>
-                                <div class="form-group">
-                                    <label for="contract_id">Contract ID:</label>
-                                    <input type="number" disabled v-model="product_det.contract_id" id="contract_id" disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label for="product_start_date">Product Start Date:</label>
-                                    <input type="date" v-model="product_det.product_start_date" id="product_start_date" :disabled="!isEditable1">
-                                </div>
-                                <div class="form-group">
-                                    <label for="product_end_date">Product End Date:</label>
-                                    <input type="date" v-model="product_det.product_end_date" id="product_end_date" :disabled="!isEditable1">
-                                </div>
-                                <div class="form-group">
-                                    <label for="yield_">{{product_info.percentage_label}} (as a decimal):</label>
-                                    <input type="number" v-model="product_det.yield_" id="yield_" :disabled="!isEditable1">
-                                </div>
-                                <div class="form-group">
-                                    <label for="expected_revenue">Expected Revenue (in {{product_info.currency}}):</label>
-                                    <input type="number" v-model="product_det.expected_revenue" id="expected_revenue" :disabled="!isEditable1">
-                                </div>
-                                <div class="form-group">
-                                    <label for="special_notes">Special Notes:</label>
-                                    <textarea v-model="product_det.special_notes" id="special_notes" :disabled="!isEditable1"></textarea>
-                                </div>
-
-                                <div class="form-group">
-                                    <button v-if="isEditable1" class="submit-button" type="submit" @click="updateProductDet">
-                                        Update Product Details
-                                    </button>
-                                </div>
-                            </div>
-                        </div> <br>
-                        <div v-if="['DUE', 'CMP', 'ORD', 'WOF'].includes(product_data.statuses.at(-1).status_code)" class="card">
-                            <h3 class="card-title">Actuals</h3>
-                            <button class="pencil-button" @click="toggleEdit2">
-                                <img src="../img/pencil-solid.svg" alt="Edit">
-                            </button>
-                            <div class="form-container" style="width:100%;">
-                                <div class="form-group">
-                                    <label for="">Actual Revenue</label>
-                                    <input type="number" v-model="actuals.actual_revenue" :disabled="!isEditable2">
-                                </div>
-                                <div class="form-group">
-                                    <label for="">Actual End Date</label>
-                                    <input type="date" v-model="actuals.actual_end_date" :disabled="!isEditable2">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <button v-if="isEditable2" class="submit-button" type="submit" @click="updateProductActuals">
-                                    Update Product Actuals
-                                </button>
-                            </div>
-                        </div> <br>
-                        <div class="card">
-                            <details>
-                                <summary>Terms and Conditions</summary>
-                                <span v-html="product_info.terms_and_conditions"></span>
-                            </details>
                         </div>
+                        <div class="accordion-group" data-group="group2">
+                            <div class="accordion-header"><span><img src="../assets/user-solid.svg"></span> <span class="accordion-body-title">Accounts</span></div>
+                            <div class="accordion-body">
+                                <p><a href="manage-account.html">Manage Accounts</a></p>
+                                <p><a>Create Account</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group3">
+                            <div class="accordion-header"><span><img src="../assets/handshake-simple-solid.svg"></span> <span class="accordion-body-title">Client Products</span></div>
+                            <div class="accordion-body">
+                                <p><a href="">Manage Products</a></p>
+                                <p><a>Sell Product</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group4">
+                            <div class="accordion-header"><span><img src="../assets/store-solid.svg"></span> <span class="accordion-body-title">Products</span></div>
+                            <div class="accordion-body">
+                                <p><a>Manage Product</a></p>
+                                <p><a>New Product</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group5">
+                            <div class="accordion-header"><span><img src="../assets/building-user-solid.svg"></span> <span class="accordion-body-title">Employees</span></div>
+                            <div class="accordion-body">
+                                <p><a>Manage Employees</a></p>
+                                <p><a>Add Employee</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sidebar-footer">
+                        <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
+                        <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
                     </div>
                 </div>
             </div>
+
+            <div class="emp-portal-content">
+                <div v-if="product_info != null">
+                    <h2>{{product_info.name}}</h2>
+                    <span>Prouct UID: {{product_data.product_uid}} | Account ID: <a :href="'account.html?account_id='+product_data.account_id">{{product_data.account_id}}</a> </span>
+                    <div class="two-column-container">
+                        <div class="column first-column">
+                            <div>
+                                <ul class="StepProgress">
+                                    <li v-for="status in product_data.statuses.slice(0, -1)" class="StepProgress-item is-done"><strong>{{status.status_name}}</strong>
+                                        {{status.status_update_dt}}
+                                    </li>
+                                    <li v-if="product_status_progression.length != 0" class="StepProgress-item current"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
+                                        {{product_data.statuses.at(-1).status_update_dt}}
+                                    </li>
+                                    <li v-else class="StepProgress-item is-done"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
+                                        {{product_data.statuses.at(-1).status_update_dt}}
+                                    </li>
+                                    <li v-for="status in product_status_progression" class="StepProgress-item"> <strong>{{status.status_name}}</strong>
+                                    </li>
+                                </ul> 
+                                </div>
+                        </div>
+                        <div class="column second-column">
+                            <div class="card">
+                                <h3 class="card-title">Product Information</h3>
+                                <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
+                                <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> 
+                            </div> <br>
+                            <div class="card">
+                                <h3 class="card-title">Available Product Actions</h3>
+                                <div class="button-row" style="width: 100%; padding: 0px;">
+                                    <span v-if="available_actions.length == 0">There are no more actions that could be performed on this product.</span>
+                                    <button v-for="action in available_actions" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                                </div>
+                            </div> <br>
+                            <div class="card">
+                                <h3 class="card-title">Product Details</h3>
+                                <button class="pencil-button" @click="toggleEdit1">
+                                    <img src="../img/pencil-solid.svg" alt="Edit">
+                                </button>
+                                <details>
+                                    <summary>Application Details</summary>
+                                    <p><b>Amount Requested:</b> {{product_info.currency}}{{product_data.amount_requested.toFixed(2)}}</p>
+                                    <p><b>Collateral:</b> {{product_data.collateral}}</p>
+                                    <p><b>Client Notes ({{product_data.standard}} Product):</b> {{product_data.appl_special_notes}}</p>
+                                </details>
+                                <div class="form-container" style="width:100%;">
+                                    <div class="form-group">
+                                        <label for="amount">Amount:</label>
+                                        <input type="number" v-model="product_det.amount" id="amount" :disabled="!isEditable1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="contract_id">Contract ID:</label>
+                                        <input type="number" disabled v-model="product_det.contract_id" id="contract_id" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="product_start_date">Product Start Date:</label>
+                                        <input type="date" v-model="product_det.product_start_date" id="product_start_date" :disabled="!isEditable1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="product_end_date">Product End Date:</label>
+                                        <input type="date" v-model="product_det.product_end_date" id="product_end_date" :disabled="!isEditable1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="yield_">{{product_info.percentage_label}} (as a decimal):</label>
+                                        <input type="number" v-model="product_det.yield_" id="yield_" :disabled="!isEditable1" max="1" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="expected_revenue">Expected Revenue (in {{product_info.currency}}):</label>
+                                        <input type="number" v-model="product_det.expected_revenue" id="expected_revenue" :disabled="!isEditable1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="special_notes">Special Notes:</label>
+                                        <textarea v-model="product_det.special_notes" id="special_notes" :disabled="!isEditable1"></textarea>
+                                    </div>
+    
+                                    <div class="form-group">
+                                        <button v-if="isEditable1" class="submit-button" type="submit" @click="updateProductDet">
+                                            Update Product Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div> <br>
+                            <div v-if="['DUE', 'CMP', 'ORD', 'WOF'].includes(product_data.statuses.at(-1).status_code)" class="card">
+                                <h3 class="card-title">Actuals</h3>
+                                <button class="pencil-button" @click="toggleEdit2">
+                                    <img src="../img/pencil-solid.svg" alt="Edit">
+                                </button>
+                                <div class="form-container" style="width:100%;">
+                                    <div class="form-group">
+                                        <label for="">Actual Revenue</label>
+                                        <input type="number" v-model="actuals.actual_revenue" :disabled="!isEditable2">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="">Actual End Date</label>
+                                        <input type="date" v-model="actuals.actual_end_date" :disabled="!isEditable2">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <button v-if="isEditable2" class="submit-button" type="submit" @click="updateProductActuals">
+                                        Update Product Actuals
+                                    </button>
+                                </div>
+                            </div> <br>
+                            <div class="card">
+                                <details>
+                                    <summary>Terms and Conditions</summary>
+                                    <span v-html="product_info.terms_and_conditions"></span>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else>
+                    <h2 style="color: red; text-align: center;">This product does not exist...</h2>
+                </div>
+            </div>
+
         </div>
 
-        <div v-else-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && !Object.keys(this.account_data).length" class="content">
-            <div style="text-align: center; color: red;"><h2>This account does not exist.</h2></div>
+        <div v-else-if="isLoggedIn && !['A', 'C', 'E'].includes(user_role)" class="content">
+            <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
         </div>
 
         <div v-else class="content">
-            <div style="text-align: center; color: red;"><h2>You are not logged in.</h2></div>
-        </div> 
+            <h2 style="color: red; text-align: center;">You are not logged in!</h2>
+        </div>
 
-    </div>
+        <script>
+            const { createApp } = Vue;
+            createApp({
+                data() {
+                    return {
+                        isLoggedIn: isLoggedIn(),
+                        usr_account_id: sessionStorage.getItem("account_id"),
+                        first_name: sessionStorage.getItem("first_name"),
+                        last_name: sessionStorage.getItem("last_name"),
+                        user_role: sessionStorage.getItem("user_role"),
+                        account_id: null, 
+                        product_uid: null, 
+                        product_data: null,
+                        product_status_progression: null, 
+                        product_info: null, 
+                        available_actions: null, 
+                        isEditable1: false, 
+                        isEditable2: false,
+                        init_product_det: {}, 
+                        product_det: {}, 
+                        init_actuals: {}, 
+                        actuals: {}
+                    };
+                },
+                methods: {
+                    showOption(opt) {
+                        opt.show = true;
+                    },
+                    hideOption(opt) {
+                        opt.show = false;
+                    }, 
+                    async loadPage(){
+                        const url = new URL(window.location.href);
+                        const params = new URLSearchParams(url.search);
+                        this.product_uid = params.get("product_uid");
+                        this.account_id = params.get("account_id");
 
-    <script>
-        const { createApp } = Vue;
-    
-        createApp({
-            data() {
-                return {
-                    isLoggedIn: isLoggedIn(),
-                    usr_account_id: sessionStorage.getItem("account_id"),
-                    user_role: sessionStorage.getItem("user_role"),
-                    account_id: null, 
-                    product_uid: null, 
-                    product_data: null,
-                    product_status_progression: null, 
-                    product_info: null, 
-                    available_actions: null, 
-                    isEditable1: false, 
-                    isEditable2: false,
-                    init_product_det: {}, 
-                    product_det: {}, 
-                    init_actuals: {}, 
-                    actuals: {}
-                };
-            },
-            mounted() {
-                this.loadPage()
-            },
-            methods: {
-                async loadPage(){
-                    const url = new URL(window.location.href);
-                    const params = new URLSearchParams(url.search);
-                    this.product_uid = params.get("product_uid");
-                    this.account_id = params.get("account_id");
-
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                            method: "GET", 
-                            headers: {
-                                "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                                method: "GET", 
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                console.error('Error:', data);
+                                alert("Error loading product information");
+                                return; 
                             }
-                        });
-                        const data = await response.json();
-                        if (!response.ok) {
-                            console.error('Error:', data);
-                            alert("Error loading product information");
-                            return; 
+
+                            this.product_data = data;
+                            console.log(this.product_data);
+
+                            const response2 = await fetch(`${API_BASE_URL}/front-end/status-progression?current_status=${this.product_data.statuses.at(-1).status_code}`, {
+                                method: "GET"
+                            });
+
+                            const data2 = await response2.json();
+                            if (!response.ok) {
+                                console.error('Error:', data2);
+                                alert("Error loading product information");
+                                return; 
+                            }
+
+                            this.product_status_progression = data2;
+                            console.log(this.product_status_progression);
+
+                            const response3 = await fetch(`${API_BASE_URL}/product/${this.product_data.product_id}`, {
+                                method: "GET"
+                            });
+
+                            const data3 = await response3.json();
+                            if (!response.ok) {
+                                console.error('Error:', data3);
+                                alert("Error loading product information");
+                                return; 
+                            }
+
+                            this.product_info = data3;
+                            console.log(this.product_info);
+
+                            const response4 = await fetch(`${API_BASE_URL}/front-end/statuses?current_status=${this.product_data.statuses.at(-1).status_code}`, {
+                                method: "GET"
+                            });
+
+                            const data4 = await response4.json();
+                            if (!response.ok) {
+                                console.error('Error:', data4);
+                                alert("Error loading product information");
+                                return; 
+                            }
+                            this.available_actions = data4;
+                            console.log(this.available_actions);
+
+                            this.init_product_det = {
+                                "amount": this.product_data.amount, 
+                                "contract_id": this.product_data.contract_id, 
+                                "product_start_date": this.product_data.product_start_date, 
+                                "product_end_date": this.product_data.product_end_date, 
+                                "yield_": this.product_data.yield_, 
+                                "expected_revenue": this.product_data.expected_revenue, 
+                                "special_notes": this.product_data.special_notes
+                            };
+                            this.product_det = {
+                                "amount": this.product_data.amount, 
+                                "contract_id": this.product_data.contract_id, 
+                                "product_start_date": this.product_data.product_start_date, 
+                                "product_end_date": this.product_data.product_end_date, 
+                                "yield_": this.product_data.yield_, 
+                                "expected_revenue": this.product_data.expected_revenue, 
+                                "special_notes": this.product_data.special_notes
+                            };
+                            this.init_actuals = {
+                                "actual_revenue": this.product_data.actual_revenue, 
+                                "actual_end_date": this.product_data.actual_end_date
+                            };
+                            this.actuals = {
+                                "actual_revenue": this.product_data.actual_revenue, 
+                                "actual_end_date": this.product_data.actual_end_date
+                            };
+                        } catch (error) {
+                            console.error('Error loading product information:', error);
+                        }
+                    }, 
+                    async changeStatus (new_status) {
+                        if (new_status == 'APR') {
+                            if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
+                            || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
+                                alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
+                                return ;
+                            }
+                        }
+                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}?usr_account_id=${this.usr_account_id}`, {
+                                method: "PATCH", 
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                console.error('Error: ', data);
+                                alert("Error updating product status");
+                                return;
+                            }
+
+                            alert("Product status successfully updated!");
+                            window.location.reload();
+                    }, 
+                    toggleEdit1 () {
+                        if (this.isEditable1) {
+                            if (JSON.stringify(this.product_det) !== JSON.stringify(this.init_product_det)) {
+                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                    return;
+                                } else {
+                                    this.product_det = this.init_product_det;
+                                }
+                            } 
+                        } 
+                    this.isEditable1 = !this.isEditable1;
+                    }, 
+                    toggleEdit2 () {
+                        if (this.isEditable2) {
+                            if (JSON.stringify(this.actuals) !== JSON.stringify(this.init_actuals)) {
+                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                    return;
+                                } else {
+                                    this.actuals = this.init_actuals;
+                                }
+                            } 
+                        } 
+                    this.isEditable2 = !this.isEditable2;
+                    }, 
+                    async updateProductDet() {
+                        const differences = {};
+
+                        for (const key in this.product_det) {
+                            if (this.product_det[key] != this.init_product_det[key]) {
+                                console.log("Met")
+                                differences[key] = this.product_det[key];
+                            }
                         }
 
-                        this.product_data = data;
-                        console.log(this.product_data);
-
-                        const response2 = await fetch(`${API_BASE_URL}/front-end/status-progression?current_status=${this.product_data.statuses.at(-1).status_code}`, {
-                            method: "GET"
-                        });
-
-                        const data2 = await response2.json();
-                        if (!response.ok) {
-                            console.error('Error:', data2);
-                            alert("Error loading product information");
-                            return; 
-                        }
-
-                        this.product_status_progression = data2;
-                        console.log(this.product_status_progression);
-
-                        const response3 = await fetch(`${API_BASE_URL}/product/${this.product_data.product_id}`, {
-                            method: "GET"
-                        });
-
-                        const data3 = await response3.json();
-                        if (!response.ok) {
-                            console.error('Error:', data3);
-                            alert("Error loading product information");
-                            return; 
-                        }
-
-                        this.product_info = data3;
-                        console.log(this.product_info);
-
-                        const response4 = await fetch(`${API_BASE_URL}/front-end/statuses?current_status=${this.product_data.statuses.at(-1).status_code}`, {
-                            method: "GET"
-                        });
-
-                        const data4 = await response4.json();
-                        if (!response.ok) {
-                            console.error('Error:', data4);
-                            alert("Error loading product information");
-                            return; 
-                        }
-                        this.available_actions = data4;
-                        console.log(this.available_actions);
-
-                        this.init_product_det = {
-                            "amount": this.product_data.amount, 
-                            "contract_id": this.product_data.contract_id, 
-                            "product_start_date": this.product_data.product_start_date, 
-                            "product_end_date": this.product_data.product_end_date, 
-                            "yield_": this.product_data.yield_, 
-                            "expected_revenue": this.product_data.expected_revenue, 
-                            "special_notes": this.product_data.special_notes
-                        };
-                        this.product_det = {
-                            "amount": this.product_data.amount, 
-                            "contract_id": this.product_data.contract_id, 
-                            "product_start_date": this.product_data.product_start_date, 
-                            "product_end_date": this.product_data.product_end_date, 
-                            "yield_": this.product_data.yield_, 
-                            "expected_revenue": this.product_data.expected_revenue, 
-                            "special_notes": this.product_data.special_notes
-                        };
-                        this.init_actuals = {
-                            "actual_revenue": this.product_data.actual_revenue, 
-                            "actual_end_date": this.product_data.actual_end_date
-                        };
-                        this.actuals = {
-                            "actual_revenue": this.product_data.actual_revenue, 
-                            "actual_end_date": this.product_data.actual_end_date
-                        };
-                    } catch (error) {
-                        console.error('Error loading product information:', error);
-                    }
-                }, 
-                async changeStatus (new_status) {
-                    if (new_status == 'APR') {
-                        if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
-                        || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
-                            alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
-                            return ;
-                        }
-                    }
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}?usr_account_id=${this.usr_account_id}`, {
+                        console.log(differences);
+                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
                             method: "PATCH", 
                             headers: {
                                 "Content-Type": "application/json",
                                 "token": sessionStorage.getItem("token")
-                            }
+                            }, 
+                            body: JSON.stringify(differences)
                         });
                         const data = await response.json();
                         if (!response.ok) {
-                            console.error('Error: ', data);
-                            alert("Error updating product status");
-                            return;
+                            console.error('Error:', data);
+                            alert("Error updating the product details");
+                            return ;
                         }
+                        alert("Product details updated succesfully!");
+                        widnow.location.reload();
+                    }, 
+                    async updateProductActuals() {
+                        const differences = {};
 
-                        alert("Product status successfully updated!");
-                        window.location.reload();
-                }, 
-                toggleEdit1 () {
-                    if (this.isEditable1) {
-                        if (JSON.stringify(this.product_det) !== JSON.stringify(this.init_product_det)) {
-                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                return;
-                            } else {
-                                this.product_det = this.init_product_det;
+                        for (const key in this.actuals) {
+                            if (this.actuals[key] != this.init_actuals[key]) {
+                                console.log("Met")
+                                differences[key] = this.actuals[key];
                             }
-                        } 
-                    } 
-                this.isEditable1 = !this.isEditable1;
-                }, 
-                toggleEdit2 () {
-                    if (this.isEditable2) {
-                        if (JSON.stringify(this.actuals) !== JSON.stringify(this.init_actuals)) {
-                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                return;
-                            } else {
-                                this.actuals = this.init_actuals;
-                            }
-                        } 
-                    } 
-                this.isEditable2 = !this.isEditable2;
-                }, 
-                async updateProductDet() {
-                    const differences = {};
-
-                    for (const key in this.product_det) {
-                        if (this.product_det[key] != this.init_product_det[key]) {
-                            console.log("Met")
-                            differences[key] = this.product_det[key];
                         }
-                    }
 
-                    console.log(differences);
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                        method: "PATCH", 
-                        headers: {
-                            "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
-                        }, 
-                        body: JSON.stringify(differences)
-                    });
-                    const data = await response.json();
-                    if (!response.ok) {
-                        console.error('Error:', data);
-                        alert("Error updating the product details");
-                        return ;
-                    }
-                    alert("Product details updated succesfully!");
-                    widnow.location.reload();
-                }, 
-                async updateProductActuals() {
-                    const differences = {};
-
-                    for (const key in this.actuals) {
-                        if (this.actuals[key] != this.init_actuals[key]) {
-                            console.log("Met")
-                            differences[key] = this.actuals[key];
+                        console.log(differences);
+                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                            method: "PATCH", 
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }, 
+                            body: JSON.stringify(differences)
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            console.error('Error:', data);
+                            alert("Error updating the product actuals");
+                            return ;
                         }
+                        alert("Product actuals updated succesfully!");
+                        widnow.location.reload();
                     }
-
-                    console.log(differences);
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                        method: "PATCH", 
-                        headers: {
-                            "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
-                        }, 
-                        body: JSON.stringify(differences)
+                }, 
+                mounted() {
+                    document.querySelectorAll('.accordion-header').forEach(header => {
+                        header.addEventListener('click', function() {
+                            const body = this.nextElementSibling;
+                            body.classList.toggle('show');
+                        });
                     });
-                    const data = await response.json();
-                    if (!response.ok) {
-                        console.error('Error:', data);
-                        alert("Error updating the product actuals");
-                        return ;
-                    }
-                    alert("Product actuals updated succesfully!");
-                    widnow.location.reload();
+
+                    this.loadPage();
                 }
-            }
-        }).mount('#app');
-    </script>
-    
-
+            }).mount('#app');
+        </script>
+    </div>
 </body>
 </html>

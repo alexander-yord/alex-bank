@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex Bank</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+  <meta name="theme-color" content="rgb(131, 152, 162)" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="../src/style.css">
+  <script src="../src/functions.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <nav class="navbar">
+          <div class="wrapper">
+            <a href="../index.html">
+              <img src="../img/alex_bank.png" alt="Logo">
+            </a>
+              <ul>
+                <li><a v-if="!isLoggedIn" href="../login/index.html">Log In</a></li>
+                <li><a v-if="isLoggedIn" href="../myaccount/index.html">My Account</a></li>
+              </ul>
+          </div>
+        </nav>
+
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)" class="content">
+            <h1>Employee Portal</h1> 
+            <h3>Logged in as {{first_name}} {{last_name}} (Account ID: {{account_id}})</h3> <br>
+
+            <div class="button-row">
+                <h2>Accounts</h2> 
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Go to Account ID..." />
+                    <button id="search-button" @click="performSearch">
+                        <img src="../img/magnifying-glass-solid.svg" alt="Search">
+                    </button>
+                </div>
+            </div>
+            Unverified Accounts: <br>
+            <div class="carousel-container">
+                <a :href="'account.html?account_id='+account.account_id" class="carousel-card" v-for="account in unverified_accounts">
+                    <div class="account-id">Account ID: {{account.account_id}}</div>
+                    <div class="first-name">{{account.first_name}}</div>
+                    <div class="last-name">{{account.last_name}} <abbr :title="account.verification">{{account.verification_emoji}}</abbr></div>
+                    <div class="role-group">{{account.user_role}} | <abbr :title="account.account_group_description">{{account.account_group}}</abbr></div>
+                    <div class="create-date">Created on: {{account.created_dt}}</div>
+                </a>
+                <!-- Add more cards as needed -->
+            </div>
+            
+            
+
+
+        </div>
+
+        <div v-else class="content">
+            You are not logged in or do not have access to this page. 
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+    
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    unverified_accounts: []
+                };
+            },
+            mounted() {
+                this.fetchUnverifiedAccounts();
+            },
+            methods: {
+                async fetchUnverifiedAccounts() {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/account?emp_account_id=${this.account_id}&verification=N&verification=C`, {
+                            method: "GET",
+                            headers: { "token": sessionStorage.getItem("token") }
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.unverified_accounts = data;
+                    } catch (error) {
+                        console.error('Error fetching unverified accounts:', error);
+                    }
+                }, 
+                performSearch() {
+                    const query = document.getElementById('search-input').value;
+                    if (query) {
+                        window.location.href = `account.html?account_id=${encodeURIComponent(query)}`;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+
+</body>

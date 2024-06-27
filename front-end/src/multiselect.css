@@ -1,0 +1,90 @@
+:root {
+    --color-bg-light: rgb(254, 254, 254);
+    --color-bg-dark: rgb(131, 152, 162);
+    --color-text-light: rgb(254, 254, 254);
+    --color-text-dark: rgb(131, 152, 162);
+    --color-border-light: rgb(200, 200, 200);
+    --color-accent-green: rgb(58, 172, 93);
+    --color-accent-red: rgb(204, 82, 82);
+    --color-grey-light: #bebebe;
+    --color-grey-dark: #979797;
+    --color-bg-disabled: #f0f0f0;
+    --color-border-disabled: #ccc;
+    --color-black: #000;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: var(--color-bg-light);
+    color: var(--color-bg-dark);
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    padding: 5px;
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    display: inline-block;
+}
+
+.tag {
+    background-color: var(--color-bg-disabled);
+    border-radius: 3px;
+    padding: 5px;
+    margin: 3px;
+    display: inline-flex;
+    max-width: 100px;
+}
+.tag-close {
+    margin-left: 5px;
+    cursor: pointer;
+}
+select {
+    border: none;
+    width: 100%;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.arrow-container {
+    --size: 0.3rem;
+    position: absolute;
+    top: 45%;
+    right: 1rem;
+    width: 0;
+    height: 0;
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-top: var(--size) solid var(--color-black);
+    cursor: pointer;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: var(--color-bg-light);
+    width: 100%;
+    max-width: 300px;
+    overflow: auto;
+    margin-top: 2px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border: 1px solid var(--color-border-light);
+    border-radius: 5px;
+    z-index: 1;
+  }
+  
+  .dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+  }
+
+.dropdown a:hover {
+    background-color: var(--color-grey-light);
+    cursor: pointer;
+}
+
+.show {
+    display: block;
+}

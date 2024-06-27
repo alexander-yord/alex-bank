@@ -66,8 +66,17 @@
             </div>
 
             <div class="emp-portal-content">
-                <h2>Hi, {{first_name}} {{last_name}}! </h2>
-                <p>⚠️ As we develop this page further, use the links on the side to navigate to the pages you need. </p>
+
+                <div class="heading-row">
+                    <h2>Manage Accounts</h2> 
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Go to Account ID..." @keyup.enter="goToAccount" />
+                        <button id="search-button" @click="goToAccount">
+                            <img src="../assets/arrow-right-solid.svg" alt="Search">
+                        </button>
+                    </div>
+                </div>
+
                 <!-- <div>
                     <div class="tags-container" id="tags-container" style="height: 30px;">
                         <span class="tag" v-for="opt in statuses.filter(status => !status.show)" :key="opt.code">
@@ -123,6 +132,12 @@
                     },
                     hideOption(opt) {
                         opt.show = false;
+                    }, 
+                    goToAccount() {
+                        const query = document.getElementById('search-input').value;
+                        if (query) {
+                            window.location.href = `account.html?account_id=${encodeURIComponent(query)}`;
+                        }
                     }
                 }, 
                 mounted() {

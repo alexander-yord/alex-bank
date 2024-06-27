@@ -1,0 +1,126 @@
+:root {
+    --color-bg-light: rgb(254, 254, 254);
+    --color-bg-dark: rgb(131, 152, 162);
+    --color-text-light: rgb(254, 254, 254);
+    --color-text-dark: rgb(131, 152, 162);
+    --color-border-light: rgb(200, 200, 200);
+    --color-accent-green: rgb(58, 172, 93);
+    --color-accent-red: rgb(204, 82, 82);
+    --color-grey-light: #bebebe;
+    --color-grey-dark: #979797;
+    --color-bg-disabled: #f0f0f0;
+    --color-border-disabled: #ccc;
+    --color-black: #000;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: rgb(254, 254, 254);
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    background-color: var(--color-bg-light);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    padding-top: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.accordion {
+    flex-grow: 1;
+}
+
+.accordion-group {
+    margin-bottom: 10px;
+    /* border: 1px solid #ccc;
+    border-radius: 5px; */
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 15px;
+    /* background-color: #e9ecef; */
+    cursor: pointer;
+}
+
+.accordion-header img {
+    width: 20px;
+}
+
+.accordion-body {
+    display: none;
+    margin-left: 27px;
+    padding: 0px 15px;
+}
+
+.sidebar-footer {
+    padding: 15px;
+    position:absolute;
+    bottom:0;
+}
+
+.sidebar-footer img {
+    width: 20px;
+}
+
+.sidebar-footer-title {
+    margin-left: 6px;
+}
+
+.sidebar-footer a {
+    cursor: pointer;
+    color: var(--color-black);
+    transition: color 0.3s;
+}
+
+.sidebar-footer a:hover {
+    text-decoration: none;
+    color: var(--color-text-dark);
+}
+
+.show {
+    display: block;
+}
+
+.emp-portal-content {
+    margin-left: 290px; /* Ensure the content is pushed to the right of the sidebar */
+    padding: 20px;
+    padding-top: 0px;
+}
+
+.accordion-header img {
+    width: 20px;
+}
+
+.accordion-body-title {
+    margin-left: 6px;
+}
+
+.accordion-body a {
+    cursor: pointer;
+    color: var(--color-black);
+    transition: color 0.3s;
+}
+
+.accordion-body a:hover {
+    text-decoration: none;
+    color: var(--color-text-dark);
+}
+
+.heading-row {
+    display: flex;
+    justify-content: space-between;
+    /* margin-bottom: 20px; */
+}
+
+
+
+

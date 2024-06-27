@@ -62,10 +62,19 @@ class AccountGroup(BaseModel):
     default_yn: str
 
 
+class Statuses(BaseModel):
+    status_code: str
+    status_name: str
+    call_to_action: Optional[str] = None
+    status_description: str
+    show: bool
+
+
 class DropDownOptions(BaseModel):
     user_role: List[UserRole]
     verifications: List[Verification]
     account_groups: List[AccountGroup]
+    statuses: List[Statuses]
 
 
 class BroadAccountFilters(BaseModel):

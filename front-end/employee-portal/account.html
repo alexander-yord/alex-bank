@@ -1,374 +1,426 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alex Bank</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
-  <meta name="theme-color" content="rgb(131, 152, 162)" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="../src/style.css">
-  <script src="../src/functions.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../src/employee-portal.css">
+    <title>Alex Bank</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+    <meta name="theme-color" content="rgb(131, 152, 162)" />
+    <link rel="stylesheet" href="../src/style.css">
+    <script src="../src/functions.js"></script>
+    <title>Employee Portal</title>
 </head>
-
 <body>
     <div id="app">
-        <nav class="navbar">
-          <div class="wrapper">
-            <a href="../index.html">
-              <img src="../img/alex_bank.png" alt="Logo">
-            </a>
-              <ul>
-                <li><a href="../products/index.html">Products</a></li>
-                <li v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)"><a href="index.html">Employee Portal</a></li>
-                <li v-if="!isLoggedIn" ><a href="../login/index.html">Log In</a></li>
-                <li v-if="isLoggedIn" ><a href="../myaccount/index.html">My Account</a></li>
-              </ul>
-          </div>
-        </nav>
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)">
+            <div class="sidebar">
+                <div class="sidebar-content">
+                    <div>
+                        <h2><a style="color: #000 !important; text-decoration: none; cursor: pointer;" href="index.html"><span><img height="20px" src="../img/alex_bank.png"> </span>Employee Portal</a></h2>
+                    </div>
+                    <div class="accordion">
+                        <div class="accordion-group" data-group="group1" v-if="['A', 'C'].includes(user_role)">
+                            <div class="accordion-header"><span><img src="../assets/chart-simple-solid.svg"></span> <span class="accordion-body-title">Executive Reports</span></div>
+                            <div class="accordion-body">
+                                <p><a>Report 1</a></p>
+                                <p><a>Report 2</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group2">
+                            <div class="accordion-header"><span><img src="../assets/user-solid.svg"></span> <span class="accordion-body-title">Accounts</span></div>
+                            <div class="accordion-body">
+                                <p><a href="manage-account.html">Manage Accounts</a></p>
+                                <p><a>Create Account</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group3">
+                            <div class="accordion-header"><span><img src="../assets/handshake-simple-solid.svg"></span> <span class="accordion-body-title">Client Products</span></div>
+                            <div class="accordion-body">
+                                <p><a href="manage-products.html">Manage Products</a></p>
+                                <p><a>Sell Product</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group4">
+                            <div class="accordion-header"><span><img src="../assets/store-solid.svg"></span> <span class="accordion-body-title">Products</span></div>
+                            <div class="accordion-body">
+                                <p><a>Manage Product</a></p>
+                                <p><a>New Product</a></p>
+                            </div>
+                        </div>
+                        <div class="accordion-group" data-group="group5">
+                            <div class="accordion-header"><span><img src="../assets/building-user-solid.svg"></span> <span class="accordion-body-title">Employees</span></div>
+                            <div class="accordion-body">
+                                <p><a>Manage Employees</a></p>
+                                <p><a>Add Employee</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sidebar-footer">
+                        <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
+                        <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
+                    </div>
+                </div>
+            </div>
 
-        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && Object.keys(this.account_data).length" class="content">
-            <h2>Account Verification: {{ account_data.first_name }} {{ account_data.last_name }}</h2> 
-            Account ID: {{ account_data.account_id }} | {{ account_data.country }}{{ account_data.address ? ', ' + account_data.address : '' }}
+            <div class="emp-portal-content" v-if="Object.keys(this.account_data).length">
+                <h2>{{ account_data.first_name }} {{ account_data.last_name }}</h2> 
+                Account ID: {{ account_data.account_id }} | {{ account_data.country }}{{ account_data.address ? ', ' + account_data.address : '' }}
 
-            <br><br>
-            <div v-if="account_data.verification_code == 'N'" class="container">
-                <ul class="progressbar">
-                    <li class="active">Account Created</li>
-                    <li>Account Contacted</li>
-                    <li>Account Verified</li>
-                </ul>
-            </div>
-            <div v-if="account_data.verification_code == 'C'" class="container">
-                <ul class="progressbar">
-                    <li class="active">Account Created</li>
-                    <li class="active">Account Contacted</li>
-                    <li>Account Verified</li>
-                </ul>
-            </div>
-            <div v-if="account_data.verification_code == 'Y'" class="container">
-                <ul class="progressbar">
-                    <li class="active">Account Created</li>
-                    <li class="active">Account Contacted</li>
-                    <li class="active">Account Verified</li>
-                </ul>
-            </div>
-            <div v-if="account_data.verification_code == 'R'" class="container">
-                <ul class="progressbar">
-                    <li class="active">Account Created</li>
-                    <li class="active">Account Contacted</li>
-                    <li class="active">Account Verified</li>
-                    <li class="active-revoked">Verification Revoked</li>
-                </ul>
-            </div>
-            <br><br> 
-            
-            <div class="button-row">
-                <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Send Verification Email</button>
-                <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Verify</button>
-                <button v-if="['N', 'Y', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('R')" style="border-color: rgb(204, 82, 82); background: rgb(204, 82, 82);">
-                    Revoke Verification
-                </button>
-            </div>
-            
-            <br><br>
-            <div class="data-form-container editable-form">
-                <div class="form-group full-width">
-                    <h2>Contact Information</h2>
+                <br><br>
+                <div v-if="account_data.verification_code == 'N'" class="container">
+                    <ul class="progressbar">
+                        <li class="active">Account Created</li>
+                        <li>Account Contacted</li>
+                        <li>Account Verified</li>
+                    </ul>
                 </div>
-                <button class="pencil-button" v-on:click="toggleEdit">
-                    <img src="../img/pencil-solid.svg" alt="Edit">
-                </button>
-                <div class="form-group">
-                    <label for="name">Email:</label>
-                    <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
+                <div v-if="account_data.verification_code == 'C'" class="container">
+                    <ul class="progressbar">
+                        <li class="active">Account Created</li>
+                        <li class="active">Account Contacted</li>
+                        <li>Account Verified</li>
+                    </ul>
                 </div>
-                <div class="form-group">
-                    <label for="email">Phone:</label>
-                    <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
+                <div v-if="account_data.verification_code == 'Y'" class="container">
+                    <ul class="progressbar">
+                        <li class="active">Account Created</li>
+                        <li class="active">Account Contacted</li>
+                        <li class="active">Account Verified</li>
+                    </ul>
                 </div>
-                <div class="form-group">
-                    <label for="country">Country of Residence:</label>
-                    <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
-                        <option value="BGR">Bulgaria</option>
-                        <option value="USA">United States</option>
-                        <option value="OTH">Other</option>
-                    </select>
+                <div v-if="account_data.verification_code == 'R'" class="container">
+                    <ul class="progressbar">
+                        <li class="active">Account Created</li>
+                        <li class="active">Account Contacted</li>
+                        <li class="active">Account Verified</li>
+                        <li class="active-revoked">Verification Revoked</li>
+                    </ul>
                 </div>
-                <div class="form-group">
-                    <label for="bio">Address:</label>
-                    <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
-                </div>
-                <div class="form-group">
-                    <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
-                        Update
+                <br><br> 
+                
+                <div class="button-row">
+                    <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Send Verification Email</button>
+                    <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Verify</button>
+                    <button v-if="['N', 'Y', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('R')" style="border-color: rgb(204, 82, 82); background: rgb(204, 82, 82);">
+                        Revoke Verification
                     </button>
                 </div>
-            </div>
-
-            <br><br>
-            <div class="card-row">
-                <div class="card">
-                    <div class="form-group-row full-width">
-                        <h2>Account Group</h2>
+                
+                <br><br>
+                <div class="data-form-container editable-form">
+                    <div class="form-group full-width">
+                        <h2>Contact Information</h2>
                     </div>
-                    <button class="pencil-button" v-on:click="toggleEdit2">
+                    <button class="pencil-button" v-on:click="toggleEdit">
                         <img src="../img/pencil-solid.svg" alt="Edit">
                     </button>
-                    <div class="form-group-row">
-                        <label for="account_group">Account Group:</label>
-                        <select id="account_group" v-model="account_group.account_group_code" :disabled="!isEditableF2"> 
-                            <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
-                        </select>
+                    <div class="form-group">
+                        <label for="name">Email:</label>
+                        <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
                     </div>
                     <div class="form-group">
-                        <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup">
-                            Change Group
+                        <label for="email">Phone:</label>
+                        <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country of Residence:</label>
+                        <div class="custom-select">
+                            <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
+                                <option value="BGR">Bulgaria</option>
+                                <option value="USA">United States</option>
+                                <option value="OTH">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Address:</label>
+                        <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
+                            Update
                         </button>
                     </div>
                 </div>
-                
-                <div class="card">
-                    <div class="form-group-row full-width">
-                        <h2>Login Credentials</h2>
+
+                <br><br>
+                <div class="card-row">
+                    <div class="card">
+                        <div class="form-group-row full-width">
+                            <h2>Account Group</h2>
+                        </div>
+                        <button class="pencil-button" v-on:click="toggleEdit2">
+                            <img src="../img/pencil-solid.svg" alt="Edit">
+                        </button>
+                        <div class="form-group-row">
+                            <label for="account_group">Account Group:</label>
+                            <div class="custom-select">
+                                <select id="account_group" v-model="account_group.account_group_code" :disabled="!isEditableF2"> 
+                                    <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup">
+                                Change Group
+                            </button>
+                        </div>
                     </div>
-                    <button class="pencil-button" v-on:click="">
-                        <img src="../img/pencil-solid.svg" alt="Edit">
-                    </button>
-                    <div class="form-group-row">
-                        <label for="account_group" style="color: red">Not implemented</label>
-                        
+                    
+                    <div class="card">
+                        <div class="form-group-row full-width">
+                            <h2>Login Credentials</h2>
+                        </div>
+                        <button class="pencil-button" v-on:click="">
+                            <img src="../img/pencil-solid.svg" alt="Edit">
+                        </button>
+                        <div class="form-group-row">
+                            <label for="account_group" style="color: red">Not implemented</label>
+                            
+                        </div>
                     </div>
                 </div>
-            </div>
-            <br> 
+                <br> 
 
 
-            <div>
-                <h2>Products:</h2>
-            </div>
-            <div class="product-grid" v-if="Object.keys(products).length">
-                <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
-                    <img :src="'../img/products/'+prod.category_id+'.png'"> 
-                    <div class="product-title">{{prod.name}}</div>
-                    <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
-                    <div class="product-description">{{prod.description}}</div>
-                </a>
-            </div>
-            <div v-else>
-                This account has no products. 
-            </div>
+                <div>
+                    <h2>Products:</h2>
+                </div>
+                <div class="product-grid" v-if="Object.keys(products).length">
+                    <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
+                        <img :src="'../img/products/'+prod.category_id+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+                <div v-else>
+                    This account has no products. 
+                </div>
             
+            </div>
+            <div class="emp-portal-content" v-else>
+                <h2 style="color: red; text-align: center;">This account does not exist...</h2>
+            </div>
         </div>
 
-        <div v-else-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && !Object.keys(this.account_data).length" class="content">
-            <div style="text-align: center; color: red;"><h2>This account does not exist.</h2></div>
+        <div v-else-if="isLoggedIn && !['A', 'C', 'E'].includes(user_role)" class="content">
+            <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
         </div>
 
         <div v-else class="content">
-            <div style="text-align: center; color: red;"><h2>You are not logged in.</h2></div>
-        </div> 
+            <h2 style="color: red; text-align: center;">You are not logged in!</h2>
+        </div>
 
-    </div>
-
-    <script>
-        const { createApp } = Vue;
-    
-        createApp({
-            data() {
-                return {
-                    isLoggedIn: isLoggedIn(),
-                    usr_account_id: sessionStorage.getItem("account_id"),
-                    first_name: sessionStorage.getItem("first_name"),
-                    last_name: sessionStorage.getItem("last_name"),
-                    user_role: sessionStorage.getItem("user_role"),
-                    page_account_id: null, 
-                    contact_data: {},
-                    initial_contact_data: {},
-                    account_data: {},
-                    dd_account_group_options: {},
-                    account_group: {}, 
-                    initial_account_group: {},
-                    isEditableF1: false, 
-                    isEditableF2: false, 
-                    isEditableF3: false,
-                    products: {}
-                };
-            },
-            mounted() {
-                this.load_account_data(), 
-                this.loadAccountProducts();
-            },
-            methods: {
-                async load_account_data() {
-                    try {
-                        const queryString = window.location.search;
-                        const urlParams = new URLSearchParams(queryString);
-                        const accountID = urlParams.get('account_id');
-                        this.page_account_id = accountID;
-                        const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
-                            method: "GET",
-                            headers: { "token": sessionStorage.getItem("token") }
-                        });
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        const data = await response.json();
-                        this.account_data = data;
-                        this.initial_contact_data = {
-                            "phone": data["phone"], 
-                            "email": data["email"], 
-                            "country_code": data["country_code"], 
-                            "country": data["country"], 
-                            "address": data["address"]
-                        }
-                        this.contact_data = {
-                            "phone": data["phone"], 
-                            "email": data["email"], 
-                            "country_code": data["country_code"], 
-                            "country": data["country"], 
-                            "address": data["address"]
-                        }
-                        this.initial_account_group = {"account_group_code": data["account_group_code"]}
-                        this.account_group = {"account_group_code": data["account_group_code"]}
-                    } catch (error) {
-                        console.error('Error fetching account data:', error);
-                    }
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        const data = await response.json();
-                        this.dd_account_group_options = data["account_groups"];
-                    } catch (error) {
-                        console.error('Error fetching account data:', error);
-                    }
+        <script>
+            const { createApp } = Vue;
+            createApp({
+                data() {
+                    return {
+                        isLoggedIn: isLoggedIn(),
+                        usr_account_id: sessionStorage.getItem("account_id"),
+                        first_name: sessionStorage.getItem("first_name"),
+                        last_name: sessionStorage.getItem("last_name"),
+                        user_role: sessionStorage.getItem("user_role"),
+                        page_account_id: null, 
+                        contact_data: {},
+                        initial_contact_data: {},
+                        account_data: {},
+                        dd_account_group_options: {},
+                        account_group: {}, 
+                        initial_account_group: {},
+                        isEditableF1: false, 
+                        isEditableF2: false, 
+                        isEditableF3: false,
+                        products: {}
+                    };
                 },
-                async loadAccountProducts() {
-                    try {
-                        const queryString = window.location.search;
-                        const urlParams = new URLSearchParams(queryString);
-                        const account_id = urlParams.get('account_id');
-
-                        const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
-                            method: "GET", 
-                            headers: {
-                                "token": sessionStorage.getItem("token")
+                methods: {
+                    showOption(opt) {
+                        opt.show = true;
+                    },
+                    hideOption(opt) {
+                        opt.show = false;
+                    }, 
+                    async load_account_data() {
+                        try {
+                            const queryString = window.location.search;
+                            const urlParams = new URLSearchParams(queryString);
+                            const accountID = urlParams.get('account_id');
+                            this.page_account_id = accountID;
+                            const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
+                                method: "GET",
+                                headers: { "token": sessionStorage.getItem("token") }
+                            });
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
                             }
-                        });
-                        const result = await response.json();
-
-                        if (!response.ok) {
-                            console.log(`Error fetching account products: ${result}`)
-                            return;
+                            const data = await response.json();
+                            this.account_data = data;
+                            this.initial_contact_data = {
+                                "phone": data["phone"], 
+                                "email": data["email"], 
+                                "country_code": data["country_code"], 
+                                "country": data["country"], 
+                                "address": data["address"]
+                            }
+                            this.contact_data = {
+                                "phone": data["phone"], 
+                                "email": data["email"], 
+                                "country_code": data["country_code"], 
+                                "country": data["country"], 
+                                "address": data["address"]
+                            }
+                            this.initial_account_group = {"account_group_code": data["account_group_code"]}
+                            this.account_group = {"account_group_code": data["account_group_code"]}
+                        } catch (error) {
+                            console.error('Error fetching account data:', error);
                         }
-                        this.products = result;
-                        console.log(result);
-                        return;
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            const data = await response.json();
+                            this.dd_account_group_options = data["account_groups"];
+                        } catch (error) {
+                            console.error('Error fetching account data:', error);
+                        }
+                    },
+                    async loadAccountProducts() {
+                        try {
+                            const queryString = window.location.search;
+                            const urlParams = new URLSearchParams(queryString);
+                            const account_id = urlParams.get('account_id');
 
-                    } catch (error) {
-                        console.error('Error fetching account products: ', error)
-                    }
-                },
-                toggleEdit() {
-                    if (this.isEditableF1) {
-                        if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
-                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                            const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
+                                method: "GET", 
+                                headers: {
+                                    "token": sessionStorage.getItem("token")
+                                }
+                            });
+                            const result = await response.json();
+
+                            if (!response.ok) {
+                                console.log(`Error fetching account products: ${result}`)
                                 return;
-                            } else {
-                                this.contact_data = this.initial_contact_data;
                             }
-                        } 
-                    } 
-                this.isEditableF1 = !this.isEditableF1;
-                },
-                toggleEdit2() {
-                    if (this.isEditableF2) {
-                        if (JSON.stringify(this.account_group) !== JSON.stringify(this.initial_account_group)) {
-                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                return;
-                            } else {
-                                this.account_group = this.initial_account_group;
-                            }
-                        } 
-                    } 
-                this.isEditableF2 = !this.isEditableF2;
-                },
-                async verifyAccount(new_status) {
-                    if (new_status=='R') {
-                        if (!confirm("You are about to revoke the verification of an account. Are you want to?")){
+                            this.products = result;
+                            console.log(result);
                             return;
+
+                        } catch (error) {
+                            console.error('Error fetching account products: ', error)
                         }
-                    }
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                    },
+                    toggleEdit() {
+                        if (this.isEditableF1) {
+                            if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
+                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                    return;
+                                } else {
+                                    this.contact_data = this.initial_contact_data;
+                                }
+                            } 
+                        } 
+                    this.isEditableF1 = !this.isEditableF1;
+                    },
+                    toggleEdit2() {
+                        if (this.isEditableF2) {
+                            if (JSON.stringify(this.account_group) !== JSON.stringify(this.initial_account_group)) {
+                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                    return;
+                                } else {
+                                    this.account_group = this.initial_account_group;
+                                }
+                            } 
+                        } 
+                    this.isEditableF2 = !this.isEditableF2;
+                    },
+                    async verifyAccount(new_status) {
+                        if (new_status=='R') {
+                            if (!confirm("You are about to revoke the verification of an account. Are you want to?")){
+                                return;
                             }
+                        }
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
+                                method: "PATCH",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }
+                            });
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            const data = await response.json();
+                            // Handle the response data as needed
+                            alert("Verification Status Succesfully Updated!")
+                            window.location.reload();
+                        } catch (error) {
+                            console.error('Error verifying account:', error);
+                        }
+                    }, 
+                    async updateContactInfo() {
+                        const differences = {};
+
+                        for (const key in this.contact_data) {
+                            console.log(key)
+                            if (this.contact_data[key] !== this.initial_contact_data[key]) {
+                                console.log("Met")
+                                differences[key] = this.contact_data[key];
+                            }
+                        }
+                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
+                                method: "PATCH",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }, 
+                                body: JSON.stringify(differences)
                         });
+
                         if (!response.ok) {
                             throw new Error(`HTTP error! Status: ${response.status}`);
                         }
-                        const data = await response.json();
-                        // Handle the response data as needed
-                        alert("Verification Status Succesfully Updated!")
+                        alert("Contact information succesfully updated!")
                         window.location.reload();
-                    } catch (error) {
-                        console.error('Error verifying account:', error);
-                    }
-                }, 
-                async updateContactInfo() {
-                    const differences = {};
-
-                    for (const key in this.contact_data) {
-                        console.log(key)
-                        if (this.contact_data[key] !== this.initial_contact_data[key]) {
-                            console.log("Met")
-                            differences[key] = this.contact_data[key];
+                    }, 
+                    async updateAccountGroup () {
+                        if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
+                            return ;
                         }
-                    }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
-                            }, 
-                            body: JSON.stringify(differences)
-                    });
+                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
+                                method: "PATCH",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }, 
+                                body: JSON.stringify(this.account_group)
+                        });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        alert("Account group succesfully updated!")
+                        window.location.reload();
                     }
-                    alert("Contact information succesfully updated!")
-                    window.location.reload();
                 }, 
-                async updateAccountGroup () {
-                    if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
-                        return ;
-                    }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
-                            method: "PATCH",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
-                            }, 
-                            body: JSON.stringify(this.account_group)
+                mounted() {
+                    document.querySelectorAll('.accordion-header').forEach(header => {
+                        header.addEventListener('click', function() {
+                            const body = this.nextElementSibling;
+                            body.classList.toggle('show');
+                        });
                     });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    alert("Account group succesfully updated!")
-                    window.location.reload();
+                    this.load_account_data(), 
+                    this.loadAccountProducts();
                 }
-            }
-        }).mount('#app');
-    </script>
-    
-
+            }).mount('#app');
+        </script>
+    </div>
 </body>
 </html>

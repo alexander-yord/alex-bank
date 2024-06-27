@@ -46,7 +46,7 @@
                         <div class="accordion-group" data-group="group4">
                             <div class="accordion-header"><span><img src="../assets/store-solid.svg"></span> <span class="accordion-body-title">Products</span></div>
                             <div class="accordion-body">
-                                <p><a>Manage Product</a></p>
+                                <p><a href="manage-products.html">Manage Product</a></p>
                                 <p><a>New Product</a></p>
                             </div>
                         </div>
@@ -66,8 +66,17 @@
             </div>
 
             <div class="emp-portal-content">
-                <h2>Hi, {{first_name}} {{last_name}}! </h2>
-                <p>⚠️ As we develop this page further, use the links on the side to navigate to the pages you need. </p>
+
+                <div class="heading-row">
+                    <h2>Manage Products</h2> 
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Go to Product UID..." @keyup.enter="goToProduct" />
+                        <button id="search-button" @click="goToProduct">
+                            <img src="../assets/arrow-right-solid.svg" alt="Search">
+                        </button>
+                    </div>
+                </div>
+
                 <!-- <div>
                     <div class="tags-container" id="tags-container" style="height: 30px;">
                         <span class="tag" v-for="opt in statuses.filter(status => !status.show)" :key="opt.code">
@@ -123,6 +132,12 @@
                     },
                     hideOption(opt) {
                         opt.show = false;
+                    }, 
+                    goToProduct() {
+                        const query = document.getElementById('search-input').value;
+                        if (query) {
+                            window.location.href = `product.html?product_uid=${encodeURIComponent(query)}`;
+                        }
                     }
                 }, 
                 mounted() {
