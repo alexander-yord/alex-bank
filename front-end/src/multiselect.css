@@ -25,6 +25,8 @@
     max-width: 300px;
     position: relative;
     display: inline-block;
+    min-height: 30px;
+    height: auto;
 }
 
 .tag {

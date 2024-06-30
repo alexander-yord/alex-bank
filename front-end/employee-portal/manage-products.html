@@ -76,20 +76,30 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- <div>
-                    <div class="tags-container" id="tags-container" style="height: 30px;">
+                <div class="card">
+                    <div class="tags-container" id="tags-container">
                         <span class="tag" v-for="opt in statuses.filter(status => !status.show)" :key="opt.code">
-                            {{ opt.name }}<span class="tag-close" @click="showOption(opt)">x</span>
+                            {{ opt.status_name }}<span class="tag-close" @click="showOption(opt)">x</span>
                         </span>
                         <div class="arrow-container" id="arrow-button"></div>
                     </div>            
-                    <div id="myDropdown" class="dropdown-content">
+                    <div id="myDropdown" class="dropdown-content" style="left: 335px;">
                         <a style="cursor: pointer;" v-for="opt in statuses.filter(status => status.show)" :key="opt.code" @click="hideOption(opt)">
-                            {{ opt.name }}
+                            {{ opt.status_name }}
                         </a>
                     </div>
-                </div> -->
+                    <button style="height:40px; width: 40px;" @click="loadProducts"><img width="17px" src="../assets/magnifying-glass-solid.svg"></button>
+                </div>
+
+                <div class="product-grid" v-if="Object.keys(products).length">
+                    <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
+                        <img :src="'../img/products/'+prod.category_id+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+                
             </div>
         </div>
 
@@ -102,14 +112,6 @@
         </div>
 
         <script>
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     const arrowButton = document.getElementById('arrow-button');
-                
-            //     arrowButton.addEventListener('click', function() {
-            //         document.getElementById("myDropdown").classList.toggle("show");
-            //     });
-            // });
-
             const { createApp } = Vue;
             createApp({
                 data() {
@@ -119,11 +121,8 @@
                         first_name: sessionStorage.getItem("first_name"),
                         last_name: sessionStorage.getItem("last_name"),
                         user_role: sessionStorage.getItem("user_role"),
-                        statuses: [
-                            { "code": "CMP", "name": "Complete", "show": true }, 
-                            { "code": "WOF", "name": "Written Off", "show": true }, 
-                            { "code": "ORD", "name": "Overdue", "show": true }
-                        ]
+                        statuses: [], 
+                        products: []
                     };
                 },
                 methods: {
@@ -138,6 +137,50 @@
                         if (query) {
                             window.location.href = `product.html?product_uid=${encodeURIComponent(query)}`;
                         }
+                    }, 
+                    async loadPage () {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            const data = await response.json();
+                            this.statuses = data["statuses"];
+                            console.log(this.statuses);
+                        } catch (error) {
+                            console.error('Error fetching statuses:', error);
+                        }
+                    }, 
+                    async loadProducts() {
+                        // Step 1: Filter statuses
+                        const filteredStatuses = this.statuses.filter(status => status.show === false);
+                        
+                        // Step 2: Construct the query string
+                        const statusCodes = filteredStatuses.map(status => `status_code=${status.status_code}`).join('&');
+
+                        // Step 3: Construct the full URL
+                        const accountId = sessionStorage.getItem('account_id');
+                        const url = `${API_BASE_URL}/product/instances/?usr_account_id=${accountId}&${statusCodes}`;
+
+                        // Step 4: Fetch the data
+                        try {
+                            const response = await fetch(url, {
+                                method: "GET",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "token": sessionStorage.getItem("token")
+                                }
+                            });
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            const data = await response.json();
+                            // Do something with the data
+                            this.products = data;
+                            console.log(data);
+                        } catch (error) {
+                            console.error('Error fetching product instances:', error);
+                        }
                     }
                 }, 
                 mounted() {
@@ -147,9 +190,17 @@
                             body.classList.toggle('show');
                         });
                     });
+
+                    this.loadPage();
+                    const arrowButton = document.getElementById('arrow-button');
+                    if (arrowButton) {
+                        arrowButton.addEventListener('click', function() {
+                            document.getElementById("myDropdown").classList.toggle("show");
+                        });
+                    }
                 }
             }).mount('#app');
-        </script>
+        </script>        
     </div>
 </body>
 </html>
