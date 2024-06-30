@@ -66,8 +66,10 @@ INSERT INTO product_statuses (code, status_name, call_to_action, status_descript
 	('DEN', 'Denied', 'Deny', 'Application is denied'),
 	('CNL', 'Cancelled', 'Cancel', 'The application or the exchange of the underlying was cancelled'),
 	('AMD', 'Amended', 'Amend', 'An employee made a change, and the client has to agree to it'),
+    ('AGR', 'Agreed', 'Agree', 'The client agrees to the change proposed by the employee'), 
+    ('DIS', 'Disagreed', 'Disagree', 'The client does not agree with the change proposed by the employee'),
 	('SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
-	('AWT', 'Awaiting Disbursement Date', 'Await Disbursement Date', 'Awaiting Begin Date'),
+	('AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
 	('NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
 	('TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
 	('DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
@@ -87,13 +89,21 @@ values
 DELIMITER //
 
 -- product status update trigger
-CREATE TRIGGER before_product_instance_update
+CREATE TRIGGER product_instance_status_update
 BEFORE UPDATE ON product_instance
 FOR EACH ROW
 BEGIN
   IF NEW.status_code != OLD.status_code THEN
-    INSERT INTO product_status_updates (product_uid, was_status, is_code, update_dt)
-    VALUES (OLD.product_uid, OLD.status_code, NEW.status_code, NOW());
+    INSERT INTO product_status_updates (product_uid, was_status, is_code, update_dt, update_user, update_note, update_note_public_yn)
+    VALUES (
+		OLD.product_uid, 
+        OLD.status_code, 
+        NEW.status_code, 
+        NOW(), 
+        NEW.latest_update_user_id,
+        CASE WHEN OLD.latest_note != NEW.latest_note THEN NEW.latest_note ELSE NULL END,
+        CASE WHEN OLD.latest_note != NEW.latest_note THEN NEW.latest_note_public_yn ELSE NULL END
+    );
   END IF;
 END;  
 //

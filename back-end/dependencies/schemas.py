@@ -34,6 +34,11 @@ class NewAccount(BaseModel):
     password: str
 
 
+class UpdateNoteModel(BaseModel):
+    content: Optional[str] = None
+    public_yn: Optional[str] = None
+
+
 class AmendAccount(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -118,7 +123,12 @@ class StatusUpdates(BaseModel):
     status_code: str
     status_name: str
     status_description: str
+    update_user: Optional[int] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     status_update_dt: str
+    update_note: Optional[str] = None
+    public_yn: Optional[str] = None
 
 
 class ProductInstancePublic(BaseModel):
@@ -141,6 +151,7 @@ class ProductInstancePublic(BaseModel):
     approval_dt: Optional[str] = None
     yield_: Optional[float] = 0
     standard: str
+    notifications: str
 
 
 class ProductInstancePrivate(BaseModel):
@@ -165,6 +176,7 @@ class ProductInstancePrivate(BaseModel):
     actual_revenue: Optional[float] = None
     expected_revenue: Optional[float] = None
     standard: str
+    notifications: str
 
 
 class AmendProductInstance(BaseModel):

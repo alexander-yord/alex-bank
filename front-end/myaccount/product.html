@@ -29,7 +29,24 @@
 
         <div v-if="isLoggedIn" class="content">
             <div v-if="product_info != null">
-                <h2>{{product_info.name}}</h2>
+                <h2>{{product_info.name}} <div class="info">
+                    <img v-if="product_data.notifications=='Y'" src="../assets/bell-solid.svg" class="info-icon" alt="Info icon">
+                    <img v-else-if="product_data.notifications=='P'" src="../assets/bullhorn-solid.svg" class="info-icon" alt="Info icon">
+                    <img v-else-if="product_data.notifications=='N'" src="../assets/bell-slash-solid.svg" class="info-icon" alt="Info icon">
+                    <span v-if="product_data.notifications=='Y'" class="extra-info">
+                        Receive notifications for every status change. <br>
+                        <a @click="changeNotificationPreferences('P')" style="cursor: pointer;">Important Only</a> <a @click="changeNotificationPreferences('N')" style="cursor: pointer;">No Notifications</a>
+                    </span>
+                    <span v-else-if="product_data.notifications=='P'" class="extra-info">
+                        Receive notifications only for important updates. <br>
+                        <a @click="changeNotificationPreferences('Y')" style="cursor: pointer;">All Notifications</a> <a @click="changeNotificationPreferences('N')" style="cursor: pointer;">No Notifications</a>
+                    </span>
+                    <span v-else-if="product_data.notifications=='N'" class="extra-info">
+                        You aren't receiving any notifications for this product. <br>
+                        <a @click="changeNotificationPreferences('Y')" style="cursor: pointer;">All Notifications</a> <a @click="changeNotificationPreferences('P')" style="cursor: pointer;">Important Notifications</a>
+                    </span>
+                </div> </h2>
+
                 <span>Prouct UID: {{product_data.product_uid}} | Account ID: <a :href="'account.html?account_id='+product_data.account_id">{{product_data.account_id}}</a> </span>
                 <div class="two-column-container">
                     <div class="column first-column">
@@ -37,32 +54,42 @@
                             <ul class="StepProgress">
                                 <li v-for="status in product_data.statuses.slice(0, -1)" class="StepProgress-item is-done"><strong>{{status.status_name}}</strong>
                                     {{status.status_update_dt}}
+                                    <div v-if="status.update_note">[<span style="color: rgb(255, 165, 0)">{{status.first_name}} {{status.last_name}}</span>] {{status.update_note}}</div>
                                 </li>
                                 <li v-if="product_status_progression.length != 0" class="StepProgress-item current"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
                                     {{product_data.statuses.at(-1).status_update_dt}}
+                                    <div v-if="product_data.statuses.at(-1).update_note">[<span style="color: rgb(255, 165, 0)">{{product_data.statuses.at(-1).first_name}} {{product_data.statuses.at(-1).last_name}}</span>] {{product_data.statuses.at(-1).update_note}}</div>
                                 </li>
                                 <li v-else class="StepProgress-item is-done"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
                                     {{product_data.statuses.at(-1).status_update_dt}}
                                 </li>
-                                <li v-for="status in product_status_progression" class="StepProgress-item"> <strong>{{status.status_name}}</strong>
+                                <li v-for="status in product_status_progression" class="StepProgress-item"> 
+                                    <strong>{{status.status_name}}</strong>
                                 </li>
                             </ul> 
-                            </div>
+                        </div>
                     </div>
                     <div class="column second-column">
                         <div class="card">
-                            <h3 class="card-title">Standard Product Information</h3>
+                            <h3 class="card-title">Standard Product Information </h3>
                             <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
                             <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> <br>
                             <div>Note that these are only the standard product characteristics, and are superseded by the Product Details listed below.</div>
                         </div> <br>
-                        <!-- <div class="card">
+                        <div class="card">
                             <h3 class="card-title">Available Product Actions</h3>
-                            <div class="button-row" style="width: 100%; padding: 0px;">
-                                <span v-if="available_actions.length == 0">There are no more actions that could be performed on this product.</span>
-                                <button v-for="action in available_actions" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                            <div v-if="available_actions.filter(action => ['AWT', 'AGR', 'DIS', 'CNL'].includes(action.status_code)).length == 0">
+                                <span>There are no actions that you can performed on this product currently.</span>
                             </div>
-                        </div> <br> -->
+                            <div v-else style="width: 100%">
+                                <label>Write a note <i>(opt.)</i>:
+                                <textarea style="width: 100%; max-width: none;" v-model="update_notes"> </textarea> <br>
+                                <div class="button-row" style="width: 100%; padding: 0px;">
+                                    <button v-for="action in available_actions.filter(action => ['AWT', 'AGR', 'DIS', 'CNL'].includes(action.status_code))" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                                </div> 
+                            </div>
+                        </div> <br>
+
                         <div class="card">
                             <h3 class="card-title">Product Details</h3>
                             <details>
@@ -98,6 +125,41 @@
                                 </div>
                             </div>
                         </div> <br>
+
+                        <div v-if="product_det.contract_id != null" class="card" ref="contractCard">
+                            <h3 class="card-title">Contract</h3>
+                            <details style="width: 100%;" ref="contractDetails">
+                                <summary>View Contract</summary>
+                                <span><iframe id="contract" width="600" height="800px" type="application/pdf"></iframe></span>
+                            </details>
+                            <div id="sign-contract" v-if="product_data.statuses.at(-1).status_code == 'SGN'">
+                                To sign the contract, write your name:<br>
+                                <div id="signature-container">
+                                    <input id="signature" type="text" :placeholder="account_data.first_name+' '+account_data.last_name" oninput="checkSignature()">
+                                    <span id="signature-check">✔</span>
+                                    <span id="signature-x">✖</span>
+                                </div>
+                                <br>
+                                <button @click="signContract">Sign</button>
+                                <script>
+                                    function checkSignature() {
+                                        const signatureInput = document.getElementById('signature');
+                                        const signatureCheck = document.getElementById('signature-check');
+                                        const signatureX = document.getElementById('signature-x');
+                                    
+                                        if (signatureInput.value === signatureInput.placeholder) {
+                                            signatureCheck.style.display = 'inline';
+                                            signatureX.style.display = 'none';
+                                        } else {
+                                            signatureCheck.style.display = 'none';
+                                            signatureX.style.display = 'inline';
+                                        }
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                        <br v-if="product_det.contract_id != null"> 
+
                         <div class="card">
                             <details>
                                 <summary>Terms and Conditions</summary>
@@ -131,6 +193,7 @@
                     account_id: null, 
                     product_uid: null, 
                     product_data: null,
+                    notifications: null,
                     product_status_progression: null, 
                     product_info: null, 
                     available_actions: null, 
@@ -139,7 +202,9 @@
                     init_product_det: {}, 
                     product_det: {}, 
                     init_actuals: {}, 
-                    actuals: {}
+                    actuals: {}, 
+                    update_notes: null, 
+                    account_data: {}
                 };
             },
             mounted() {
@@ -237,34 +302,131 @@
                             "actual_revenue": this.product_data.actual_revenue, 
                             "actual_end_date": this.product_data.actual_end_date
                         };
+                        this.loadContract();
+                        this.loadAccountName();
+                        console.log(this.account_data.notifications);
                     } catch (error) {
                         console.error('Error loading product information:', error);
                     }
                 }, 
-                async changeStatus (new_status) {
-                    if (new_status == 'APR') {
-                        if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
-                        || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
-                            alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
-                            return ;
-                        }
-                    }
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}?usr_account_id=${this.usr_account_id}`, {
-                            method: "PATCH", 
+                async loadContract() {
+                    if (this.product_det.contract_id) {
+                        const contractUrl = `${API_BASE_URL}/product/instance/${this.product_uid}/contract/?usr_account_id=${this.usr_account_id}`;
+                        const response = await fetch(contractUrl, {
+                            method: "GET",
                             headers: {
                                 "Content-Type": "application/json",
                                 "token": sessionStorage.getItem("token")
                             }
                         });
-                        const data = await response.json();
                         if (!response.ok) {
-                            console.error('Error: ', data);
-                            alert("Error updating product status");
-                            return;
+                            throw new Error('Network response was not ok');
                         }
+                        const blob = await response.blob();
 
-                        alert("Product status successfully updated!");
-                        window.location.reload();
+                        // Create a URL for the blob
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        
+                        // Get the existing iframe element by ID
+                        const iframe = document.getElementById('contract');
+                        if (iframe) {
+                            iframe.style.width = '100%';
+                            iframe.src = blobUrl;
+                            
+                            // Release the URL object when the iframe is no longer needed
+                            iframe.onload = () => window.URL.revokeObjectURL(blobUrl);
+                        } else {
+                            console.error('Iframe with id "contract" not found');
+                        }
+                    }
+                },
+                async loadAccountName() {
+                    account_id = this.product_data.account_id;
+                    const response = await fetch(`${API_BASE_URL}/account/${account_id}?usr_account_id=${this.usr_account_id}`, {
+                        method: "GET",
+                        headers: { "token": sessionStorage.getItem("token") }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    this.account_data = data;
+                },
+                async signContract() {
+                    const signatureInput = document.getElementById('signature');
+                    if (this.account_data.verification_code == 'Y') {
+                        if (signatureInput.value === signatureInput.placeholder) {
+                            const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/sign-contract?usr_account_id=${this.usr_account_id}`, {
+                                method: "POST",
+                                headers: { "token": sessionStorage.getItem("token") }
+                            });
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            window.location.reload();
+                        } else {
+                            alert("Please enter your name as it appears in the field.")
+                        }
+                    } 
+                    else {
+                        alert("You cannot sign the contract if you are not a verified account. Go to 'My Account' to verify your email.")
+                    }
+                    
+                },
+                async changeNotificationPreferences (new_preference) {
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/notifications/${new_preference}?usr_account_id=${this.usr_account_id}`, {
+                        method: "PUT", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        console.error('Error: ', data);
+                        alert("Error updating product notification preferences");
+                        return;
+                    }
+
+                    window.location.reload();
+                },
+                async changeStatus (new_status) {
+                    if (new_status == 'AWT') {
+                        // Expand the details element
+                        this.$refs.contractDetails.open = true;
+
+                        // Scroll to the contract card
+                        this.$nextTick(() => {
+                            this.$refs.contractCard.scrollIntoView({ behavior: 'smooth' });
+                        });
+                        return ;
+                    }
+                    body = {};
+                    if (this.update_notes != null) {
+                        body = {
+                            "content": this.update_notes, 
+                            "public_yn": 'Y'
+                        }
+                    }
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}/client/?usr_account_id=${this.usr_account_id}`, {
+                        method: "PATCH", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }, 
+                        body: JSON.stringify(body)
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        console.error('Error: ', data);
+                        alert("Error updating product status");
+                        return;
+                    }
+
+                    alert("Product status successfully updated!");
+                    window.location.reload();
                 }, 
                 toggleEdit1 () {
                     if (this.isEditable1) {
