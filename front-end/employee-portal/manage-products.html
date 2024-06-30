@@ -109,98 +109,97 @@
 
         <div v-else class="content">
             <h2 style="color: red; text-align: center;">You are not logged in!</h2>
-        </div>
-
-        <script>
-            const { createApp } = Vue;
-            createApp({
-                data() {
-                    return {
-                        isLoggedIn: isLoggedIn(),
-                        usr_account_id: sessionStorage.getItem("account_id"),
-                        first_name: sessionStorage.getItem("first_name"),
-                        last_name: sessionStorage.getItem("last_name"),
-                        user_role: sessionStorage.getItem("user_role"),
-                        statuses: [], 
-                        products: []
-                    };
+        </div>        
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    usr_account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    statuses: [], 
+                    products: []
+                };
+            },
+            methods: {
+                showOption(opt) {
+                    opt.show = true;
                 },
-                methods: {
-                    showOption(opt) {
-                        opt.show = true;
-                    },
-                    hideOption(opt) {
-                        opt.show = false;
-                    }, 
-                    goToProduct() {
-                        const query = document.getElementById('search-input').value;
-                        if (query) {
-                            window.location.href = `product.html?product_uid=${encodeURIComponent(query)}`;
-                        }
-                    }, 
-                    async loadPage () {
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            this.statuses = data["statuses"];
-                            console.log(this.statuses);
-                        } catch (error) {
-                            console.error('Error fetching statuses:', error);
-                        }
-                    }, 
-                    async loadProducts() {
-                        // Step 1: Filter statuses
-                        const filteredStatuses = this.statuses.filter(status => status.show === false);
-                        
-                        // Step 2: Construct the query string
-                        const statusCodes = filteredStatuses.map(status => `status_code=${status.status_code}`).join('&');
-
-                        // Step 3: Construct the full URL
-                        const accountId = sessionStorage.getItem('account_id');
-                        const url = `${API_BASE_URL}/product/instances/?usr_account_id=${accountId}&${statusCodes}`;
-
-                        // Step 4: Fetch the data
-                        try {
-                            const response = await fetch(url, {
-                                method: "GET",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }
-                            });
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            // Do something with the data
-                            this.products = data;
-                            console.log(data);
-                        } catch (error) {
-                            console.error('Error fetching product instances:', error);
-                        }
+                hideOption(opt) {
+                    opt.show = false;
+                }, 
+                goToProduct() {
+                    const query = document.getElementById('search-input').value;
+                    if (query) {
+                        window.location.href = `product.html?product_uid=${encodeURIComponent(query)}`;
                     }
                 }, 
-                mounted() {
-                    document.querySelectorAll('.accordion-header').forEach(header => {
-                        header.addEventListener('click', function() {
-                            const body = this.nextElementSibling;
-                            body.classList.toggle('show');
-                        });
-                    });
+                async loadPage () {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.statuses = data["statuses"];
+                        console.log(this.statuses);
+                    } catch (error) {
+                        console.error('Error fetching statuses:', error);
+                    }
+                }, 
+                async loadProducts() {
+                    // Step 1: Filter statuses
+                    const filteredStatuses = this.statuses.filter(status => status.show === false);
+                    
+                    // Step 2: Construct the query string
+                    const statusCodes = filteredStatuses.map(status => `status_code=${status.status_code}`).join('&');
 
-                    this.loadPage();
-                    const arrowButton = document.getElementById('arrow-button');
-                    if (arrowButton) {
-                        arrowButton.addEventListener('click', function() {
-                            document.getElementById("myDropdown").classList.toggle("show");
+                    // Step 3: Construct the full URL
+                    const accountId = sessionStorage.getItem('account_id');
+                    const url = `${API_BASE_URL}/product/instances/?usr_account_id=${accountId}&${statusCodes}`;
+
+                    // Step 4: Fetch the data
+                    try {
+                        const response = await fetch(url, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }
                         });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        // Do something with the data
+                        this.products = data;
+                        console.log(data);
+                    } catch (error) {
+                        console.error('Error fetching product instances:', error);
                     }
                 }
-            }).mount('#app');
-        </script>        
-    </div>
+            }, 
+            mounted() {
+                document.querySelectorAll('.accordion-header').forEach(header => {
+                    header.addEventListener('click', function() {
+                        const body = this.nextElementSibling;
+                        body.classList.toggle('show');
+                    });
+                });
+
+                this.loadPage();
+                const arrowButton = document.getElementById('arrow-button');
+                if (arrowButton) {
+                    arrowButton.addEventListener('click', function() {
+                        document.getElementById("myDropdown").classList.toggle("show");
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>

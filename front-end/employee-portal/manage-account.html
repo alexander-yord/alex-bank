@@ -100,56 +100,56 @@
         <div v-else class="content">
             <h2 style="color: red; text-align: center;">You are not logged in!</h2>
         </div>
-
-        <script>
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     const arrowButton = document.getElementById('arrow-button');
-                
-            //     arrowButton.addEventListener('click', function() {
-            //         document.getElementById("myDropdown").classList.toggle("show");
-            //     });
-            // });
-
-            const { createApp } = Vue;
-            createApp({
-                data() {
-                    return {
-                        isLoggedIn: isLoggedIn(),
-                        usr_account_id: sessionStorage.getItem("account_id"),
-                        first_name: sessionStorage.getItem("first_name"),
-                        last_name: sessionStorage.getItem("last_name"),
-                        user_role: sessionStorage.getItem("user_role"),
-                        statuses: [
-                            { "code": "CMP", "name": "Complete", "show": true }, 
-                            { "code": "WOF", "name": "Written Off", "show": true }, 
-                            { "code": "ORD", "name": "Overdue", "show": true }
-                        ]
-                    };
-                },
-                methods: {
-                    showOption(opt) {
-                        opt.show = true;
-                    },
-                    hideOption(opt) {
-                        opt.show = false;
-                    }, 
-                    goToAccount() {
-                        const query = document.getElementById('search-input').value;
-                        if (query) {
-                            window.location.href = `account.html?account_id=${encodeURIComponent(query)}`;
-                        }
-                    }
-                }, 
-                mounted() {
-                    document.querySelectorAll('.accordion-header').forEach(header => {
-                        header.addEventListener('click', function() {
-                            const body = this.nextElementSibling;
-                            body.classList.toggle('show');
-                        });
-                    });
-                }
-            }).mount('#app');
-        </script>
     </div>
+
+    <script>
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     const arrowButton = document.getElementById('arrow-button');
+            
+        //     arrowButton.addEventListener('click', function() {
+        //         document.getElementById("myDropdown").classList.toggle("show");
+        //     });
+        // });
+
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    usr_account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    statuses: [
+                        { "code": "CMP", "name": "Complete", "show": true }, 
+                        { "code": "WOF", "name": "Written Off", "show": true }, 
+                        { "code": "ORD", "name": "Overdue", "show": true }
+                    ]
+                };
+            },
+            methods: {
+                showOption(opt) {
+                    opt.show = true;
+                },
+                hideOption(opt) {
+                    opt.show = false;
+                }, 
+                goToAccount() {
+                    const query = document.getElementById('search-input').value;
+                    if (query) {
+                        window.location.href = `account.html?account_id=${encodeURIComponent(query)}`;
+                    }
+                }
+            }, 
+            mounted() {
+                document.querySelectorAll('.accordion-header').forEach(header => {
+                    header.addEventListener('click', function() {
+                        const body = this.nextElementSibling;
+                        body.classList.toggle('show');
+                    });
+                });
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>
