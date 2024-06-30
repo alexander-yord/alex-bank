@@ -43,6 +43,7 @@
             <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
             <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> 
             <button v-if="!show_appl_form" id="show-appl-button" @click="showApplication()">Apply for {{product_info.category_name}}</button>
+            
             <form v-if="show_appl_form" id="appl-form" class="form-container full-width">
                 <div class="form-group full-width">
                     <h3>{{product_info.category_name}} Application</h3>
@@ -53,9 +54,9 @@
                 </div>
                 <div class="form-group" style="display: inline;">
                     <span style="display: inline;">Customize Product: </span>
-                    <input type="radio" name="appl_cust" value="yes" v-model="appl_cust" value="N" style="display: inline;" >
+                    <input type="radio" name="appl_cust" value="yes" v-model="appl_cust" style="display: inline;" >
                     <label for="standard_n" style="display: inline;" >Yes</label>
-                    <input type="radio" name="appl_cust" value="no" v-model="appl_cust" value="Y" style="display: inline;" checked>
+                    <input type="radio" name="appl_cust" value="no" v-model="appl_cust" style="display: inline;" checked>
                     <label for="standard_y" style="display: inline;">No</label>
                     <br>
                     <span>*Please include any customization requests in the special notes field.</span>
@@ -123,6 +124,15 @@
 
             this.product_info = data;
             this.appl_amount = data.monetary_amount;
+
+            this.$nextTick(() => {
+              if (!this.isLoggedIn) {
+                var button = document.getElementById("show-appl-button");
+                if (button) {
+                  button.style.backgroundColor = "rgb(200, 200, 200)";
+                }
+              }
+            });
         } catch (error) {
             console.error('Error fetching product categories:', error);
         }

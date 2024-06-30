@@ -76,6 +76,11 @@
                             <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> <br>
                             <div>Note that these are only the standard product characteristics, and are superseded by the Product Details listed below.</div>
                         </div> <br>
+
+                        <div v-if="account_data.verification_code != 'Y'" class="card">
+                            ⚠️ You will need to verify your account in order to receive updates and be able to sign the contract.
+                        </div> <br v-if="account_data.verification_code != 'Y'">
+
                         <div class="card">
                             <h3 class="card-title">Available Product Actions</h3>
                             <div v-if="available_actions.filter(action => ['AWT', 'AGR', 'DIS', 'CNL'].includes(action.status_code)).length == 0">

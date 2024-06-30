@@ -816,3 +816,37 @@ button img {
     color: var(--color-accent-red);
 }
 
+/* */
+
+.verification {
+    position: relative;
+    padding-right: 30px; /* Add padding to make space for the icon */
+}
+
+.verification-container {
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    display: inline-block;
+}
+
+.verification-check,
+.verification-x {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    display: none;
+}
+
+.verification-check {
+    color: var(--color-accent-green);
+}
+
+.verification-x {
+    color: var(--color-accent-red);
+}
+
+
