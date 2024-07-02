@@ -1,0 +1,78 @@
+[
+    {
+        "displayName": "Executive Reports",
+        "icon": "../assets/chart-simple-solid.svg",
+        "privileges": ["A", "C"],
+        "dataGroup": "group1",
+        "children": [
+            {
+                "displayName": "Outstanding Products",
+                "url": "https://app.sumboard.io/s/WzcfHKBj7mPwL/8rTFWMtnBgHWm"
+            }
+        ]
+    },
+    {
+        "displayName": "Accounts",
+        "icon": "../assets/user-solid.svg",
+        "privileges": ["A", "C", "E"],
+        "dataGroup": "group2",
+        "children": [
+            {
+                "displayName": "Manage Accounts",
+                "url": "manage-account.html"
+            },
+            {
+                "displayName": "Create Account",
+                "url": "something.html"
+            }
+        ]
+    },
+    {
+        "displayName": "Client Products",
+        "icon": "../assets/handshake-simple-solid.svg",
+        "privileges": ["A", "C", "E"],
+        "dataGroup": "group3",
+        "children": [
+            {
+                "displayName": "Manage Products",
+                "url": "manage-products.html"
+            },
+            {
+                "displayName": "Sell Product",
+                "url": "something.html"
+            }
+        ]
+    },
+    {
+        "displayName": "Products",
+        "icon": "../assets/store-solid.svg",
+        "privileges": ["A", "C", "E"],
+        "dataGroup": "group4",
+        "children": [
+            {
+                "displayName": "Manage Product",
+                "url": "something.html"
+            },
+            {
+                "displayName": "New Product",
+                "url": "something.html"
+            }
+        ]
+    },
+    {
+        "displayName": "Employees",
+        "icon": "../assets/building-user-solid.svg",
+        "privileges": ["A", "C", "E"],
+        "dataGroup": "group5",
+        "children": [
+            {
+                "displayName": "Manage Employees",
+                "url": "something.html"
+            },
+            {
+                "displayName": "Add Employee",
+                "url": "something.html"
+            }
+        ]
+    }
+]

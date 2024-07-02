@@ -7,7 +7,7 @@ function isLoggedIn() {
 API_BASE_URL = "http://127.0.0.1:8000/api"
 
 try {
-    if (window.location.hostname != '') {
+    if (window.location.hostname != '' && window.location.hostname != '127.0.0.1') {
         API_BASE_URL = `${window.location.protocol}//${window.location.hostname}/api`
     }
 } 
