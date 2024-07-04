@@ -75,7 +75,9 @@ def available_next_status(current_status: str):
     next_status_map = {
         "APL": ["REV", "APR", "DEN", "AMD", "CNL"],
         "REV": ["APR", "DEN", "AMD", "CNL"],
-        "AMD": ["APR", "CNL"],
+        "AMD": ["AGR", "DIS", "CNL"],
+        "AGR": ["APR", "CNL"],
+        "DIS": ["AMD", "CNL"],
         "APR": ["SGN", "CNL"],
         "SGN": ["AWT", "CNL"],
         "AWT": ["NOR", "CNL"],
@@ -108,7 +110,9 @@ def status_progressions(current_status: str):
     next_status_map = {
         "APL": ["REV", "APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
         "REV": ["APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
-        "AMD": ["APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "AMD": ["AGR", "APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "AGR": ["APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
+        "DIS": ["AMD", "AGR", "APR", "SGN", "AWT", "NOR", "DUE", "CMP"],
         "APR": ["SGN", "AWT", "NOR", "DUE", "CMP"],
         "SGN": ["AWT", "NOR", "DUE", "CMP"],
         "AWT": ["NOR", "DUE", "CMP"],

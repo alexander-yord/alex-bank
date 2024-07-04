@@ -5,6 +5,7 @@
     --color-text-dark: rgb(131, 152, 162);
     --color-border-light: rgb(200, 200, 200);
     --color-accent-green: rgb(58, 172, 93);
+    --color-accent-yellow: rgb(255, 204, 0);
     --color-accent-red: rgb(204, 82, 82);
     --color-grey-light: #bebebe;
     --color-grey-dark: #979797;
@@ -167,6 +168,33 @@ select {
     padding-right: 40px;
 }
 
+select:disabled {
+    background-color: var(--color-bg-disabled);
+}
+
+select:focus {
+    border-color: var(--color-bg-dark);
+    outline: none;
+}
+
+select option {
+    background-color: var(--color-bg-light);
+    color: var(--color-bg-dark);
+}
+
+.standard-select {
+    background-color: var(--color-bg-light);
+    color: var(--color-bg-dark);
+    border: 1px solid var(--color-border-light);
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    margin: 10px 0;
+    width: 100%;
+    max-width: 300px;
+    box-sizing: border-box;
+}
+
 .custom-select::before,
 .custom-select::after {
     --size: 0.3rem;
@@ -188,20 +216,6 @@ select {
     border-right: var(--size) solid transparent;
     border-top: var(--size) solid var(--color-black);
     top: 55%;
-}
-
-select:disabled {
-    background-color: var(--color-bg-disabled);
-}
-
-select:focus {
-    border-color: var(--color-bg-dark);
-    outline: none;
-}
-
-select option {
-    background-color: var(--color-bg-light);
-    color: var(--color-bg-dark);
 }
 
 .form-container {
@@ -726,3 +740,113 @@ button img {
 .StepProgress strong {
     display: block;
 }
+
+.info {
+    font-size: 20px;
+    width: auto;
+    padding-left: 5px;
+    position: relative;
+    display: inline-block; /* Ensure it appears inline */
+}
+
+.info-icon {
+    width: 15px;
+    vertical-align: middle; /* Align the icon with text */
+}
+
+.extra-info {
+    display: block; /* Set to block for transition effects */
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out; /* Transition properties */
+    margin-left: 5px;
+    line-height: 16px;
+    font-size: 12px;
+    position: absolute;
+    top: 0;
+    left: 25px; /* Adjusted to position correctly next to the icon */
+    background-color: var(--color-bg-light); /* Assuming you want it to match the light background color */
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10; /* Ensure it appears above other elements */
+    white-space: wrap; /* Prevents wrapping to ensure single line */
+    max-width: 300px; /* Set a maximum width */
+    width: max-content; /* Ensures the width is as wide as the content */
+}
+
+.info:hover .extra-info {
+    opacity: 1; /* Make visible */
+    visibility: visible; /* Make visible */
+}
+
+.info:hover {
+    background-color: white; /* Adjusted background color on hover */
+    text-align: left !important;
+}
+
+#signature {
+    position: relative;
+    padding-right: 30px; /* Add padding to make space for the icon */
+}
+
+#signature-container {
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    display: inline-block;
+}
+
+#signature-check,
+#signature-x {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    display: none;
+}
+
+#signature-check {
+    color: var(--color-accent-green);
+}
+
+#signature-x {
+    color: var(--color-accent-red);
+}
+
+/* */
+
+.verification {
+    position: relative;
+    padding-right: 30px; /* Add padding to make space for the icon */
+}
+
+.verification-container {
+    width: 100%;
+    max-width: 300px;
+    position: relative;
+    display: inline-block;
+}
+
+.verification-check,
+.verification-x {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    pointer-events: none;
+    display: none;
+}
+
+.verification-check {
+    color: var(--color-accent-green);
+}
+
+.verification-x {
+    color: var(--color-accent-red);
+}
+
+

@@ -320,8 +320,8 @@ async def product_sale(account_id: int, product_id: int, usr_account_id: int, da
     application_id = db.cursor.fetchone()[0]
 
     stmt2 = """
-    INSERT INTO product_instance (application_id, account_id, status_code)
-    VALUES (%s, %s, 'APL')
+    INSERT INTO product_instance (application_id, account_id, status_code, latest_note)
+    VALUES (%s, %s, 'APL', '')
     """
     db.cursor.execute(stmt2, (application_id, account_id))
     db.cnx.commit()

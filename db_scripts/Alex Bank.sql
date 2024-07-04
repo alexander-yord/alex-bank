@@ -88,7 +88,7 @@ CREATE TABLE `applications` (
 
 CREATE TABLE `product_instance` (
   `product_uid` integer PRIMARY KEY AUTO_INCREMENT,
-  `application_id` integer,
+  `application_id` integer NOT NULL,
   `account_id` integer,
   `amount` float,
   `yield` float,
@@ -99,7 +99,11 @@ CREATE TABLE `product_instance` (
   `product_end_date` date,
   `special_notes` text,
   `actual_end_date` date,
-  `actual_revenue` float
+  `actual_revenue` float,
+  `latest_update_user_id` integer,
+  `latest_note` text,
+  `latest_note_public_yn` char(1),
+  `notifications_yn` char(1) DEFAULT 'P'
 );
 
 CREATE TABLE `product_statuses` (
@@ -113,7 +117,10 @@ CREATE TABLE `product_status_updates` (
   `product_uid` integer,
   `was_status` varchar(3),
   `is_code` varchar(3),
-  `update_dt` timestamp DEFAULT (now())
+  `update_dt` timestamp DEFAULT (now()),
+  `update_user` int,
+  `update_note` text,
+  `update_note_public_yn` char(1)
 );
 
 CREATE TABLE `documents` (
@@ -151,6 +158,14 @@ CREATE TABLE `account_worthiness_notes` (
   `client_note` text,
   `employee_note` text,
   `passed_yn` char(1)
+);
+
+CREATE TABLE `contracts` (
+  `contract_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `unsigned_contract` text,
+  `signature_date` date,
+  `signed_contract` text,
+  `document_id` integer
 );
 
 CREATE UNIQUE INDEX `worthiness_check_steps_index_0` ON `worthiness_check_steps` (`account_group_code`, `version`, `step_no`);
@@ -191,8 +206,6 @@ ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`wc_step_uid`) REFERENCE
 
 ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`prime_uid`) REFERENCES `account_worthiness` (`prime_uid`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `documents` (`document_id`);
-
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`status_code`) REFERENCES `product_statuses` (`code`);
 
 ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
@@ -202,3 +215,9 @@ ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `
 ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `product_statuses` (`code`);
 
 ALTER TABLE `applications` ADD FOREIGN KEY (`approved_by`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`contract_id`);
+
+ALTER TABLE `contracts` ADD FOREIGN KEY (`document_id`) REFERENCES `documents` (`document_id`);
+
+ALTER TABLE `product_instance` ADD FOREIGN KEY (`latest_update_user_id`) REFERENCES `accounts` (`account_id`);

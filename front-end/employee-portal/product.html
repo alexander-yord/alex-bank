@@ -66,25 +66,59 @@
 
             <div class="emp-portal-content">
                 <div v-if="product_info != null">
-                    <h2>{{product_info.name}}</h2>
+                    <h2>{{product_info.name}} <div class="info">
+                        <img v-if="product_data.notifications=='Y'" src="../assets/bell-solid.svg" class="info-icon" alt="Info icon">
+                        <img v-else-if="product_data.notifications=='P'" src="../assets/bullhorn-solid.svg" class="info-icon" alt="Info icon">
+                        <img v-else-if="product_data.notifications=='N'" src="../assets/bell-slash-solid.svg" class="info-icon" alt="Info icon">
+                        <span v-if="product_data.notifications=='Y'" class="extra-info">
+                            Receives notifications for every status change. <br>
+                            <a @click="changeNotificationPreferences('P')" style="cursor: pointer;">Important Only</a> <a @click="changeNotificationPreferences('N')" style="cursor: pointer;">No Notifications</a>
+                        </span>
+                        <span v-else-if="product_data.notifications=='P'" class="extra-info">
+                            Receives notifications only for important updates. <br>
+                            <a @click="changeNotificationPreferences('Y')" style="cursor: pointer;">All Notifications</a> <a @click="changeNotificationPreferences('N')" style="cursor: pointer;">No Notifications</a>
+                        </span>
+                        <span v-else-if="product_data.notifications=='N'" class="extra-info">
+                            Client isn't receiving any notifications for this product. <br>
+                            <a @click="changeNotificationPreferences('Y')" style="cursor: pointer;">All Notifications</a> <a @click="changeNotificationPreferences('P')" style="cursor: pointer;">Important Notifications</a>
+                        </span>
+                    </div> </h2>
                     <span>Prouct UID: {{product_data.product_uid}} | Account ID: <a :href="'account.html?account_id='+product_data.account_id">{{product_data.account_id}}</a> </span>
                     <div class="two-column-container">
                         <div class="column first-column">
                             <div>
                                 <ul class="StepProgress">
-                                    <li v-for="status in product_data.statuses.slice(0, -1)" class="StepProgress-item is-done"><strong>{{status.status_name}}</strong>
-                                        {{status.status_update_dt}}
+                                    <li v-for="status in product_data.statuses.slice(0, -1)" class="StepProgress-item is-done"><strong>{{status.status_name}} <div class="info">
+                                        <img src="../assets/circle-info-solid.svg" class="info-icon" alt="Info icon">
+                                        <span class="extra-info">
+                                            {{status.status_update_dt}} <br>
+                                            <a :href="'account.html?account_id='+status.update_user">{{status.first_name}} {{status.last_name}}</a>
+                                        </span>
+                                    </div></strong> 
+                                    <div v-if="status.update_note">{{status.first_name}} {{status.last_name}} [<span style="color: rgb(255, 165, 0)">{{status.public_yn == 'Y' ? 'Public' : 'Internal'}}</span>]: {{status.update_note}}</div>
                                     </li>
-                                    <li v-if="product_status_progression.length != 0" class="StepProgress-item current"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
-                                        {{product_data.statuses.at(-1).status_update_dt}}
+                                    <li v-if="product_status_progression.length != 0" class="StepProgress-item current"><strong>{{product_data.statuses.at(-1).status_name}} <div class="info">
+                                        <img src="../assets/circle-info-solid.svg" class="info-icon" alt="Info icon">
+                                        <span class="extra-info">
+                                            {{product_data.statuses.at(-1).status_update_dt}} <br>
+                                            <a :href="'account.html?account_id='+product_data.statuses.at(-1).update_user">{{product_data.statuses.at(-1).first_name}} {{product_data.statuses.at(-1).last_name}}</a>
+                                        </span>
+                                    </div></strong>
+                                    <div v-if="product_data.statuses.at(-1).update_note">{{product_data.statuses.at(-1).first_name}} {{product_data.statuses.at(-1).last_name}} [<span style="color: rgb(255, 165, 0)">{{product_data.statuses.at(-1).public_yn == 'Y' ? 'Public' : 'Internal'}}</span>]: {{product_data.statuses.at(-1).update_note}}</div>
                                     </li>
-                                    <li v-else class="StepProgress-item is-done"><strong>{{product_data.statuses.at(-1).status_name}}</strong>
-                                        {{product_data.statuses.at(-1).status_update_dt}}
+                                    <li v-else class="StepProgress-item is-done"><strong>{{product_data.statuses.at(-1).status_name}} <div class="info">
+                                        <img src="../assets/circle-info-solid.svg" class="info-icon" alt="Info icon">
+                                        <span class="extra-info">
+                                            {{product_data.statuses.at(-1).status_update_dt}} <br>
+                                            <a :href="'account.html?account_id='+product_data.statuses.at(-1).update_user">{{product_data.statuses.at(-1).first_name}} {{product_data.statuses.at(-1).last_name}}</a>
+                                        </span>
+                                    </div></strong>
+                                    <div v-if="product_data.statuses.at(-1).update_note">[<span style="color: rgb(255, 165, 0)">{{product_data.statuses.at(-1).public_yn == 'Y' ? 'Public' : 'Internal'}}</span>] {{product_data.statuses.at(-1).update_note}}</div>
                                     </li>
                                     <li v-for="status in product_status_progression" class="StepProgress-item"> <strong>{{status.status_name}}</strong>
                                     </li>
                                 </ul> 
-                                </div>
+                            </div>
                         </div>
                         <div class="column second-column">
                             <div class="card">
@@ -94,11 +128,22 @@
                             </div> <br>
                             <div class="card">
                                 <h3 class="card-title">Available Product Actions</h3>
-                                <div class="button-row" style="width: 100%; padding: 0px;">
-                                    <span v-if="available_actions.length == 0">There are no more actions that could be performed on this product.</span>
-                                    <button v-for="action in available_actions" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                                <div v-if="available_actions.length == 0">
+                                    <span>There are no more actions that could be performed on this product.</span>
+                                </div>
+                                <div v-else style="width: 100%">
+                                    <label>Write a note <i>(opt.)</i>: </label>
+                                        <select style="width: auto;" v-model="public_note_yn">
+                                            <option value="Y">Public</option>
+                                            <option value="N">Internal</option>
+                                        </select> <br>
+                                    <textarea style="width: 100%; max-width: none;" v-model="update_notes"> </textarea> <br>
+                                    <div class="button-row" style="width: 100%; padding: 0px;">
+                                        <button v-for="action in available_actions" class="action-button" @click="changeStatus(action.status_code)">{{action.status_name}}</button>
+                                    </div> 
                                 </div>
                             </div> <br>
+
                             <div class="card">
                                 <h3 class="card-title">Product Details</h3>
                                 <button class="pencil-button" @click="toggleEdit1">
@@ -147,6 +192,7 @@
                                     </div>
                                 </div>
                             </div> <br>
+
                             <div v-if="['DUE', 'CMP', 'ORD', 'WOF'].includes(product_data.statuses.at(-1).status_code)" class="card">
                                 <h3 class="card-title">Actuals</h3>
                                 <button class="pencil-button" @click="toggleEdit2">
@@ -167,7 +213,16 @@
                                         Update Product Actuals
                                     </button>
                                 </div>
-                            </div> <br>
+                            </div> <br v-if="['DUE', 'CMP', 'ORD', 'WOF'].includes(product_data.statuses.at(-1).status_code)">
+
+                            <div v-if="product_det.contract_id != null" class="card">
+                                <h3 class="card-title">Contract</h3>
+                                <details style="width: 100%;">
+                                    <summary>View Contract</summary>
+                                    <span><iframe id="contract" width="600" height="800px" type="application/pdf"></iframe></span>
+                                </details>
+                            </div> <br v-if="product_det.contract_id != null">                   
+
                             <div class="card">
                                 <details>
                                     <summary>Terms and Conditions</summary>
@@ -191,251 +246,314 @@
         <div v-else class="content">
             <h2 style="color: red; text-align: center;">You are not logged in!</h2>
         </div>
-
-        <script>
-            const { createApp } = Vue;
-            createApp({
-                data() {
-                    return {
-                        isLoggedIn: isLoggedIn(),
-                        usr_account_id: sessionStorage.getItem("account_id"),
-                        first_name: sessionStorage.getItem("first_name"),
-                        last_name: sessionStorage.getItem("last_name"),
-                        user_role: sessionStorage.getItem("user_role"),
-                        account_id: null, 
-                        product_uid: null, 
-                        product_data: null,
-                        product_status_progression: null, 
-                        product_info: null, 
-                        available_actions: null, 
-                        isEditable1: false, 
-                        isEditable2: false,
-                        init_product_det: {}, 
-                        product_det: {}, 
-                        init_actuals: {}, 
-                        actuals: {}
-                    };
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    usr_account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    account_id: null, 
+                    product_uid: null, 
+                    product_data: null,
+                    product_status_progression: null, 
+                    product_info: null, 
+                    available_actions: null, 
+                    isEditable1: false, 
+                    isEditable2: false,
+                    init_product_det: {}, 
+                    product_det: {}, 
+                    init_actuals: {}, 
+                    actuals: {}, 
+                    update_notes: null, 
+                    public_note_yn: 'Y'
+                };
+            },
+            methods: {
+                showOption(opt) {
+                    opt.show = true;
                 },
-                methods: {
-                    showOption(opt) {
-                        opt.show = true;
-                    },
-                    hideOption(opt) {
-                        opt.show = false;
-                    }, 
-                    async loadPage(){
-                        const url = new URL(window.location.href);
-                        const params = new URLSearchParams(url.search);
-                        this.product_uid = params.get("product_uid");
-                        this.account_id = params.get("account_id");
+                hideOption(opt) {
+                    opt.show = false;
+                }, 
+                async loadPage(){
+                    const url = new URL(window.location.href);
+                    const params = new URLSearchParams(url.search);
+                    this.product_uid = params.get("product_uid");
+                    this.account_id = params.get("account_id");
 
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                                method: "GET", 
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }
-                            });
-                            const data = await response.json();
-                            if (!response.ok) {
-                                console.error('Error:', data);
-                                alert("Error loading product information");
-                                return; 
-                            }
-
-                            this.product_data = data;
-                            console.log(this.product_data);
-
-                            const response2 = await fetch(`${API_BASE_URL}/front-end/status-progression?current_status=${this.product_data.statuses.at(-1).status_code}`, {
-                                method: "GET"
-                            });
-
-                            const data2 = await response2.json();
-                            if (!response.ok) {
-                                console.error('Error:', data2);
-                                alert("Error loading product information");
-                                return; 
-                            }
-
-                            this.product_status_progression = data2;
-                            console.log(this.product_status_progression);
-
-                            const response3 = await fetch(`${API_BASE_URL}/product/${this.product_data.product_id}`, {
-                                method: "GET"
-                            });
-
-                            const data3 = await response3.json();
-                            if (!response.ok) {
-                                console.error('Error:', data3);
-                                alert("Error loading product information");
-                                return; 
-                            }
-
-                            this.product_info = data3;
-                            console.log(this.product_info);
-
-                            const response4 = await fetch(`${API_BASE_URL}/front-end/statuses?current_status=${this.product_data.statuses.at(-1).status_code}`, {
-                                method: "GET"
-                            });
-
-                            const data4 = await response4.json();
-                            if (!response.ok) {
-                                console.error('Error:', data4);
-                                alert("Error loading product information");
-                                return; 
-                            }
-                            this.available_actions = data4;
-                            console.log(this.available_actions);
-
-                            this.init_product_det = {
-                                "amount": this.product_data.amount, 
-                                "contract_id": this.product_data.contract_id, 
-                                "product_start_date": this.product_data.product_start_date, 
-                                "product_end_date": this.product_data.product_end_date, 
-                                "yield_": this.product_data.yield_, 
-                                "expected_revenue": this.product_data.expected_revenue, 
-                                "special_notes": this.product_data.special_notes
-                            };
-                            this.product_det = {
-                                "amount": this.product_data.amount, 
-                                "contract_id": this.product_data.contract_id, 
-                                "product_start_date": this.product_data.product_start_date, 
-                                "product_end_date": this.product_data.product_end_date, 
-                                "yield_": this.product_data.yield_, 
-                                "expected_revenue": this.product_data.expected_revenue, 
-                                "special_notes": this.product_data.special_notes
-                            };
-                            this.init_actuals = {
-                                "actual_revenue": this.product_data.actual_revenue, 
-                                "actual_end_date": this.product_data.actual_end_date
-                            };
-                            this.actuals = {
-                                "actual_revenue": this.product_data.actual_revenue, 
-                                "actual_end_date": this.product_data.actual_end_date
-                            };
-                        } catch (error) {
-                            console.error('Error loading product information:', error);
-                        }
-                    }, 
-                    async changeStatus (new_status) {
-                        if (new_status == 'APR') {
-                            if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
-                            || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
-                                alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
-                                return ;
-                            }
-                        }
-                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}?usr_account_id=${this.usr_account_id}`, {
-                                method: "PATCH", 
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }
-                            });
-                            const data = await response.json();
-                            if (!response.ok) {
-                                console.error('Error: ', data);
-                                alert("Error updating product status");
-                                return;
-                            }
-
-                            alert("Product status successfully updated!");
-                            window.location.reload();
-                    }, 
-                    toggleEdit1 () {
-                        if (this.isEditable1) {
-                            if (JSON.stringify(this.product_det) !== JSON.stringify(this.init_product_det)) {
-                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                    return;
-                                } else {
-                                    this.product_det = this.init_product_det;
-                                }
-                            } 
-                        } 
-                    this.isEditable1 = !this.isEditable1;
-                    }, 
-                    toggleEdit2 () {
-                        if (this.isEditable2) {
-                            if (JSON.stringify(this.actuals) !== JSON.stringify(this.init_actuals)) {
-                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                    return;
-                                } else {
-                                    this.actuals = this.init_actuals;
-                                }
-                            } 
-                        } 
-                    this.isEditable2 = !this.isEditable2;
-                    }, 
-                    async updateProductDet() {
-                        const differences = {};
-
-                        for (const key in this.product_det) {
-                            if (this.product_det[key] != this.init_product_det[key]) {
-                                console.log("Met")
-                                differences[key] = this.product_det[key];
-                            }
-                        }
-
-                        console.log(differences);
-                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                            method: "PATCH", 
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                            method: "GET", 
                             headers: {
                                 "Content-Type": "application/json",
                                 "token": sessionStorage.getItem("token")
-                            }, 
-                            body: JSON.stringify(differences)
+                            }
                         });
                         const data = await response.json();
                         if (!response.ok) {
                             console.error('Error:', data);
-                            alert("Error updating the product details");
-                            return ;
-                        }
-                        alert("Product details updated succesfully!");
-                        widnow.location.reload();
-                    }, 
-                    async updateProductActuals() {
-                        const differences = {};
-
-                        for (const key in this.actuals) {
-                            if (this.actuals[key] != this.init_actuals[key]) {
-                                console.log("Met")
-                                differences[key] = this.actuals[key];
-                            }
+                            alert("Error loading product information");
+                            return; 
                         }
 
-                        console.log(differences);
-                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                            method: "PATCH", 
-                            headers: {
-                                "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
-                            }, 
-                            body: JSON.stringify(differences)
+                        this.product_data = data;
+                        console.log(this.product_data);
+
+                        const response2 = await fetch(`${API_BASE_URL}/front-end/status-progression?current_status=${this.product_data.statuses.at(-1).status_code}`, {
+                            method: "GET"
                         });
-                        const data = await response.json();
+
+                        const data2 = await response2.json();
                         if (!response.ok) {
-                            console.error('Error:', data);
-                            alert("Error updating the product actuals");
-                            return ;
+                            console.error('Error:', data2);
+                            alert("Error loading product information");
+                            return; 
                         }
-                        alert("Product actuals updated succesfully!");
-                        widnow.location.reload();
+
+                        this.product_status_progression = data2;
+                        console.log(this.product_status_progression);
+
+                        const response3 = await fetch(`${API_BASE_URL}/product/${this.product_data.product_id}`, {
+                            method: "GET"
+                        });
+
+                        const data3 = await response3.json();
+                        if (!response.ok) {
+                            console.error('Error:', data3);
+                            alert("Error loading product information");
+                            return; 
+                        }
+
+                        this.product_info = data3;
+                        console.log(this.product_info);
+
+                        const response4 = await fetch(`${API_BASE_URL}/front-end/statuses?current_status=${this.product_data.statuses.at(-1).status_code}`, {
+                            method: "GET"
+                        });
+
+                        const data4 = await response4.json();
+                        if (!response.ok) {
+                            console.error('Error:', data4);
+                            alert("Error loading product information");
+                            return; 
+                        }
+                        this.available_actions = data4;
+                        console.log(this.available_actions);
+
+                        this.init_product_det = {
+                            "amount": this.product_data.amount, 
+                            "contract_id": this.product_data.contract_id, 
+                            "product_start_date": this.product_data.product_start_date, 
+                            "product_end_date": this.product_data.product_end_date, 
+                            "yield_": this.product_data.yield_, 
+                            "expected_revenue": this.product_data.expected_revenue, 
+                            "special_notes": this.product_data.special_notes
+                        };
+                        this.product_det = {
+                            "amount": this.product_data.amount, 
+                            "contract_id": this.product_data.contract_id, 
+                            "product_start_date": this.product_data.product_start_date, 
+                            "product_end_date": this.product_data.product_end_date, 
+                            "yield_": this.product_data.yield_, 
+                            "expected_revenue": this.product_data.expected_revenue, 
+                            "special_notes": this.product_data.special_notes
+                        };
+                        this.init_actuals = {
+                            "actual_revenue": this.product_data.actual_revenue, 
+                            "actual_end_date": this.product_data.actual_end_date
+                        };
+                        this.actuals = {
+                            "actual_revenue": this.product_data.actual_revenue, 
+                            "actual_end_date": this.product_data.actual_end_date
+                        };
+
+                        this.loadContract();
+                        console.log(this.product_data);
+
+                    } catch (error) {
+                        console.error('Error loading product information:', error);
                     }
                 }, 
-                mounted() {
-                    document.querySelectorAll('.accordion-header').forEach(header => {
-                        header.addEventListener('click', function() {
-                            const body = this.nextElementSibling;
-                            body.classList.toggle('show');
+                async loadContract() {
+                    if (this.product_det.contract_id) {
+                        const contractUrl = `${API_BASE_URL}/product/instance/${this.product_uid}/contract/?usr_account_id=${this.usr_account_id}`;
+                        const response = await fetch(contractUrl, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }
                         });
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        const blob = await response.blob();
+
+                        // Create a URL for the blob
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        
+                        // Get the existing iframe element by ID
+                        const iframe = document.getElementById('contract');
+                        if (iframe) {
+                            iframe.style.width = '100%';
+                            iframe.src = blobUrl;
+                            
+                            // Release the URL object when the iframe is no longer needed
+                            iframe.onload = () => window.URL.revokeObjectURL(blobUrl);
+                        } else {
+                            console.error('Iframe with id "contract" not found');
+                        }
+                    }
+                },
+                async changeStatus (new_status) {
+                    if (new_status == 'APR') {
+                        if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
+                        || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
+                            alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
+                            return ;
+                        }
+                    }
+                    body = {}
+                    if (this.update_notes != null) {
+                        body = {
+                            "content": this.update_notes, 
+                            "public_yn": this.public_note_yn
+                        }
+                    }
+                    console.log(body);
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}?usr_account_id=${this.usr_account_id}`, {
+                            method: "PATCH", 
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }, 
+                            body: JSON.stringify(body)
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            console.error('Error: ', data);
+                            alert("Error updating product status");
+                            return;
+                        }
+
+                        alert("Product status successfully updated!");
+                        window.location.reload();
+                }, 
+                async changeNotificationPreferences (new_preference) {
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/notifications/${new_preference}?usr_account_id=${this.usr_account_id}`, {
+                        method: "PUT", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }
                     });
 
-                    this.loadPage();
+                    const data = await response.json();
+                    if (!response.ok) {
+                        console.error('Error: ', data);
+                        alert("Error updating product notification preferences");
+                        return;
+                    }
+
+                    window.location.reload();
+                },
+                toggleEdit1 () {
+                    if (this.isEditable1) {
+                        if (JSON.stringify(this.product_det) !== JSON.stringify(this.init_product_det)) {
+                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                return;
+                            } else {
+                                this.product_det = this.init_product_det;
+                            }
+                        } 
+                    } 
+                this.isEditable1 = !this.isEditable1;
+                }, 
+                toggleEdit2 () {
+                    if (this.isEditable2) {
+                        if (JSON.stringify(this.actuals) !== JSON.stringify(this.init_actuals)) {
+                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                return;
+                            } else {
+                                this.actuals = this.init_actuals;
+                            }
+                        } 
+                    } 
+                this.isEditable2 = !this.isEditable2;
+                }, 
+                async updateProductDet() {
+                    const differences = {};
+
+                    for (const key in this.product_det) {
+                        if (this.product_det[key] != this.init_product_det[key]) {
+                            console.log("Met")
+                            differences[key] = this.product_det[key];
+                        }
+                    }
+
+                    console.log(differences);
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                        method: "PATCH", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }, 
+                        body: JSON.stringify(differences)
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        console.error('Error:', data);
+                        alert("Error updating the product details");
+                        return ;
+                    }
+                    alert("Product details updated succesfully!");
+                    window.location.reload();
+                }, 
+                async updateProductActuals() {
+                    const differences = {};
+
+                    for (const key in this.actuals) {
+                        if (this.actuals[key] != this.init_actuals[key]) {
+                            console.log("Met")
+                            differences[key] = this.actuals[key];
+                        }
+                    }
+
+                    console.log(differences);
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                        method: "PATCH", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "token": sessionStorage.getItem("token")
+                        }, 
+                        body: JSON.stringify(differences)
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        console.error('Error:', data);
+                        alert("Error updating the product actuals");
+                        return ;
+                    }
+                    alert("Product actuals updated succesfully!");
+                    widnow.location.reload();
                 }
-            }).mount('#app');
-        </script>
-    </div>
+            }, 
+            mounted() {
+                document.querySelectorAll('.accordion-header').forEach(header => {
+                    header.addEventListener('click', function() {
+                        const body = this.nextElementSibling;
+                        body.classList.toggle('show');
+                    });
+                });
+
+                this.loadPage();
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>

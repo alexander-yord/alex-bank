@@ -20,40 +20,13 @@
                     <div>
                         <h2><a style="color: #000 !important; text-decoration: none; cursor: pointer;" href="index.html"><span><img height="20px" src="../img/alex_bank.png"> </span>Employee Portal</a></h2>
                     </div>
-                    <div class="accordion">
-                        <div class="accordion-group" data-group="group1" v-if="['A', 'C'].includes(user_role)">
-                            <div class="accordion-header"><span><img src="../assets/chart-simple-solid.svg"></span> <span class="accordion-body-title">Executive Reports</span></div>
-                            <div class="accordion-body">
-                                <p><a>Report 1</a></p>
-                                <p><a>Report 2</a></p>
-                            </div>
-                        </div>
-                        <div class="accordion-group" data-group="group2">
-                            <div class="accordion-header"><span><img src="../assets/user-solid.svg"></span> <span class="accordion-body-title">Accounts</span></div>
-                            <div class="accordion-body">
-                                <p><a href="manage-account.html">Manage Accounts</a></p>
-                                <p><a>Create Account</a></p>
-                            </div>
-                        </div>
-                        <div class="accordion-group" data-group="group3">
-                            <div class="accordion-header"><span><img src="../assets/handshake-simple-solid.svg"></span> <span class="accordion-body-title">Client Products</span></div>
-                            <div class="accordion-body">
-                                <p><a href="manage-products.html">Manage Products</a></p>
-                                <p><a>Sell Product</a></p>
-                            </div>
-                        </div>
-                        <div class="accordion-group" data-group="group4">
-                            <div class="accordion-header"><span><img src="../assets/store-solid.svg"></span> <span class="accordion-body-title">Products</span></div>
-                            <div class="accordion-body">
-                                <p><a>Manage Product</a></p>
-                                <p><a>New Product</a></p>
-                            </div>
-                        </div>
-                        <div class="accordion-group" data-group="group5">
-                            <div class="accordion-header"><span><img src="../assets/building-user-solid.svg"></span> <span class="accordion-body-title">Employees</span></div>
-                            <div class="accordion-body">
-                                <p><a>Manage Employees</a></p>
-                                <p><a>Add Employee</a></p>
+                    <div class="accordion" v-if="menu.length != 0">
+                        <div v-for="(group, index) in menu" class="accordion-group" :data-group="group.dataGroup">
+                            <div v-if="group.privileges.includes(user_role)">
+                                <div class="accordion-header" @click="toggleAccordion(index)"><span><img :src="group.icon"></span> <span class="accordion-body-title">{{group.displayName}}</span></div>
+                                <div class="accordion-body" :class="{ show: openIndex === index }">
+                                    <p v-for="child in group.children"><a :href="child.url">{{child.displayName}}</a></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -213,214 +186,225 @@
         <div v-else class="content">
             <h2 style="color: red; text-align: center;">You are not logged in!</h2>
         </div>
-
-        <script>
-            const { createApp } = Vue;
-            createApp({
-                data() {
-                    return {
-                        isLoggedIn: isLoggedIn(),
-                        usr_account_id: sessionStorage.getItem("account_id"),
-                        first_name: sessionStorage.getItem("first_name"),
-                        last_name: sessionStorage.getItem("last_name"),
-                        user_role: sessionStorage.getItem("user_role"),
-                        page_account_id: null, 
-                        contact_data: {},
-                        initial_contact_data: {},
-                        account_data: {},
-                        dd_account_group_options: {},
-                        account_group: {}, 
-                        initial_account_group: {},
-                        isEditableF1: false, 
-                        isEditableF2: false, 
-                        isEditableF3: false,
-                        products: {}
-                    };
-                },
-                methods: {
-                    showOption(opt) {
-                        opt.show = true;
-                    },
-                    hideOption(opt) {
-                        opt.show = false;
-                    }, 
-                    async load_account_data() {
-                        try {
-                            const queryString = window.location.search;
-                            const urlParams = new URLSearchParams(queryString);
-                            const accountID = urlParams.get('account_id');
-                            this.page_account_id = accountID;
-                            const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
-                                method: "GET",
-                                headers: { "token": sessionStorage.getItem("token") }
-                            });
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            this.account_data = data;
-                            this.initial_contact_data = {
-                                "phone": data["phone"], 
-                                "email": data["email"], 
-                                "country_code": data["country_code"], 
-                                "country": data["country"], 
-                                "address": data["address"]
-                            }
-                            this.contact_data = {
-                                "phone": data["phone"], 
-                                "email": data["email"], 
-                                "country_code": data["country_code"], 
-                                "country": data["country"], 
-                                "address": data["address"]
-                            }
-                            this.initial_account_group = {"account_group_code": data["account_group_code"]}
-                            this.account_group = {"account_group_code": data["account_group_code"]}
-                        } catch (error) {
-                            console.error('Error fetching account data:', error);
-                        }
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            this.dd_account_group_options = data["account_groups"];
-                        } catch (error) {
-                            console.error('Error fetching account data:', error);
-                        }
-                    },
-                    async loadAccountProducts() {
-                        try {
-                            const queryString = window.location.search;
-                            const urlParams = new URLSearchParams(queryString);
-                            const account_id = urlParams.get('account_id');
-
-                            const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
-                                method: "GET", 
-                                headers: {
-                                    "token": sessionStorage.getItem("token")
-                                }
-                            });
-                            const result = await response.json();
-
-                            if (!response.ok) {
-                                console.log(`Error fetching account products: ${result}`)
-                                return;
-                            }
-                            this.products = result;
-                            console.log(result);
-                            return;
-
-                        } catch (error) {
-                            console.error('Error fetching account products: ', error)
-                        }
-                    },
-                    toggleEdit() {
-                        if (this.isEditableF1) {
-                            if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
-                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                    return;
-                                } else {
-                                    this.contact_data = this.initial_contact_data;
-                                }
-                            } 
-                        } 
-                    this.isEditableF1 = !this.isEditableF1;
-                    },
-                    toggleEdit2() {
-                        if (this.isEditableF2) {
-                            if (JSON.stringify(this.account_group) !== JSON.stringify(this.initial_account_group)) {
-                                if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
-                                    return;
-                                } else {
-                                    this.account_group = this.initial_account_group;
-                                }
-                            } 
-                        } 
-                    this.isEditableF2 = !this.isEditableF2;
-                    },
-                    async verifyAccount(new_status) {
-                        if (new_status=='R') {
-                            if (!confirm("You are about to revoke the verification of an account. Are you want to?")){
-                                return;
-                            }
-                        }
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
-                                method: "PATCH",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }
-                            });
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! Status: ${response.status}`);
-                            }
-                            const data = await response.json();
-                            // Handle the response data as needed
-                            alert("Verification Status Succesfully Updated!")
-                            window.location.reload();
-                        } catch (error) {
-                            console.error('Error verifying account:', error);
-                        }
-                    }, 
-                    async updateContactInfo() {
-                        const differences = {};
-
-                        for (const key in this.contact_data) {
-                            console.log(key)
-                            if (this.contact_data[key] !== this.initial_contact_data[key]) {
-                                console.log("Met")
-                                differences[key] = this.contact_data[key];
-                            }
-                        }
-                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
-                                method: "PATCH",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }, 
-                                body: JSON.stringify(differences)
-                        });
-
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    menu: [], 
+                    openIndex: null,
+                    isLoggedIn: isLoggedIn(),
+                    usr_account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    page_account_id: null, 
+                    contact_data: {},
+                    initial_contact_data: {},
+                    account_data: {},
+                    dd_account_group_options: {},
+                    account_group: {}, 
+                    initial_account_group: {},
+                    isEditableF1: false, 
+                    isEditableF2: false, 
+                    isEditableF3: false,
+                    products: {}
+                };
+            },
+            methods: {
+                async loadMenu () {
+                    try {
+                        const response = await fetch("menu.json");
                         if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
+                            throw new Error(`HTTP error! status: ${response.status}`);
                         }
-                        alert("Contact information succesfully updated!")
-                        window.location.reload();
-                    }, 
-                    async updateAccountGroup () {
-                        if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
-                            return ;
-                        }
-                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
-                                method: "PATCH",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "token": sessionStorage.getItem("token")
-                                }, 
-                                body: JSON.stringify(this.account_group)
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! Status: ${response.status}`);
-                        }
-                        alert("Account group succesfully updated!")
-                        window.location.reload();
+                        const menu = await response.json();
+                        this.menu = menu;
+                    } catch (error) {
+                        console.error("Failed to load menu:", error);
                     }
                 }, 
-                mounted() {
-                    document.querySelectorAll('.accordion-header').forEach(header => {
-                        header.addEventListener('click', function() {
-                            const body = this.nextElementSibling;
-                            body.classList.toggle('show');
+                toggleAccordion(index) {
+                    this.openIndex = this.openIndex === index ? null : index;
+                },
+                showOption(opt) {
+                    opt.show = true;
+                },
+                hideOption(opt) {
+                    opt.show = false;
+                }, 
+                async load_account_data() {
+                    try {
+                        const queryString = window.location.search;
+                        const urlParams = new URLSearchParams(queryString);
+                        const accountID = urlParams.get('account_id');
+                        this.page_account_id = accountID;
+                        const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
+                            method: "GET",
+                            headers: { "token": sessionStorage.getItem("token") }
                         });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.account_data = data;
+                        this.initial_contact_data = {
+                            "phone": data["phone"], 
+                            "email": data["email"], 
+                            "country_code": data["country_code"], 
+                            "country": data["country"], 
+                            "address": data["address"]
+                        }
+                        this.contact_data = {
+                            "phone": data["phone"], 
+                            "email": data["email"], 
+                            "country_code": data["country_code"], 
+                            "country": data["country"], 
+                            "address": data["address"]
+                        }
+                        this.initial_account_group = {"account_group_code": data["account_group_code"]}
+                        this.account_group = {"account_group_code": data["account_group_code"]}
+                    } catch (error) {
+                        console.error('Error fetching account data:', error);
+                    }
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.dd_account_group_options = data["account_groups"];
+                    } catch (error) {
+                        console.error('Error fetching account data:', error);
+                    }
+                },
+                async loadAccountProducts() {
+                    try {
+                        const queryString = window.location.search;
+                        const urlParams = new URLSearchParams(queryString);
+                        const account_id = urlParams.get('account_id');
+
+                        const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
+                            method: "GET", 
+                            headers: {
+                                "token": sessionStorage.getItem("token")
+                            }
+                        });
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            console.log(`Error fetching account products: ${result}`)
+                            return;
+                        }
+                        this.products = result;
+                        console.log(result);
+                        return;
+
+                    } catch (error) {
+                        console.error('Error fetching account products: ', error)
+                    }
+                },
+                toggleEdit() {
+                    if (this.isEditableF1) {
+                        if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
+                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                return;
+                            } else {
+                                this.contact_data = this.initial_contact_data;
+                            }
+                        } 
+                    } 
+                this.isEditableF1 = !this.isEditableF1;
+                },
+                toggleEdit2() {
+                    if (this.isEditableF2) {
+                        if (JSON.stringify(this.account_group) !== JSON.stringify(this.initial_account_group)) {
+                            if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+                                return;
+                            } else {
+                                this.account_group = this.initial_account_group;
+                            }
+                        } 
+                    } 
+                this.isEditableF2 = !this.isEditableF2;
+                },
+                async verifyAccount(new_status) {
+                    if (new_status=='R') {
+                        if (!confirm("You are about to revoke the verification of an account. Are you want to?")){
+                            return;
+                        }
+                    }
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        // Handle the response data as needed
+                        alert("Verification Status Succesfully Updated!")
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Error verifying account:', error);
+                    }
+                }, 
+                async updateContactInfo() {
+                    const differences = {};
+
+                    for (const key in this.contact_data) {
+                        console.log(key)
+                        if (this.contact_data[key] !== this.initial_contact_data[key]) {
+                            console.log("Met")
+                            differences[key] = this.contact_data[key];
+                        }
+                    }
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }, 
+                            body: JSON.stringify(differences)
                     });
-                    this.load_account_data(), 
-                    this.loadAccountProducts();
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    alert("Contact information succesfully updated!")
+                    window.location.reload();
+                }, 
+                async updateAccountGroup () {
+                    if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
+                        return ;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "token": sessionStorage.getItem("token")
+                            }, 
+                            body: JSON.stringify(this.account_group)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    alert("Account group succesfully updated!")
+                    window.location.reload();
                 }
-            }).mount('#app');
-        </script>
-    </div>
+            }, 
+            mounted() {
+                this.loadMenu();
+                this.load_account_data(), 
+                this.loadAccountProducts();
+            }
+        }).mount('#app');
+    </script>
 </body>
 </html>

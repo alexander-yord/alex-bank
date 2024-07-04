@@ -32,27 +32,49 @@
             <form class="form-container" @submit.prevent="createAccount">
                 <div class="form-group">
                     <label for="first_name">First Name:</label>
-                    <input type="text" id="first_name" required>
+                    <input type="text" id="first_name" maxlength="255" required>
                 </div>
                 <div class="form-group">
                     <label for="last_name">Last Name:</label>
-                    <input type="text" id="last_name" required>
+                    <input type="text" id="last_name" maxlength="255" required>
                 </div>
                 <div class="form-group">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" required>
+                    <div class="verification-container">
+                      <input id="email" type="text" maxlength="255" oninput="checkVerification()">
+                      <span class="verification-check" id="verification-check">✔</span>
+                      <span class="verification-x" id="verification-x">✖</span>
+                    </div>
+                    <script>
+                      function checkVerification() {
+                          const emailInput = document.getElementById('email');
+                          const signatureCheck = document.getElementById('verification-check');
+                          const signatureX = document.getElementById('verification-x');
+                          const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+                      
+                          if (regex.test(emailInput.value)) {
+                              signatureCheck.style.display = 'inline';
+                              signatureX.style.display = 'none';
+                          } else {
+                              signatureCheck.style.display = 'none';
+                              signatureX.style.display = 'inline';
+                          }
+                      }
+                    </script>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number: <i>(opt.)</i></label>
                     <input type="text" id="phone" maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label for="country">Country of Residence:</label>
+                  <label for="country">Country of Residence:</label>
+                  <div class="custom-select">
                     <select id="country">
-                        <option value="BGR">Bulgaria</option>
-                        <option value="USA">United States</option>
-                        <option value="OTH">Other</option>
+                      <option value="BGR">Bulgaria</option>
+                      <option value="USA">United States</option>
+                      <option value="OTH">Other</option>
                     </select>
+                  </div>
                 </div>
                 <div class="form-group">
                     <label for="address">Permanent Address: <i>(opt.)</i></label>
@@ -60,11 +82,19 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password:</label>
-                    <input type="password" id="password" required>
+                    <div class="verification-container">
+                      <input type="password" id="password" minlength="8" maxlength="255" required oninput="checkPassword()">
+                      <span class="verification-check" id="password-check">✔</span>
+                      <span class="verification-x" id="password-x">✖</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="repeat-password">Repeat Password:</label>
-                    <input type="password" id="repeat-password" required>
+                    <div class="verification-container">
+                      <input type="password" id="repeat-password" minlength="8" maxlength="255" required oninput="checkPasswordMatch()">
+                      <span class="verification-check" id="repeat-password-check">✔</span>
+                      <span class="verification-x" id="repeat-password-x">✖</span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <div>
@@ -97,8 +127,18 @@
                 const password = document.getElementById('password').value;
                 const repeatPassword = document.getElementById('repeat-password').value;
 
+                if (password.length < 8) {
+                  alert("Password must be at least 8 characters!");
+                  return;
+                }
                 if (password !== repeatPassword) {
                   alert('Passwords do not match');
+                  return;
+                }
+
+                const regex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+                if (!regex.test(email)) {
+                  alert("Please enter a valid email address!");
                   return;
                 }
 
@@ -137,6 +177,35 @@
             }
           }
         }).mount('#app');
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('password');
+            const passwordCheck = document.getElementById('password-check');
+            const passwordX = document.getElementById('password-x');
+
+            if (passwordInput.value.length >= 8) {
+                passwordCheck.style.display = 'inline';
+                passwordX.style.display = 'none';
+            } else {
+                passwordCheck.style.display = 'none';
+                passwordX.style.display = 'inline';
+            }
+        }
+
+        function checkPasswordMatch() {
+            const passwordInput = document.getElementById('password');
+            const repeatPasswordInput = document.getElementById('repeat-password');
+            const repeatPasswordCheck = document.getElementById('repeat-password-check');
+            const repeatPasswordX = document.getElementById('repeat-password-x');
+
+            if (passwordInput.value === repeatPasswordInput.value) {
+                repeatPasswordCheck.style.display = 'inline';
+                repeatPasswordX.style.display = 'none';
+            } else {
+                repeatPasswordCheck.style.display = 'none';
+                repeatPasswordX.style.display = 'inline';
+            }
+        }
     </script>
 </body>
 

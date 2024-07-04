@@ -1,11 +1,12 @@
 import os
+import io
 import sys
 import configparser
 from pathlib import Path
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
-from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query
-from dependencies import database as db, helpers as h, schemas as s, mail as m
+from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
+from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query, Body
 
 router = APIRouter(
     prefix="/product",
@@ -225,14 +226,18 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
-    SELECT product_uid, is_code, status_name, status_description, update_dt FROM
+    SELECT product_uid, is_code, status_name, status_description, update_dt, update_user, ac.first_name, ac.last_name, 
+    update_note, update_note_public_yn FROM
     (
         SELECT 
             pi.product_uid AS product_uid, 
             ps.code AS is_code, 
             ps.status_name AS status_name, 
             ps.status_description AS status_description, 
-            appl.application_dt AS update_dt
+            appl.account_id AS update_user,
+            appl.application_dt AS update_dt, 
+            NULL AS update_note, 
+            NULL AS update_note_public_yn
         FROM applications appl 
         JOIN product_instance pi ON pi.application_id=appl.application_id
         JOIN product_statuses ps ON ps.code='APL' 
@@ -242,10 +247,14 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
             psu.is_code AS is_code, 
             ps.status_name AS status_name, 
             ps.status_description AS status_description, 
-            psu.update_dt AS update_dt
+            psu.update_user AS update_user,
+            psu.update_dt AS update_dt, 
+            psu.update_note AS update_note, 
+            psu.update_note_public_yn AS update_note_public_yn
         FROM product_status_updates psu
-        JOIN product_statuses ps ON ps.code = psu.is_code 
-    ) AS status_updates
+        JOIN product_statuses ps ON ps.code = psu.is_code
+    ) AS su
+    LEFT JOIN accounts ac ON su.update_user = ac.account_id
     WHERE product_uid = %s ORDER BY update_dt
     """
 
@@ -255,11 +264,21 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
 
     for status in res:
         item = s.StatusUpdates(
-            status_code=status[1],
-            status_name=status[2],
-            status_description=status[3],
-            status_update_dt=str(status[4])
+            status_code=status[1],  # Corresponds to ps.is_code or psu.is_code
+            status_name=status[2],  # Corresponds to ps.status_name
+            status_description=status[3],  # Corresponds to ps.status_description
+            status_update_dt=str(status[4]),  # Corresponds to su.update_dt or psu.update_dt
+            update_user=status[5] if status[5] else None,  # Corresponds to su.update_user or psu.update_user
+            first_name=status[6] if status[6] else None,  # Corresponds to ac.first_name
+            last_name=status[7] if status[7] else None,  # Corresponds to ac.last_name
+            update_note=status[8] if status[8] and (status[9] == 'Y' or
+                                                    h.check_user_privilege(usr_account_id, ['C', 'A', 'E'])) else None,
+            # Corresponds to su.update_note or psu.update_note
+            public_yn=status[9] if status[9] and (status[9] == 'Y' or
+                                                  h.check_user_privilege(usr_account_id, ['C', 'A', 'E'])) else None
+            # Corresponds to su.update_note_public_yn or psu.update_note_public_yn
         )
+
         statuses.append(item)
 
     stmt = """
@@ -267,13 +286,14 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
     pi.contract_id, pi.product_start_date, pi.product_end_date, pi.actual_end_date, pi.special_notes, pi.application_id, 
     appl.approved_by, appl.amount_requested, appl.special_notes, appl.collateral, appl.approved_yn, appl.approval_dt, 
     pi.yield, pi.actual_revenue, appl.product_id, pi.expected_revenue, 
-    CASE WHEN appl.standard_yn = 'Y' THEN 'Standard' ELSE 'Custom' END AS standard
+    CASE WHEN appl.standard_yn = 'Y' THEN 'Standard' ELSE 'Custom' END AS standard, 
+    notifications_yn
     FROM product_instance pi 
     LEFT JOIN applications appl ON appl.application_id = pi.application_id
     JOIN product_statuses ps ON ps.code = pi.status_code 
     WHERE pi.product_uid = %s
     """
-    db.cursor.execute(stmt, (product_uid, ))
+    db.cursor.execute(stmt, (product_uid,))
     res = db.cursor.fetchone()
 
     if h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
@@ -298,7 +318,8 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
             actual_revenue=res[19],
             product_id=res[20],
             expected_revenue=res[21],
-            standard=res[22]
+            standard=res[22],
+            notifications=res[23]
         )
     else:
         prod = s.ProductInstancePublic(
@@ -320,7 +341,8 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
             approval_dt=str(res[17]) if res[17] is not None else None,
             yield_=res[18],
             product_id=res[20],
-            standard=res[22]
+            standard=res[22],
+            notifications=res[23]
         )
 
     return prod
@@ -328,6 +350,7 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
 
 @router.patch("/instance/{product_uid}/status/{new_status}")
 async def update_product_status(product_uid: int, usr_account_id: int, new_status: str,
+                                update_note: s.UpdateNoteModel = Body(),
                                 token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
@@ -341,10 +364,17 @@ async def update_product_status(product_uid: int, usr_account_id: int, new_statu
     current_status = db.cursor.fetchone()[0]
     possible_future_statuses = h.available_next_status(current_status)
     if not any(d["status_code"] == new_status for d in possible_future_statuses):
-        raise HTTPException(400, f"Status {new_status} not allowed after {current_status} or does not exist")
+        raise HTTPException(403, f"Status {new_status} not allowed after {current_status} or does not exist")
 
-    stmt = "UPDATE product_instance SET status_code = %s WHERE product_uid = %s"
-    db.cursor.execute(stmt, (new_status, product_uid))
+    if update_note.content is not None:
+        stmt = "UPDATE product_instance SET " \
+               "status_code = %s, latest_update_user_id = %s, latest_note = %s, latest_note_public_yn = %s " \
+               "WHERE product_uid = %s"
+        db.cursor.execute(stmt, (new_status, usr_account_id, update_note.content,
+                                 update_note.public_yn if update_note.public_yn == 'Y' else 'N', product_uid))
+    else:
+        stmt = "UPDATE product_instance SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
+        db.cursor.execute(stmt, (new_status, usr_account_id, product_uid))
     db.cnx.commit()
 
     if new_status in ['APR', 'DEN']:
@@ -354,8 +384,41 @@ async def update_product_status(product_uid: int, usr_account_id: int, new_statu
         """
         db.cursor.execute(stmt, ('Y' if current_status == 'APR' else 'N', usr_account_id, product_uid))
         db.cnx.commit()
-    elif new_status == 'SGN':
-        m.send_contract_email(product_uid)
+
+        if new_status == 'APR':
+            c.generate_contract_string(product_uid)
+
+    return {"status": "Success!"}
+
+
+@router.patch("/instance/{product_uid}/status/{new_status}/client/")
+async def client_update_product_status(product_uid: int, usr_account_id: int, new_status: str,
+                                       update_note: s.UpdateNoteModel = Body(),
+                                       token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
+    db.cursor.execute("SELECT status_code, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_uid} does not exist")
+    current_status, account_id = db.cursor.fetchone()
+    possible_future_statuses = h.available_next_status(current_status)
+    if not any(d["status_code"] == new_status for d in possible_future_statuses):
+        raise HTTPException(403, f"Status {new_status} not allowed after {current_status} or does not exist")
+    if new_status not in ["CNL", "AGR", "DIS"]:
+        raise HTTPException(403, "This action cannot be performed by the client")
+
+    if update_note.content is not None:
+        stmt = "UPDATE product_instance SET " \
+               "status_code = %s, latest_update_user_id = %s, latest_note = %s, latest_note_public_yn = %s " \
+               "WHERE product_uid = %s"
+        db.cursor.execute(stmt, (new_status, usr_account_id, update_note.content,
+                                 update_note.public_yn if update_note.public_yn == 'Y' else 'N', product_uid))
+    else:
+        stmt = "UPDATE product_instance SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
+        db.cursor.execute(stmt, (new_status, usr_account_id, product_uid))
+    db.cnx.commit()
 
     return {"status": "Success!"}
 
@@ -426,98 +489,166 @@ def update_product_instance(
     return {"message": "Product updated successfully"}
 
 
-@router.post("/instance/{product_uid}/send-contract")
-async def send_contract(product_uid: int, email: str = None):
-    try:
-        m.send_contract_email(product_uid, email)
-        return {"message": "Success!"}
-    except Exception as err:
-        return {"message": str(err)}
-
-
-@router.get("/instance/{product_uid}/contract/", response_class=FileResponse)
-async def download_file(product_uid: int, usr_account_id: int,
-                        token: Annotated[str | None, Header(convert_underscores=False)] = None):
+@router.post("/instance/{product_uid}/sign-contract")
+async def digitally_sign_contract(product_uid: int, usr_account_id: int,
+                                  token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-
-    try:
-        cfile = configparser.ConfigParser()
-        cfile.read(os.path.join(sys.path[0], "config.ini"))
-        UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
-    except Exception as err:
-        print(err)
-        raise HTTPException(status_code=500, detail=str(err))
-
-    db.cursor.execute("SELECT contract_id, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
-    if db.cursor.rowcount != 1:
-        raise HTTPException(404, f"Product {product_uid} does not exist")
+    db.cursor.execute("SELECT account_id, status_code, contract_id FROM product_instance WHERE product_uid = %s",
+                      (product_uid,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"No product with Product UID {product_uid} found.")
     res = db.cursor.fetchone()
-    contract_id, account_id = res[0], res[1]
+    if not h.verify_authorization(usr_account_id, token) or not res[0] == usr_account_id:
+        raise HTTPException(401, "User is not authorized")
+    if not res[1] == "SGN":
+        raise HTTPException(403, "Signing not allowed for this product status.")
+    db.cursor.execute("SELECT verification FROM accounts WHERE account_id = %s", (usr_account_id,))
+    verification = db.cursor.fetchone()[0]
+    if verification != 'Y':
+        raise HTTPException(401, "Unverified accounts cannot sign a contract.")
 
-    file_path = Path(UPLOAD_DIR) / f"upload-{contract_id}.pdf"
+    c.sign_contract(res[2], usr_account_id)
 
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
-        raise HTTPException(401, "User does not have privileges")
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
+    stmt = "UPDATE product_instance SET status_code = 'AWT', latest_update_user_id = %s WHERE product_uid = %s"
+    db.cursor.execute(stmt, (usr_account_id, product_uid))
+    db.cnx.commit()
 
-    return FileResponse(file_path, media_type='application/pdf', filename=f"upload-{contract_id}.pdf")
+    m.send_contract_email(product_uid)
+
+    return {"status": "Success!"}
 
 
-@router.post("/instance/{product_uid}/contract")
-async def submit_signed_contract(product_uid: int, usr_account_id: int, file: UploadFile = File(...),
-                                 token: Annotated[str | None, Header(convert_underscores=False)] = None):
-    try:
-        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
-        cfile.read(os.path.join(sys.path[0], "config.ini"))
-
-        UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
-        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
-    except Exception as err:
-        print(err)
-        raise HTTPException(500, err)
-
+@router.get("/instance/{product_uid}/contract/")
+async def get_pdf_contract(product_uid: int, usr_account_id: int,
+                           token: Annotated[str | None, Header(convert_underscores=False)] = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
     if not h.verify_authorization(usr_account_id, token):
         raise HTTPException(401, "User is not authorized")
-    # Check if the file is a PDF
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
-    # Check if the file size is less than 10MB
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+    db.cursor.execute("SELECT account_id, contract_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_uid} not found")
+    res = db.cursor.fetchone()
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not res[0] == usr_account_id:
+        raise HTTPException(401, "User does not have privileges.")
+
+    buffer = c.contract_buffer(res[1])
+
+    # Create a StreamingResponse from the buffer
+    return StreamingResponse(buffer, media_type='application/pdf',
+                             headers={"Content-Disposition": f"attachment;filename=contract_{res[1]}.pdf"})
+
+
+@router.put("/instance/{product_uid}/notifications/{new_preference}")
+async def update_product_notifications_status(product_uid: int, new_preference: str, usr_account_id: int,
+                                              token: Annotated[str | None, Header(convert_underscores=False)] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if not h.verify_authorization(usr_account_id, token):
+        raise HTTPException(401, "User is not authorized")
     db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
-    if db.cursor.rowcount != 1:
-        raise HTTPException(404, f"Product {product_uid} not found.")
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_uid} not found")
     account_id = db.cursor.fetchone()[0]
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
-        raise HTTPException(401, "User does not have privileges")
+    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+        raise HTTPException(401, "User does not have privileges.")
+    if new_preference not in ['Y', 'N', 'P']:
+        raise HTTPException(403, f"{new_preference} not a valid status")
 
-    stmt = "INSERT INTO documents (document_profile) VALUES ('CON')"
-    db.cursor.execute(stmt)
-    db.cnx.commit()
+    try:
+        db.cursor.execute("UPDATE product_instance SET notifications_yn = %s WHERE product_uid = %s",
+                          (new_preference, product_uid))
+        db.cnx.commit()
+    except Exception as e:
+        db.cnx.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "Success!"}
 
-    db.cursor.execute("SELECT LAST_INSERT_ID()")
-    document_id = db.cursor.fetchone()[0]
-    new_file_name = f"upload-{document_id}.pdf"
 
-    print(os.path.dirname(__file__))
-    # Save the file to the ../tmp/ folder
-    file_location = os.path.join(UPLOAD_DIR, new_file_name)
-    with open(file_location, "wb") as f:
-        f.write(content)
-
-    stmt = "UPDATE documents SET document_name = %s WHERE document_id = %s"
-    db.cursor.execute(stmt, (new_file_name, document_id))
-    db.cnx.commit()
-
-    stmt = "UPDATE product_instance SET contract_id = 1 WHERE product_uid = %s"
-    db.cursor.execute(stmt, (product_uid,))
-    db.cnx.commit()
-
-    return {"filename": new_file_name}
+# @router.get("/instance/{product_uid}/contract/", response_class=FileResponse)
+# async def download_file(product_uid: int, usr_account_id: int,
+#                         token: Annotated[str | None, Header(convert_underscores=False)] = None):
+#     if not db.cnx.is_connected():
+#         db.cnx, db.cursor = db.connect()
+#     if not h.verify_authorization(usr_account_id, token):
+#         raise HTTPException(401, "User is not authorized")
+#
+#     try:
+#         cfile = configparser.ConfigParser()
+#         cfile.read(os.path.join(sys.path[0], "config.ini"))
+#         UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
+#     except Exception as err:
+#         print(err)
+#         raise HTTPException(status_code=500, detail=str(err))
+#
+#     db.cursor.execute("SELECT contract_id, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+#     if db.cursor.rowcount != 1:
+#         raise HTTPException(404, f"Product {product_uid} does not exist")
+#     res = db.cursor.fetchone()
+#     contract_id, account_id = res[0], res[1]
+#
+#     file_path = Path(UPLOAD_DIR) / f"upload-{contract_id}.pdf"
+#
+#     if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+#         raise HTTPException(401, "User does not have privileges")
+#     if not file_path.exists():
+#         raise HTTPException(status_code=404, detail="File not found")
+#
+#     return FileResponse(file_path, media_type='application/pdf', filename=f"upload-{contract_id}.pdf")
+#
+#
+# @router.post("/instance/{product_uid}/contract")
+# async def submit_signed_contract(product_uid: int, usr_account_id: int, file: UploadFile = File(...),
+#                                  token: Annotated[str | None, Header(convert_underscores=False)] = None):
+#     try:
+#         cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+#         cfile.read(os.path.join(sys.path[0], "config.ini"))
+#
+#         UPLOAD_DIR = cfile["UPLOAD"]["UPLOAD_DIR"]
+#         MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+#     except Exception as err:
+#         print(err)
+#         raise HTTPException(500, err)
+#
+#     if not db.cnx.is_connected():
+#         db.cnx, db.cursor = db.connect()
+#     if not h.verify_authorization(usr_account_id, token):
+#         raise HTTPException(401, "User is not authorized")
+#     # Check if the file is a PDF
+#     if file.content_type != "application/pdf":
+#         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+#     # Check if the file size is less than 10MB
+#     content = await file.read()
+#     if len(content) > MAX_FILE_SIZE:
+#         raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+#     db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+#     if db.cursor.rowcount != 1:
+#         raise HTTPException(404, f"Product {product_uid} not found.")
+#     account_id = db.cursor.fetchone()[0]
+#     if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+#         raise HTTPException(401, "User does not have privileges")
+#
+#     stmt = "INSERT INTO documents (document_profile) VALUES ('CON')"
+#     db.cursor.execute(stmt)
+#     db.cnx.commit()
+#
+#     db.cursor.execute("SELECT LAST_INSERT_ID()")
+#     document_id = db.cursor.fetchone()[0]
+#     new_file_name = f"upload-{document_id}.pdf"
+#
+#     print(os.path.dirname(__file__))
+#     # Save the file to the ../tmp/ folder
+#     file_location = os.path.join(UPLOAD_DIR, new_file_name)
+#     with open(file_location, "wb") as f:
+#         f.write(content)
+#
+#     stmt = "UPDATE documents SET document_name = %s WHERE document_id = %s"
+#     db.cursor.execute(stmt, (new_file_name, document_id))
+#     db.cnx.commit()
+#
+#     stmt = "UPDATE product_instance SET contract_id = 1 WHERE product_uid = %s"
+#     db.cursor.execute(stmt, (product_uid,))
+#     db.cnx.commit()
+#
+#     return {"filename": new_file_name}
