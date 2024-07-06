@@ -8,7 +8,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=s.LoggedInUser)
+@router.post("/")
 async def signup(acc_info: s.NewAccount = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
@@ -27,18 +27,14 @@ async def signup(acc_info: s.NewAccount = None):
     db.cursor.execute(stmt3, (account_id, acc_info.password))
     db.cnx.commit()
 
-    token = h.generate_authorization()
-    stmt = "INSERT into login_sessions (account_id, token) values (%s, %s)"
-    account_token_tuple = (account_id, token)
-    db.cursor.execute(stmt, account_token_tuple)
-    db.cnx.commit()
+    token = h.create_jwt_token(account_id, 'U')
 
-    result = {
+    return {
         "status": "You successfully logged in!",
         "account_id": account_id,
         "first_name": acc_info.first_name,
         "last_name": acc_info.last_name,
         "user_role": 'U',
-        "token": token
+        "access_token": token,
+        "token_type": "bearer"
     }
-    return result

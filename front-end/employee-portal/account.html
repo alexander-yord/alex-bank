@@ -195,7 +195,6 @@
                     menu: [], 
                     openIndex: null,
                     isLoggedIn: isLoggedIn(),
-                    usr_account_id: sessionStorage.getItem("account_id"),
                     first_name: sessionStorage.getItem("first_name"),
                     last_name: sessionStorage.getItem("last_name"),
                     user_role: sessionStorage.getItem("user_role"),
@@ -240,9 +239,9 @@
                         const urlParams = new URLSearchParams(queryString);
                         const accountID = urlParams.get('account_id');
                         this.page_account_id = accountID;
-                        const response = await fetch(`${API_BASE_URL}/account/${accountID}?usr_account_id=${this.usr_account_id}`, {
+                        const response = await fetch(`${API_BASE_URL}/account/${accountID}`, {
                             method: "GET",
-                            headers: { "token": sessionStorage.getItem("token") }
+                            headers: { "Authorization": `Bearer ${sessionStorage.getItem("token")}` }
                         });
                         if (!response.ok) {
                             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -285,10 +284,10 @@
                         const urlParams = new URLSearchParams(queryString);
                         const account_id = urlParams.get('account_id');
 
-                        const response = await fetch(`${API_BASE_URL}/account/${account_id}/products?usr_account_id=${this.usr_account_id}`, {
+                        const response = await fetch(`${API_BASE_URL}/account/${account_id}/products`, {
                             method: "GET", 
                             headers: {
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         const result = await response.json();
@@ -336,11 +335,11 @@
                         }
                     }
                     try {
-                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?emp_account_id=${this.usr_account_id}&new_verification_code=${new_status}`, {
+                        const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/verification?new_verification_code=${new_status}`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         if (!response.ok) {
@@ -364,11 +363,11 @@
                             differences[key] = this.contact_data[key];
                         }
                     }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/information`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }, 
                             body: JSON.stringify(differences)
                     });
@@ -383,11 +382,11 @@
                     if (this.account_group.account_group_code == this.initial_account_group.account_group_code) {
                         return ;
                     }
-                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.account_data.account_id}/group`, {
                             method: "PATCH",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }, 
                             body: JSON.stringify(this.account_group)
                     });

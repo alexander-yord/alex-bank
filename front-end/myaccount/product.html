@@ -193,7 +193,6 @@
             data() {
                 return {
                     isLoggedIn: isLoggedIn(),
-                    usr_account_id: sessionStorage.getItem("account_id"),
                     user_role: sessionStorage.getItem("user_role"),
                     account_id: null, 
                     product_uid: null, 
@@ -223,11 +222,11 @@
                     this.account_id = params.get("account_id");
 
                     try {
-                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                        const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}`, {
                             method: "GET", 
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         const data = await response.json();
@@ -316,12 +315,12 @@
                 }, 
                 async loadContract() {
                     if (this.product_det.contract_id) {
-                        const contractUrl = `${API_BASE_URL}/product/instance/${this.product_uid}/contract/?usr_account_id=${this.usr_account_id}`;
+                        const contractUrl = `${API_BASE_URL}/product/instance/${this.product_uid}/contract/`;
                         const response = await fetch(contractUrl, {
                             method: "GET",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         if (!response.ok) {
@@ -347,9 +346,9 @@
                 },
                 async loadAccountName() {
                     account_id = this.product_data.account_id;
-                    const response = await fetch(`${API_BASE_URL}/account/${account_id}?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/account/${account_id}`, {
                         method: "GET",
-                        headers: { "token": sessionStorage.getItem("token") }
+                        headers: { "Authorization": `Bearer ${sessionStorage.getItem("token")}` }
                     });
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -361,9 +360,9 @@
                     const signatureInput = document.getElementById('signature');
                     if (this.account_data.verification_code == 'Y') {
                         if (signatureInput.value === signatureInput.placeholder) {
-                            const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/sign-contract?usr_account_id=${this.usr_account_id}`, {
+                            const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/sign-contract`, {
                                 method: "POST",
-                                headers: { "token": sessionStorage.getItem("token") }
+                                headers: { "Authorization": `Bearer ${sessionStorage.getItem("token")}` }
                             });
                             if (!response.ok) {
                                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -379,11 +378,11 @@
                     
                 },
                 async changeNotificationPreferences (new_preference) {
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/notifications/${new_preference}?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/notifications/${new_preference}`, {
                         method: "PUT", 
                         headers: {
                             "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                         }
                     });
 
@@ -414,11 +413,11 @@
                             "public_yn": 'Y'
                         }
                     }
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}/client/?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_uid}/status/${new_status}/client/`, {
                         method: "PATCH", 
                         headers: {
                             "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                         }, 
                         body: JSON.stringify(body)
                     });
@@ -468,11 +467,11 @@
                     }
 
                     console.log(differences);
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
+                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}`, {
                         method: "PATCH", 
                         headers: {
                             "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                         }, 
                         body: JSON.stringify(differences)
                     });
@@ -483,34 +482,6 @@
                         return ;
                     }
                     alert("Product details updated succesfully!");
-                    widnow.location.reload();
-                }, 
-                async updateProductActuals() {
-                    const differences = {};
-
-                    for (const key in this.actuals) {
-                        if (this.actuals[key] != this.init_actuals[key]) {
-                            console.log("Met")
-                            differences[key] = this.actuals[key];
-                        }
-                    }
-
-                    console.log(differences);
-                    const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}?usr_account_id=${this.usr_account_id}`, {
-                        method: "PATCH", 
-                        headers: {
-                            "Content-Type": "application/json",
-                            "token": sessionStorage.getItem("token")
-                        }, 
-                        body: JSON.stringify(differences)
-                    });
-                    const data = await response.json();
-                    if (!response.ok) {
-                        console.error('Error:', data);
-                        alert("Error updating the product actuals");
-                        return ;
-                    }
-                    alert("Product actuals updated succesfully!");
                     widnow.location.reload();
                 }
             }

@@ -31,27 +31,24 @@ def send_verification_email(account_id):
         return ;
 
     # Create the email message
-    stmt = "SELECT account_id, first_name, last_name, email FROM accounts WHERE account_id = %s"
+    stmt = "SELECT account_id, first_name, last_name, email, user_role FROM accounts WHERE account_id = %s"
     db.cursor.execute(stmt, (account_id,))
     res = db.cursor.fetchone()
     account_data = {
         "account_id": res[0],
         "first_name": res[1],
         "last_name": res[2],
-        "email": res[3]
+        "email": res[3],
+        "user_role": res[4]
     }
 
-    token = h.generate_authorization()
-    stmt = "INSERT into login_sessions (account_id, token) values (%s, %s)"
-    account_token_tuple = (account_id, token)
-    db.cursor.execute(stmt, account_token_tuple)
-    db.cnx.commit()
+    token = h.create_jwt_token(account_data.get("account_id"), account_data.get("user_role"), 1800)
 
     html = f"""
     <html>
       <body>
         <p>Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}),<br>
-          This email is from Alex Bank regarding verification of your email. <br>
+          This email is from Alex Bank regarding verification of your email. Please note that this token is valid only 30 mins. <br>
           If you made this request, please click on the link below: </p>
         <p><a href="https://alex-bank.com/verify.html?token={token}">Verify Your Alex Bank Account</a></p>
         <p> If you did not make such request, please ignore this email. </p>
@@ -59,7 +56,7 @@ def send_verification_email(account_id):
     </html>
     """
     body = f"""Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}, \n"
-    This email is from Alex Bank regarding verification of your email. If you made this request, please click on the link below: \n
+    This email is from Alex Bank regarding verification of your email. Please note that this token is valid only 30 mins. If you made this request, please click on the link below: \n
     https://alex-bank.com/verify.html?token={token} \n
     If you did not make such request, please ignore this email.
     """

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from typing import Annotated, Optional, List
 from dependencies import database as db, helpers as h, schemas as s, mail as m
 
@@ -9,15 +9,14 @@ router = APIRouter(
 
 
 @router.get("")
-def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(None),
+def get_accounts(country_code: Optional[List[str]] = Query(None),
                  user_role: Optional[List[str]] = Query(None), verification: Optional[List[str]] = Query(None),
                  account_group: Optional[List[str]] = Query(None),
-                 token: Annotated[str | None, Header(convert_underscores=False)] = None):
+                 token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(emp_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']):
+    if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = "SELECT a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, " \
@@ -59,13 +58,11 @@ def get_accounts(emp_account_id: int, country_code: Optional[List[str]] = Query(
 
 
 @router.get("/{account_id}")
-async def get_account_info(account_id: int, usr_account_id: int,
-                           token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
@@ -116,13 +113,11 @@ async def create_account():
 
 
 @router.post("/{account_id}/send-verification-email")
-async def send_verification_email(account_id: int, usr_account_id: int,
-                                  token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def send_verification_email(account_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not usr_account_id == account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not usr_account_id == account_id:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
     if not db.cursor.rowcount == 1:
@@ -133,37 +128,30 @@ async def send_verification_email(account_id: int, usr_account_id: int,
 
 @router.post("/verify")
 async def verify_account(token: str):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    stmt = "SELECT account_id FROM login_sessions WHERE token = %s"
-    db.cursor.execute(stmt, (token,))
-    if db.cursor.rowcount == 1:
-        account_id = db.cursor.fetchone()[0]
-        stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
-        db.cursor.execute(stmt, (account_id,))
-        db.cnx.commit()
+    stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
+    db.cursor.execute(stmt, (usr_account_id,))
+    db.cnx.commit()
 
-        return {"status": "Success"}
-    else:
-        raise HTTPException(404, "Token not found")
+    return {"status": "Success"}
 
 
 @router.patch("/{account_id}/verification")
-async def change_account_verification_status(account_id: int, emp_account_id: int, new_verification_code: str,
-                                             token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def change_account_verification_status(account_id: int,  new_verification_code: str,
+                                             token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(emp_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(emp_account_id, ['C', 'A', 'E']) and \
-        (new_verification_code != 'C' or account_id != emp_account_id):
+    if usr_account_role not in ['C', 'A', 'E'] and \
+        (new_verification_code != 'C' or account_id != usr_account_id):
         raise HTTPException(401, "User does not have privileges")
 
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id, ))
     if not db.cursor.rowcount == 1:
         raise HTTPException(404, "Account not found")
-
     db.cursor.execute("SELECT verification_status FROM verifications WHERE verification_status = %s",
                       (new_verification_code,))
     if db.cursor.rowcount == 0:
@@ -178,13 +166,11 @@ async def change_account_verification_status(account_id: int, emp_account_id: in
 
 
 @router.patch("/{account_id}/information")
-async def update_account_information(account_id: int, usr_account_id: int, data: s.AmendAccount,
-                                     token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def update_account_information(account_id: int, data: s.AmendAccount, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if not usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
     if db.cursor.rowcount == 0:
@@ -220,13 +206,11 @@ async def update_account_information(account_id: int, usr_account_id: int, data:
 
 
 @router.patch("/{account_id}/group")
-async def update_account_group(account_id: int, usr_account_id: int, data: s.AmendAccountGroup,
-                               token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def update_account_group(account_id: int, data: s.AmendAccountGroup, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
     if db.cursor.rowcount == 0:
@@ -250,13 +234,11 @@ async def update_account_credentials():
 
 
 @router.get("/{account_id}/products")
-async def get_account_products(account_id: int, usr_account_id: int,
-                               token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def get_account_products(account_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
@@ -294,13 +276,11 @@ async def get_account_products(account_id: int, usr_account_id: int,
 
 
 @router.post("/{account_id}/product/{product_id}")
-async def product_sale(account_id: int, product_id: int, usr_account_id: int, data: s.NewProduct,
-                       token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def product_sale(account_id: int, product_id: int, data: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
     if db.cursor.rowcount == 0:

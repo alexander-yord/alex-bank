@@ -165,7 +165,7 @@
 
                     // Step 3: Construct the full URL
                     const accountId = sessionStorage.getItem('account_id');
-                    const url = `${API_BASE_URL}/product/instances/?usr_account_id=${accountId}&${statusCodes}`;
+                    const url = `${API_BASE_URL}/product/instances/?${statusCodes}`;
 
                     // Step 4: Fetch the data
                     try {
@@ -173,7 +173,7 @@
                             method: "GET",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         if (!response.ok) {

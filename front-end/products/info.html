@@ -154,11 +154,11 @@
                 "special_notes": this.appl_notes
             }
             console.log(appl_params);
-            const response = await fetch(`${API_BASE_URL}/account/${sessionStorage.getItem("account_id")}/product/${this.page_is_for_product_id}?usr_account_id=${sessionStorage.getItem("account_id")}`, {
+            const response = await fetch(`${API_BASE_URL}/account/${sessionStorage.getItem("account_id")}/product/${this.page_is_for_product_id}`, {
                 method: "POST", 
                 headers: {
                     "Content-Type": "application/json",
-                    "token": sessionStorage.getItem("token")
+                    "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                 }, 
                 body: JSON.stringify(appl_params)
             });
