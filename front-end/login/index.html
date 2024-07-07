@@ -49,15 +49,20 @@
             },
             methods: {
                 async LogIn() {
-                    const url = `${API_BASE_URL}/login/${this.account_id}`;
+                    const url = `${API_BASE_URL}/auth/token`;
+
+                    // Create form data
+                    const formData = new URLSearchParams();
+                    formData.append('username', this.account_id);
+                    formData.append('password', this.password);
                     
                     try {
                         const response = await fetch(url, {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/x-www-form-urlencoded'
                             },
-                            body: JSON.stringify({ password: this.password })
+                            body: formData.toString()
                         });
 
                         if (!response.ok) {
@@ -71,7 +76,7 @@
                         sessionStorage.setItem('first_name', data.first_name);
                         sessionStorage.setItem('last_name', data.last_name);
                         sessionStorage.setItem('user_role', data.user_role);
-                        sessionStorage.setItem('token', data.token);
+                        sessionStorage.setItem('token', data.access_token);
 
                         alert('Login successful');
                         window.location.href = "../index.html"; // Redirect to home page

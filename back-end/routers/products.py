@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
 from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
-from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query, Body
+from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query, Body, Depends
 
 router = APIRouter(
     prefix="/product",
@@ -147,26 +147,26 @@ async def get_product_instances():
 
 
 @router.get("/instances/", response_model=List[s.ProductCard])
-async def get_product_instances(usr_account_id: int,
-                                status_code: Optional[List[str]] = Query(None),
+async def get_product_instances(status_code: Optional[List[str]] = Query(None),
                                 product_id: Optional[int] = None,
                                 product_uid: Optional[int] = None,
                                 contract_id: Optional[int] = None,
-                                token: Annotated[str | None, Header(convert_underscores=False)] = None):
+                                token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
+    if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
 
     query = """
         SELECT 
             pi.product_uid, pi.application_id, pi.contract_id, appl.approved_by,
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
-            pi.status_code, ps.status_name, p.category_id, p.currency
+            pi.status_code, ps.status_name, p.category_id, p.currency, 
+            ac.first_name, ac.last_name, ac.account_id
         FROM product_instance pi
         JOIN applications appl ON appl.application_id = pi.application_id
+        JOIN accounts ac ON ac.account_id = pi.account_id
         JOIN products p ON p.product_id = appl.product_id
         JOIN product_statuses ps ON ps.code = pi.status_code
         WHERE 1=1
@@ -204,7 +204,10 @@ async def get_product_instances(usr_account_id: int,
         status_code=row[7],
         status_name=row[8],
         category_id=row[9],
-        currency=row[10]
+        currency=row[10],
+        first_name=row[11],
+        last_name=row[12],
+        account_id=row[13]
     ) for row in rows]
 
     return result
@@ -212,17 +215,15 @@ async def get_product_instances(usr_account_id: int,
 
 @router.get("/instance/{product_uid}",
             response_model=Union[s.ProductInstancePrivate, s.ProductInstancePublic])
-async def get_product_instance(product_uid: int, usr_account_id: int,
-                               token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
     db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
     account_id = db.cursor.fetchone()[0]
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
@@ -272,10 +273,10 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
             first_name=status[6] if status[6] else None,  # Corresponds to ac.first_name
             last_name=status[7] if status[7] else None,  # Corresponds to ac.last_name
             update_note=status[8] if status[8] and (status[9] == 'Y' or
-                                                    h.check_user_privilege(usr_account_id, ['C', 'A', 'E'])) else None,
+                                                    usr_account_role in ['C', 'A', 'E']) else None,
             # Corresponds to su.update_note or psu.update_note
             public_yn=status[9] if status[9] and (status[9] == 'Y' or
-                                                  h.check_user_privilege(usr_account_id, ['C', 'A', 'E'])) else None
+                                                  usr_account_role in ['C', 'A', 'E']) else None
             # Corresponds to su.update_note_public_yn or psu.update_note_public_yn
         )
 
@@ -296,7 +297,7 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
     db.cursor.execute(stmt, (product_uid,))
     res = db.cursor.fetchone()
 
-    if h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
+    if usr_account_role in ['C', 'A', 'E']:
         prod = s.ProductInstancePrivate(
             product_uid=res[0],
             account_id=res[1],
@@ -349,19 +350,20 @@ async def get_product_instance(product_uid: int, usr_account_id: int,
 
 
 @router.patch("/instance/{product_uid}/status/{new_status}")
-async def update_product_status(product_uid: int, usr_account_id: int, new_status: str,
+async def update_product_status(product_uid: int, new_status: str,
                                 update_note: s.UpdateNoteModel = Body(),
-                                token: Annotated[str | None, Header(convert_underscores=False)] = None):
+                                token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
+    if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
-    db.cursor.execute("SELECT status_code FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT status_code, notifications_yn FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
-    current_status = db.cursor.fetchone()[0]
+    row = db.cursor.fetchone()
+    current_status = row[0]
+    notifications_yn = row[1]
     possible_future_statuses = h.available_next_status(current_status)
     if not any(d["status_code"] == new_status for d in possible_future_statuses):
         raise HTTPException(403, f"Status {new_status} not allowed after {current_status} or does not exist")
@@ -388,21 +390,27 @@ async def update_product_status(product_uid: int, usr_account_id: int, new_statu
         if new_status == 'APR':
             c.generate_contract_string(product_uid)
 
+    if notifications_yn == 'Y':
+        m.send_product_status_update_email(product_uid, new_status)
+    elif notifications_yn == 'P':
+        if new_status in ["AMD", "APR", "DEN", "CNL", "SGN", "NOR", "TRG", "DUE", "ORD", "CMP"]:
+            m.send_product_status_update_email(product_uid, new_status)
+
     return {"status": "Success!"}
 
 
 @router.patch("/instance/{product_uid}/status/{new_status}/client/")
-async def client_update_product_status(product_uid: int, usr_account_id: int, new_status: str,
+async def client_update_product_status(product_uid: int, new_status: str,
                                        update_note: s.UpdateNoteModel = Body(),
-                                       token: Annotated[str | None, Header(convert_underscores=False)] = None):
+                                       token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    db.cursor.execute("SELECT status_code, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT status_code, account_id, notifications_yn FROM product_instance WHERE product_uid = %s",
+                      (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
-    current_status, account_id = db.cursor.fetchone()
+    current_status, account_id, notifications_yn = db.cursor.fetchone()
     possible_future_statuses = h.available_next_status(current_status)
     if not any(d["status_code"] == new_status for d in possible_future_statuses):
         raise HTTPException(403, f"Status {new_status} not allowed after {current_status} or does not exist")
@@ -420,22 +428,24 @@ async def client_update_product_status(product_uid: int, usr_account_id: int, ne
         db.cursor.execute(stmt, (new_status, usr_account_id, product_uid))
     db.cnx.commit()
 
+    if notifications_yn == 'Y':
+        m.send_product_status_update_email(product_uid, new_status)
+    elif notifications_yn == "P" and new_status == "CNL":
+        m.send_product_status_update_email(product_uid, new_status)
+
     return {"status": "Success!"}
 
 
 @router.patch("/instance/{product_uid}")
 def update_product_instance(
         product_uid: int,
-        usr_account_id: int,
         amendments: s.AmendProductInstance,
-        token: Annotated[str | None, Header(convert_underscores=False)] = None
+        token: str = Depends(s.oauth2_scheme)
 ):
-    print(amendments)
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']):
+    if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT status_code FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
@@ -490,8 +500,8 @@ def update_product_instance(
 
 
 @router.post("/instance/{product_uid}/sign-contract")
-async def digitally_sign_contract(product_uid: int, usr_account_id: int,
-                                  token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def digitally_sign_contract(product_uid: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
     db.cursor.execute("SELECT account_id, status_code, contract_id FROM product_instance WHERE product_uid = %s",
@@ -499,7 +509,7 @@ async def digitally_sign_contract(product_uid: int, usr_account_id: int,
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"No product with Product UID {product_uid} found.")
     res = db.cursor.fetchone()
-    if not h.verify_authorization(usr_account_id, token) or not res[0] == usr_account_id:
+    if not res[0] == usr_account_id:
         raise HTTPException(401, "User is not authorized")
     if not res[1] == "SGN":
         raise HTTPException(403, "Signing not allowed for this product status.")
@@ -520,17 +530,15 @@ async def digitally_sign_contract(product_uid: int, usr_account_id: int,
 
 
 @router.get("/instance/{product_uid}/contract/")
-async def get_pdf_contract(product_uid: int, usr_account_id: int,
-                           token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def get_pdf_contract(product_uid: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
     db.cursor.execute("SELECT account_id, contract_id FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} not found")
     res = db.cursor.fetchone()
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not res[0] == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not res[0] == usr_account_id:
         raise HTTPException(401, "User does not have privileges.")
 
     buffer = c.contract_buffer(res[1])
@@ -541,17 +549,16 @@ async def get_pdf_contract(product_uid: int, usr_account_id: int,
 
 
 @router.put("/instance/{product_uid}/notifications/{new_preference}")
-async def update_product_notifications_status(product_uid: int, new_preference: str, usr_account_id: int,
-                                              token: Annotated[str | None, Header(convert_underscores=False)] = None):
+async def update_product_notifications_status(product_uid: int, new_preference: str,
+                                              token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not h.verify_authorization(usr_account_id, token):
-        raise HTTPException(401, "User is not authorized")
     db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} not found")
     account_id = db.cursor.fetchone()[0]
-    if not h.check_user_privilege(usr_account_id, ['C', 'A', 'E']) and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges.")
     if new_preference not in ['Y', 'N', 'P']:
         raise HTTPException(403, f"{new_preference} not a valid status")

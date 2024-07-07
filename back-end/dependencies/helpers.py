@@ -1,51 +1,58 @@
 from . import database as db
-import random
-import string
+import datetime
+import jwt
+import configparser, os, sys
+from fastapi import HTTPException
 
 cursor = db.cursor
 cnx = db.cnx
-CHARACTERS = string.ascii_letters + string.digits
+
+try:
+    cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+    cfile.read(os.path.join(sys.path[0], "config.ini"))
+
+    SECRET_KEY = cfile["ENCRYPT"]["SECRET_KEY"]
+except FileNotFoundError as err:
+    SECRET_KEY = None
+    print(err)
 
 
-def generate_authorization(length=512):  # generates the authorization token
-    return ''.join(random.choice(CHARACTERS) for i in range(length))
+def create_jwt_token(account_id: int, user_role: str, exp: int = 7200) -> str:
+    """
+    Create a JWT token.
+
+    Parameters:
+    - account_id (int): The account ID.
+    - user_role (str): The user role.
+    - exp (int, optional): The expiration time in seconds. Default is 7200 seconds (2 hours).
+
+    Returns:
+    - str: The JWT token.
+    """
+
+    # Define the payload
+    payload = {
+        'account_id': account_id,
+        'user_role': user_role,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=exp)
+    }
+
+    # Create the JWT token
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+    return token
 
 
-def verify_authorization(account_id, authorization):  # verifies that the token passed is the correct one
-    global cnx, cursor
-    if not cnx.is_connected():
-        cnx, cursor = db.connect()
-    stmt = "SELECT account_id FROM login_sessions WHERE token = %s "
-    cursor.execute(stmt, (authorization,))
-    if cursor.rowcount == 0:
-        return False
-    row = cursor.fetchall()[0]
-    return True if row[0] == account_id else False
-
-
-# def check_user_privilege(account_id, roles: list):
-#     global cnx, cursor
-#     if not cnx.is_connected():
-#         cnx, cursor = db.connect()
-#     cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s AND user_role IN (%s)",
-#                    (account_id, roles))
-#     return True if cursor.rowcount == 1 else False
-
-def check_user_privilege(account_id, roles: list):
-    global cnx, cursor
-    if not cnx.is_connected():
-        cnx, cursor = db.connect()
-
-    # Construct the placeholders for the roles
-    placeholders = ', '.join(['%s'] * len(roles))
-
-    # Construct the SQL query
-    query = f"SELECT account_id FROM accounts WHERE account_id = %s AND user_role IN ({placeholders})"
-
-    # Execute the query with account_id and roles expanded into parameters
-    cursor.execute(query, (account_id, *roles))
-
-    return cursor.rowcount == 1
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        return payload.get("account_id"), payload.get("user_role")
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def verification_emoji(verification_status):

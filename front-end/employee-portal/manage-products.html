@@ -63,12 +63,13 @@
                     </div>
                     <button style="height:40px; width: 40px;" @click="loadProducts"><img width="17px" src="../assets/magnifying-glass-solid.svg"></button>
                 </div>
-
+                <br>
                 <div class="product-grid" v-if="Object.keys(products).length">
                     <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.category_id+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
+                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
+                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
                         <div class="product-description">{{prod.description}}</div>
                     </a>
                 </div>
@@ -165,7 +166,7 @@
 
                     // Step 3: Construct the full URL
                     const accountId = sessionStorage.getItem('account_id');
-                    const url = `${API_BASE_URL}/product/instances/?usr_account_id=${accountId}&${statusCodes}`;
+                    const url = `${API_BASE_URL}/product/instances/?${statusCodes}`;
 
                     // Step 4: Fetch the data
                     try {
@@ -173,7 +174,7 @@
                             method: "GET",
                             headers: {
                                 "Content-Type": "application/json",
-                                "token": sessionStorage.getItem("token")
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                             }
                         });
                         if (!response.ok) {

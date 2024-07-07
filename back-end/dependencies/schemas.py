@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from fastapi import Query
+from fastapi.security import OAuth2PasswordBearer
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 
 class LoggedInUser(BaseModel):
@@ -203,5 +207,8 @@ class ProductCard(BaseModel):
     status_name: str
     category_id: str
     currency: str
+    account_id: int
+    first_name: str
+    last_name: str
 
 

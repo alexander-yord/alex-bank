@@ -164,7 +164,7 @@
                   sessionStorage.setItem('first_name', data.first_name);
                   sessionStorage.setItem('last_name', data.last_name);
                   sessionStorage.setItem('user_role', data.user_role);
-                  sessionStorage.setItem('token', data.token);
+                  sessionStorage.setItem('token', data.access_token);
                   alert(`Account ${data.account_id} created successfully!`);
                   window.location.href = "../index.html"; // Redirect to home page
                 } else {
