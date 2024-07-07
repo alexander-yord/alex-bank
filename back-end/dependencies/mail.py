@@ -82,6 +82,25 @@ def send_verification_email(account_id):
         print(f"Failed to send email: {e}")
 
 
+def send_password_reset_email(account_id):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+
+    except Exception as err:
+        print(err)
+        return ;
+    ...
+
+
 def send_contract_email(product_uid: int, email: str = None):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
