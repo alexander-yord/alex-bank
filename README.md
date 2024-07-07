@@ -63,3 +63,5 @@ deactivate
 ## Front-End 
 You will need a live server for the front-end. You can create your own account then, or alternatively, you can log into the admin user with initial password `qwerty`. It is highly recommended that you change it immediately. 
 
+> [!NOTE]
+> By default, the back-end API is set at `http://127.0.0.1:8000/api`, however, your instance may be located elsewhere, on a different port. Change the `API_BASE_URL` variable in the `alex-bank/front-end/src/functions.js`.
