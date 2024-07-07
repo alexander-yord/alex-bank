@@ -63,12 +63,13 @@
                     </div>
                     <button style="height:40px; width: 40px;" @click="loadProducts"><img width="17px" src="../assets/magnifying-glass-solid.svg"></button>
                 </div>
-
+                <br>
                 <div class="product-grid" v-if="Object.keys(products).length">
                     <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.category_id+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.currency}}{{prod.amount.toFixed(2)}} | {{prod.status_name}}</div>
+                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
+                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
                         <div class="product-description">{{prod.description}}</div>
                     </a>
                 </div>

@@ -27,13 +27,6 @@ CREATE TABLE `login_credentials` (
   `password` varchar(255)
 );
 
-CREATE TABLE `login_sessions` (
-  `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
-  `account_id` integer,
-  `token` varchar(512),
-  `create_dt` timestamp DEFAULT (now())
-);
-
 CREATE TABLE `currencies` (
   `currency_code` varchar(3) PRIMARY KEY,
   `currency_name` varchar(255)
@@ -103,7 +96,7 @@ CREATE TABLE `product_instance` (
   `latest_update_user_id` integer,
   `latest_note` text,
   `latest_note_public_yn` char(1),
-  `notifications_yn` char(1) DEFAULT 'P'
+  `notifications_yn` char(1) DEFAULT 'Y'
 );
 
 CREATE TABLE `product_statuses` (
@@ -195,8 +188,6 @@ ALTER TABLE `account_worthiness` ADD FOREIGN KEY (`verification_user`) REFERENCE
 ALTER TABLE `account_worthiness` ADD FOREIGN KEY (`document_proof`) REFERENCES `documents` (`document_id`);
 
 ALTER TABLE `login_credentials` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
-
-ALTER TABLE `login_sessions` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
 
 ALTER TABLE `accounts` ADD FOREIGN KEY (`account_group`) REFERENCES `account_groups` (`group_code`);
 

@@ -81,83 +81,77 @@
                     </button>
                 </div>
                 
-                <br><br>
-                <div class="data-form-container editable-form">
-                    <div class="form-group full-width">
-                        <h2>Contact Information</h2>
-                    </div>
-                    <button class="pencil-button" v-on:click="toggleEdit">
-                        <img src="../img/pencil-solid.svg" alt="Edit">
-                    </button>
-                    <div class="form-group">
-                        <label for="name">Email:</label>
-                        <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Phone:</label>
-                        <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
-                    </div>
-                    <div class="form-group">
-                        <label for="country">Country of Residence:</label>
-                        <div class="custom-select">
-                            <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
-                                <option value="BGR">Bulgaria</option>
-                                <option value="USA">United States</option>
-                                <option value="OTH">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="bio">Address:</label>
-                        <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
-                            Update
-                        </button>
-                    </div>
-                </div>
-
-                <br><br>
-                <div class="card-row">
-                    <div class="card">
-                        <div class="form-group-row full-width">
-                            <h2>Account Group</h2>
-                        </div>
-                        <button class="pencil-button" v-on:click="toggleEdit2">
-                            <img src="../img/pencil-solid.svg" alt="Edit">
-                        </button>
-                        <div class="form-group-row">
-                            <label for="account_group">Account Group:</label>
-                            <div class="custom-select">
-                                <select id="account_group" v-model="account_group.account_group_code" :disabled="!isEditableF2"> 
-                                    <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
-                                </select>
+                <div class="two-column-container" style="gap: 10px;">
+                    <div class="first-column">
+                        <div class="card">
+                            <div class="form-group-row full-width">
+                                <h2>Account Group</h2>
+                            </div>
+                            <button class="pencil-button" v-on:click="toggleEdit2">
+                                <img src="../img/pencil-solid.svg" alt="Edit">
+                            </button>
+                            <div class="form-group-row">
+                                <label for="account_group">Account Group:</label>
+                                <div class="custom-select">
+                                    <select id="account_group" v-model="account_group.account_group_code" :disabled="!isEditableF2"> 
+                                        <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup">
+                                    Change Group
+                                </button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <button v-if="isEditableF2" class="submit-button" type="submit" @click="updateAccountGroup">
-                                Change Group
-                            </button>
+
+                        <div class="card" style="margin-top: 10px;">
+                            <div class="form-group-row full-width">
+                                <h2 style="margin: 7px 0px">Login Credentials <button class="inline-pencil-button" v-on:click="resetPassword">
+                                    <img src="../img/pencil-solid.svg" alt="Edit">
+                                </button></h2>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="card">
-                        <div class="form-group-row full-width">
-                            <h2>Login Credentials</h2>
-                        </div>
-                        <button class="pencil-button" v-on:click="">
-                            <img src="../img/pencil-solid.svg" alt="Edit">
-                        </button>
-                        <div class="form-group-row">
-                            <label for="account_group" style="color: red">Not implemented</label>
-                            
+                    <div class="second-column">
+                        <div class="data-form-container editable-form">
+                            <div class="form-group full-width">
+                                <h2>Contact Information</h2>
+                            </div>
+                            <button class="pencil-button" v-on:click="toggleEdit">
+                                <img src="../img/pencil-solid.svg" alt="Edit">
+                            </button>
+                            <div class="form-group">
+                                <label for="name">Email:</label>
+                                <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Phone:</label>
+                                <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
+                            </div>
+                            <div class="form-group">
+                                <label for="country">Country of Residence:</label>
+                                <div class="custom-select">
+                                    <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
+                                        <option value="BGR">Bulgaria</option>
+                                        <option value="USA">United States</option>
+                                        <option value="OTH">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bio">Address:</label>
+                                <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
+                                    Update
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <br> 
-
-
+                
                 <div>
                     <h2>Products:</h2>
                 </div>
@@ -327,6 +321,25 @@
                         } 
                     } 
                 this.isEditableF2 = !this.isEditableF2;
+                },
+                async resetPassword() {
+                    if (!confirm("Are you sure you want to reset this user's password?")){
+                        return ;
+                    }
+                    else {
+                        const response = await fetch(`${API_BASE_URL}/account/${this.page_account_id}/credentials`, {
+                            method: "POST", 
+                            headers: {
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            }
+                        });
+                        if (!response.ok) {
+                            alert("An error occurred!");
+                            return; 
+                        }
+                        alert("Password Succesfully Reset!");
+                        return;
+                    }
                 },
                 async verifyAccount(new_status) {
                     if (new_status=='R') {

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Annotated
+import bcrypt
 from dependencies import database as db, helpers as h, schemas as s
 
 router = APIRouter(
@@ -23,8 +24,14 @@ async def signup(acc_info: s.NewAccount = None):
     db.cursor.execute(stmt2, (acc_info.first_name, acc_info.last_name))
     account_id = db.cursor.fetchone()[0]
 
+    # Generate a new, unique salt
+    salt = bcrypt.gensalt()
+
+    # Hash the password with the salt
+    hashed_password = bcrypt.hashpw(acc_info.password.encode('utf-8'), salt)
+
     stmt3 = "INSERT INTO login_credentials (account_id, password) VALUES (%s, %s)"
-    db.cursor.execute(stmt3, (account_id, acc_info.password))
+    db.cursor.execute(stmt3, (account_id, hashed_password))
     db.cnx.commit()
 
     token = h.create_jwt_token(account_id, 'U')

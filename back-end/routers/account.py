@@ -228,9 +228,16 @@ async def update_account_group(account_id: int, data: s.AmendAccountGroup, token
     return {"status": "Success!"}
 
 
-@router.patch("/{account_id}/credentials")
-async def update_account_credentials():
-    pass
+@router.post("/{account_id}/credentials")
+async def update_account_credentials(account_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:
+        raise HTTPException(401, "User does not have privileges")
+
+    m.send_password_reset_email(account_id)
+    return {"status": "Success"}
 
 
 @router.get("/{account_id}/products")
@@ -308,6 +315,8 @@ async def product_sale(account_id: int, product_id: int, data: s.NewProduct, tok
 
     db.cursor.execute("SELECT LAST_INSERT_ID()")
     product_uid = db.cursor.fetchone()[0]
+
+    m.send_product_status_update_email(product_uid, 'APL')
 
     return {"status": "Success!",
             "product_uid": product_uid}

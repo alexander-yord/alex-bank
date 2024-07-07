@@ -207,5 +207,8 @@ class ProductCard(BaseModel):
     status_name: str
     category_id: str
     currency: str
+    account_id: int
+    first_name: str
+    last_name: str
 
 

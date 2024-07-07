@@ -39,71 +39,92 @@
             <div>Account ID: {{ account_data.account_id }} | {{ account_data.country }}{{ account_data.address ? ', ' + account_data.address : '' }}</div>
             <br>
             
-            <div class="data-form-container editable-form">
-                <div class="form-group full-width">
-                    <h2>Contact Information</h2>
-                </div>
-                <button class="pencil-button" v-on:click="toggleEdit">
-                    <img src="../img/pencil-solid.svg" alt="Edit">
-                </button>
-                <div class="form-group">
-                    <label for="name">Email:</label>
-                    <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
-                </div>
-                <div class="form-group">
-                    <label for="email">Phone:</label>
-                    <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
-                </div>
-                <div class="form-group">
-                    <label for="country">Country of Residence:</label>
-                    <div class="custom-select">
-                        <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
-                            <option value="BGR">Bulgaria</option>
-                            <option value="USA">United States</option>
-                            <option value="OTH">Other</option>
-                        </select>
+            <div class="two-column-container" style="gap: 10px;">
+                <div class="first-column">
+                    <div class="card">
+                        <div class="form-group-row full-width">
+                            <h2>Account Group</h2>
+                        </div>
+                        <div class="form-group-row">
+                            <label for="account_group">Account Group:</label>
+                            <select id="account_group" v-model="account_group.account_group_code" disabled> 
+                                <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 10px;">
+                        <div class="form-group-row full-width">
+                            <h2 style="margin: 12px 0px">Login Credentials <button class="inline-pencil-button" v-on:click="toggleEdit2">
+                                <img src="../img/pencil-solid.svg" alt="Edit">
+                            </button></h2>
+                        </div>
+                        <div class="form-group-row" v-if="false">
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <div class="verification-container">
+                                  <input type="password" id="password" minlength="8" maxlength="255" required oninput="checkPassword()">
+                                  <span class="verification-check" id="password-check">✔</span>
+                                  <span class="verification-x" id="password-x">✖</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="repeat-password">Repeat Password:</label>
+                                <div class="verification-container">
+                                  <input type="password" id="repeat-password" minlength="8" maxlength="255" required oninput="checkPasswordMatch()">
+                                  <span class="verification-check" id="repeat-password-check">✔</span>
+                                  <span class="verification-x" id="repeat-password-x">✖</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div>
+                                    <button type="submit">Create Account</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="bio">Address:</label>
-                    <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
-                </div>
-                <div class="form-group">
-                    <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
-                        Update
-                    </button>
+
+                <div class="second-column">
+                    <div class="data-form-container editable-form">
+                        <div class="form-group full-width">
+                            <h2>Contact Information</h2>
+                        </div>
+                        <button class="pencil-button" v-on:click="toggleEdit1">
+                            <img src="../img/pencil-solid.svg" alt="Edit">
+                        </button>
+                        <div class="form-group">
+                            <label for="name">Email:</label>
+                            <input type="text" id="name" name="name" v-model="contact_data.email" :readonly="!isEditableF1">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Phone:</label>
+                            <input type="text" id="email" name="email" v-model="contact_data.phone" :readonly="!isEditableF1">
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country of Residence:</label>
+                            <div class="custom-select">
+                                <select id="country" v-model="contact_data.country_code" :disabled="!isEditableF1"> 
+                                    <option value="BGR">Bulgaria</option>
+                                    <option value="USA">United States</option>
+                                    <option value="OTH">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="bio">Address:</label>
+                            <textarea id="bio" name="bio" v-model="contact_data.address" :readonly="!isEditableF1"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <button v-if="isEditableF1" class="submit-button" type="submit" @click="updateContactInfo">
+                                Update
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <br><br>
-            <div class="card-row">
-                <div class="card">
-                    <div class="form-group-row full-width">
-                        <h2>Account Group</h2>
-                    </div>
-                    <div class="form-group-row">
-                        <label for="account_group">Account Group:</label>
-                        <select id="account_group" v-model="account_group.account_group_code" disabled> 
-                            <option v-for="group in dd_account_group_options" :value="group.group_code"><abbr :title="group.group_description">{{group.group_name}}</abbr></option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="form-group-row full-width">
-                        <h2>Login Credentials</h2>
-                    </div>
-                    <button class="pencil-button" v-on:click="">
-                        <img src="../img/pencil-solid.svg" alt="Edit">
-                    </button>
-                    <div class="form-group-row">
-                        <label for="account_group" style="color: red">Not implemented</label>
-                        
-                    </div>
-                </div>
-            </div>
-            <br> 
-
+            <br>
 
             <div>
                 <h2>Products:</h2>
@@ -120,6 +141,27 @@
                 This account has no products. 
             </div>
             
+            <div id="passwordPopup" class="popup">
+                <div class="popup-content">
+                    <h3 style="margin: 0px;">Change Password <span class="close" @click="toggleEdit2">&times;</span></h3>
+                    <br>
+                    <form id="passwordForm" @submit.prevent="changePassword">
+                        <label for="newPassword">New Password:</label>
+                        <div class="verification-container">
+                            <input type="password" id="password" minlength="8" maxlength="255" required oninput="checkPassword()">
+                            <span class="verification-check" id="password-check">✔</span>
+                            <span class="verification-x" id="password-x">✖</span>
+                          </div>
+                        <label for="retypePassword">Retype Password</label>
+                        <div class="verification-container">
+                            <input type="password" id="repeat-password" minlength="8" maxlength="255" required oninput="checkPasswordMatch()">
+                            <span class="verification-check" id="repeat-password-check">✔</span>
+                            <span class="verification-x" id="repeat-password-x">✖</span>
+                          </div>
+                        <button type="submit" @click>Submit</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <div v-else-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role) && !Object.keys(this.account_data).length" class="content">
@@ -152,7 +194,9 @@
                     isEditableF1: false, 
                     isEditableF2: false, 
                     isEditableF3: false,
-                    products: {}
+                    products: {}, 
+                    password: null, 
+                    repeatPassword: null
                 };
             },
             mounted() {
@@ -225,7 +269,7 @@
                         console.error('Error fetching account products: ', error)
                     }
                 },
-                toggleEdit() {
+                toggleEdit1() {
                     if (this.isEditableF1) {
                         if (JSON.stringify(this.contact_data) !== JSON.stringify(this.initial_contact_data)) {
                             if (!confirm('You have unsaved changes. Are you sure you want to discard them?')) {
@@ -235,7 +279,18 @@
                             }
                         } 
                     } 
-                this.isEditableF1 = !this.isEditableF1;
+                    this.isEditableF1 = !this.isEditableF1;
+                },
+                toggleEdit2() {
+                    if (!this.isEditableF2) {
+                        const myPopup = document.getElementById('passwordPopup');
+                        myPopup.style.display = 'flex';
+                    }
+                    if (this.isEditableF2) {
+                        const myPopup = document.getElementById('passwordPopup');
+                        myPopup.style.display = 'none';
+                    }
+                    this.isEditableF2 = !this.isEditableF2;
                 },
                 async verifyAccount(new_status) {
                     if (new_status=='R') {
@@ -309,9 +364,70 @@
                     sessionStorage.clear()
                     alert("You succesfully logged out!")
                     window.location.href = "../index.html"; // Redirect to home page
+                }, 
+                async changePassword() {
+                    const password = document.getElementById('password').value;
+                    const repeatPassword = document.getElementById('repeat-password').value;
+
+                    if (password.length < 8) {
+                        alert("Password must be at least 8 characters!");
+                        return;
+                    }
+                    if (password !== repeatPassword) {
+                        alert('Passwords do not match');
+                        return;
+                    }
+
+                    const response = await fetch(API_BASE_URL + "/auth/credentials", {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json", 
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        },
+                        body: JSON.stringify({
+                            "password": password
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert("Password succesfully changed!");
+                        window.location.reload();
+                    }
+                    else {
+                        alert("An error occurred. Please try again!")
+                    }
                 }
             }
         }).mount('#app');
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('password');
+            const passwordCheck = document.getElementById('password-check');
+            const passwordX = document.getElementById('password-x');
+
+            if (passwordInput.value.length >= 8) {
+                passwordCheck.style.display = 'inline';
+                passwordX.style.display = 'none';
+            } else {
+                passwordCheck.style.display = 'none';
+                passwordX.style.display = 'inline';
+            }
+        }
+
+        function checkPasswordMatch() {
+            const passwordInput = document.getElementById('password');
+            const repeatPasswordInput = document.getElementById('repeat-password');
+            const repeatPasswordCheck = document.getElementById('repeat-password-check');
+            const repeatPasswordX = document.getElementById('repeat-password-x');
+
+            if (passwordInput.value === repeatPasswordInput.value) {
+                repeatPasswordCheck.style.display = 'inline';
+                repeatPasswordX.style.display = 'none';
+            } else {
+                repeatPasswordCheck.style.display = 'none';
+                repeatPasswordX.style.display = 'inline';
+            }
+        }
     </script>
     
 
