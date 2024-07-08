@@ -207,8 +207,8 @@ class ProductCard(BaseModel):
     status_name: str
     category_id: str
     currency: str
-    account_id: int
-    first_name: str
-    last_name: str
+    account_id: Optional[int] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 
