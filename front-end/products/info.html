@@ -104,6 +104,7 @@
     async mounted() {
       this.getProduct();
       await this.fetchProduct();
+      sessionStorage.setItem("redirectURL", window.location.href);
     },
     methods: {
       getProduct() {

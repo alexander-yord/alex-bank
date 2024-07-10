@@ -536,6 +536,7 @@
             mounted() {
                 this.loadMenu();
                 this.loadPage();
+                redirectIfNotLoggedIn();
             }
         }).mount('#app');
     </script>

@@ -79,9 +79,12 @@
                         sessionStorage.setItem('token', data.access_token);
 
                         alert('Login successful');
-                        window.location.href = "../index.html"; // Redirect to home page
-                        // Optionally redirect to another page
-                        // window.location.href = '/dashboard.html';
+                        if (sessionStorage.getItem("redirectURL") != null) {
+                            window.location.href = sessionStorage.getItem("redirectURL");
+                        }
+                        else {
+                            window.location.href = "../index.html";
+                        }
 
                     } catch (error) {
                         console.error('Error:', error);

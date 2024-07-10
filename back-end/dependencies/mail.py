@@ -251,7 +251,7 @@ def send_product_status_update_email(product_uid: int, new_status: str):
 
     db.cursor.execute(stmt, (product_uid,))
     if db.cursor.rowcount != 1:
-        pass
+        return
     row = db.cursor.fetchone()
 
     data = {

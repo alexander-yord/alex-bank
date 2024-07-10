@@ -202,6 +202,7 @@
             mounted() {
                 this.load_account_data(), 
                 this.loadAccountProducts();
+                redirectIfNotLoggedIn();
             },
             methods: {
                 async load_account_data() {

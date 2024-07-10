@@ -191,7 +191,7 @@
             }, 
             mounted() {
                 this.loadMenu();
-
+                redirectIfNotLoggedIn();
                 this.loadPage();
                 const arrowButton = document.getElementById('arrow-button');
                 if (arrowButton) {

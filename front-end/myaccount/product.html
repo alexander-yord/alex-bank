@@ -212,7 +212,8 @@
                 };
             },
             mounted() {
-                this.loadPage()
+                this.loadPage();
+                redirectIfNotLoggedIn();
             },
             methods: {
                 async loadPage(){
