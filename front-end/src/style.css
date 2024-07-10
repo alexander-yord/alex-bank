@@ -84,7 +84,7 @@ body {
 .content {
     margin: 74px 10% 0 10%;
     background-color: var(--color-bg-light); 
-    padding: 20px;
+    padding-top: 1px;
     box-sizing: border-box;
 }
 
@@ -106,9 +106,19 @@ body {
     padding: 10px 0;
 }
 
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .content {
+        margin: 74px 10px 0 10px;
+    }
+    .navbar .wrapper {
+        margin: 0px 10px;
+    }
+}
+
 .navbar img {
     height: 50px;
-    margin: 0px 20px;
+    margin: 0px;
 }
 
 .navbar ul {

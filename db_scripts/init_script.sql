@@ -24,9 +24,15 @@ values
 -- account groups 
 insert into `account_groups` (`group_code`, `group_name`, `group_description`, `default_YN`)
 values 
-	('FTC', 'Regular Client', 'Regular first time client', 'Y'), 
+	('FTC', 'First-Time Client', 'Regular first-time client', 'Y'),
+    ('FTP', 'First-Time Partner', 'Credible first-time client', 'N'),
+    ('RTC', 'Returning Client', 'Client with at least one completed product', 'N'),
     ('LTP', 'Long Term Partner', 'Long term partner of Alex Bank or affiliated entities', 'N'), 
     ('EMP', 'Employee', 'Code for any employee, inlcuding admins, C-suite, and regular employees', 'N');
+
+-- API userl; does not have credentials, i.e., cannot login with it
+insert into `accounts` (`account_id`, `first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
+values (0, 'Automated', 'Action', 'BGR', 'A', 'Y', 'EMP');
 
 -- user increment starting value
 alter table `accounts` AUTO_INCREMENT=2000000;
@@ -34,23 +40,13 @@ alter table `accounts` AUTO_INCREMENT=2000000;
 -- product instance increment starting value
 alter table `product_instance` AUTO_INCREMENT=300000;
 
--- default user
+-- default admin user
 insert into `accounts` (`first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
 values ('Admin', 'Admin', 'BGR', 'A', 'Y', 'EMP');
 
--- default user firstpass 
+-- default admin user firstpass 
 insert into `login_credentials` (`account_id`, `password`) 
 values (2000000, 'qwerty');
-
--- Ensure the Event Scheduler is enabled
-SET GLOBAL event_scheduler = ON;
-
--- Create the event to delete old login sessions
-CREATE EVENT IF NOT EXISTS delete_old_login_sessions
-ON SCHEDULE EVERY 1 HOUR
-DO
-  DELETE FROM login_sessions
-  WHERE create_dt < NOW() - INTERVAL 2 HOUR;
 
 -- document profiles 
 insert into `document_profiles` (`doc_profile_id`, `description`)
@@ -59,33 +55,24 @@ values
     ('AWP', 'Account Worthiness Proof');
 
 -- product statuses
-INSERT INTO product_statuses (code, status_name, call_to_action, status_description) VALUES
-	('APL', 'Applied', NULL, 'Application submitted'),
-	('REV', 'Reviewed', 'Review', 'Application is under review'),
-	('APR', 'Approved', 'Approve', 'Application is approved'),
-	('DEN', 'Denied', 'Deny', 'Application is denied'),
-	('CNL', 'Cancelled', 'Cancel', 'The application or the exchange of the underlying was cancelled'),
-	('AMD', 'Amended', 'Amend', 'An employee made a change, and the client has to agree to it'),
-    ('AGR', 'Agreed', 'Agree', 'The client agrees to the change proposed by the employee'), 
-    ('DIS', 'Disagreed', 'Disagree', 'The client does not agree with the change proposed by the employee'),
-	('SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
-	('AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
-	('NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
-	('TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
-	('DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
-	('CMP', 'Complete', 'Complete', 'Complete'),
-	('ORD', 'Overdue', 'Overdue', 'Overdue'),
-	('WOF', 'Written Off', 'Write Off', 'Written Off');
+INSERT INTO product_statuses (order_no, code, status_name, call_to_action, status_description) VALUES
+	(1, 'APL', 'Applied', NULL, 'Application submitted'),
+	(2, 'REV', 'Reviewed', 'Review', 'Application is under review'),
+    (3, 'AGR', 'Agreed', 'Agree', 'The client agrees to the change proposed by the employee'), 
+    (4, 'DIS', 'Disagreed', 'Disagree', 'The client does not agree with the change proposed by the employee'),
+	(5, 'CNL', 'Cancelled', 'Cancel', 'The application or the exchange of the underlying was cancelled'),
+	(6, 'AMD', 'Amended', 'Amend', 'An employee made a change, and the client has to agree to it'),
+	(7, 'APR', 'Approved', 'Approve', 'Application is approved'),
+	(8, 'DEN', 'Denied', 'Deny', 'Application is denied'),
+	(9, 'SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
+	(10, 'AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
+	(11, 'NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
+	(12, 'TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
+	(13, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
+	(14, 'CMP', 'Complete', 'Complete', 'Complete'),
+	(15, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
+	(16, 'WOF', 'Written Off', 'Write Off', 'Written Off');
 
-    
--- product category 'Loans'
-insert into `product_categories` (`category_id`, `category_name`, `description`)
-values 
-	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.'), 
-    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.'), 
-    ('DER', 'Exotic Derivatives', 'Instruments whose price depends on the performance of some underlying asset or condition.');
- 
- 
 DELIMITER //
 
 -- product status update trigger
@@ -108,33 +95,6 @@ BEGIN
 END;  
 //
 
--- Create the event to update product instance status to DUE
-CREATE EVENT IF NOT EXISTS update_product_instance_status
-ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_DATE + INTERVAL 1 DAY + INTERVAL 1 MINUTE
-DO
-BEGIN
-    UPDATE product_instance
-    SET status_code = 'DUE'
-    WHERE product_end_date = CURDATE()
-    AND status_code IN ('NOR', 'TRG');
-END;
-//
-
--- Create the event to update product instance status to ORD 7 days after it was DUE
-CREATE EVENT IF NOT EXISTS update_due_to_ord_status
-ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_DATE + INTERVAL 1 DAY + INTERVAL 1 MINUTE
-DO
-BEGIN
-    UPDATE product_instance
-    SET status_code = 'ORD'
-    WHERE status_code = 'DUE'
-    AND CURDATE() = DATE_ADD(product_end_date, INTERVAL 7 DAY);
-END;
-//
-
-DELIMITER ;
 
 
 

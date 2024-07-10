@@ -46,7 +46,7 @@
         <a v-for="cat in product_categories.slice().reverse()" :key="cat.category_id" :href="'index.html?category_id='+cat.category_id" class="product-card">
             <img :src="'../img/products/' + cat.category_id + '.png'" alt="Product Image">
             <div class="product-title">{{ cat.category_name }}</div>
-            <div class="product-description">{{ cat.category_description }}.</div>
+            <div class="product-description">{{ cat.category_description }}</div>
         </a>
     </div>
   </div>
