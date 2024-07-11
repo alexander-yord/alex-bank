@@ -84,7 +84,7 @@ CREATE TABLE `product_custom_column_def` (
 );
 
 CREATE TABLE `product_custom_column_values` (
-  `pcc_uid` integer,
+  `pcc_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `pcc_id` integer,
   `product_uid` integer,
   `int_value` integer,

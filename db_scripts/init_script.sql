@@ -95,6 +95,45 @@ BEGIN
 END;  
 //
 
+CREATE TRIGGER after_insert_product_instance
+AFTER INSERT ON product_instance
+FOR EACH ROW
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE pcc_id INT;
+    DECLARE column_name VARCHAR(255);
+    DECLARE column_type VARCHAR(255);
+
+    -- Declare a cursor to select all custom columns for the product_id
+    DECLARE custom_column_cursor CURSOR FOR
+        SELECT pccd.pcc_id, pccd.column_name, pccd.column_type
+        FROM product_instance pi
+        JOIN applications appl ON appl.application_id = pi.application_id
+        JOIN product_custom_column_def pccd ON appl.product_id = pccd.product_id
+        WHERE pi.product_uid = NEW.product_uid;
+
+    -- Declare a handler to set 'done' to 1 when the cursor is exhausted
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN custom_column_cursor;
+
+    custom_columns: LOOP
+        FETCH custom_column_cursor INTO pcc_id, column_name, column_type;
+        IF done THEN
+            LEAVE custom_columns;
+        END IF;
+
+        -- Insert a row into product_custom_column_values for each custom column
+        INSERT INTO product_custom_column_values (product_uid, pcc_id)
+        VALUES (NEW.product_uid, pcc_id); 
+    END LOOP;
+
+    CLOSE custom_column_cursor;
+END;
+
+//
+
+
 
 
 

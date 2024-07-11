@@ -170,7 +170,7 @@ async def update_account_information(account_id: int, data: s.AmendAccount, toke
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    if not usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
+    if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
     db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
     if db.cursor.rowcount == 0:
@@ -252,7 +252,8 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
         SELECT 
             pi.product_uid, pi.application_id, pi.contract_id, appl.approved_by,
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
-            pi.status_code, ps.status_name, p.category_id, p.currency
+            pi.status_code, ps.status_name, p.category_id, p.currency, 
+            nvl(p.picture_name, p.category_id)
         FROM product_instance pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN products p ON p.product_id = appl.product_id
@@ -276,7 +277,8 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
         status_code=row[7],
         status_name=row[8],
         category_id=row[9],
-        currency=row[10]
+        currency=row[10],
+        picture_name=row[11]
     ) for row in rows]
 
     return result

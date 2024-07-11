@@ -3,7 +3,7 @@ insert into `product_categories` (`category_id`, `category_name`, `description`)
 values 
 	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.'), 
     ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.'), 
-    ('DER', 'Exotic Derivatives', 'Instruments whose price depends on the performance of some underlying asset or condition.');
+    ('DER', 'Exotic Derivative', 'Instruments whose price depends on the performance of some underlying asset or condition.');
  
 -- product subcategories
 INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description) VALUES

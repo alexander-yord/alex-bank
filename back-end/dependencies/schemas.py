@@ -108,6 +108,7 @@ class Product(BaseModel):
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
     available_till: Optional[str] = None
+    picture_name: str
 
 
 class ProductCategory(BaseModel):
@@ -135,10 +136,27 @@ class StatusUpdates(BaseModel):
     public_yn: Optional[str] = None
 
 
+class ProductCustomColumns(BaseModel):
+    pcc_uid: int
+    pcc_id: int
+    product_uid: int
+    column_name: str
+    customer_populatable_yn: bool
+    customer_visible_yn: bool
+    column_type: str
+    int_value: Optional[int]
+    float_value: Optional[float]
+    varchar_value: Optional[str]
+    text_value: Optional[str]
+    date_value: Optional[str]
+    datetime_value: Optional[str]
+
+
 class ProductInstancePublic(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_custom_columns: List[ProductCustomColumns]
     product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
@@ -162,6 +180,7 @@ class ProductInstancePrivate(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_custom_columns: List[ProductCustomColumns]
     product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
@@ -210,5 +229,6 @@ class ProductCard(BaseModel):
     account_id: Optional[int] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    picture_name: Optional[str] = None
 
 

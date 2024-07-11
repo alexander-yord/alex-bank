@@ -66,7 +66,7 @@
                 <br>
                 <div class="product-grid" v-if="Object.keys(products).length">
                     <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
-                        <img :src="'../img/products/'+prod.category_id+'.png'"> 
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
                         <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
