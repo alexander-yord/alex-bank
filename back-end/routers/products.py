@@ -1,8 +1,3 @@
-import os
-import io
-import sys
-import configparser
-from pathlib import Path
 from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
 from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
@@ -36,37 +31,61 @@ async def get_product_categories():
     return category_list
 
 
+@router.get("/subcategories", response_model=List[s.ProductSubcategories])
+async def get_product_subcategories(category_id: Optional[str] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    print (category_id)
+    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description FROM product_subcategories " \
+           "WHERE 1=1"
+    if category_id is not None:
+        stmt += " AND category_id = %s"
+        db.cursor.execute(stmt, (category_id,))
+    else:
+        db.cursor.execute(stmt)
+
+    if db.cursor.rowcount == 0:
+        return []
+    rows = db.cursor.fetchall()
+    return [s.ProductSubcategories(
+        subcategory_id=row[0],
+        category_id=row[1],
+        subcategory_name=row[2],
+        subcategory_description=row[3]
+    ) for row in rows]
+
+
 @router.get("/products", response_model=List[s.Product])
-async def list_products(category_id: Optional[str] = None, only_active_yn: str = 'Y'):
+async def list_products(category_id: Optional[str] = None, subcategory_id: Optional[str] = None,
+                        only_active_yn: str = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
     try:
-        if only_active_yn == 'N':
-            sql = """
-            SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-                   p.available_from, p.available_till
-            FROM products p
-            JOIN product_categories pc ON pc.category_id = p.category_id
-            WHERE 1=1
-            """
-        else:
-            sql = """
-            SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-                   p.available_from, p.available_till, nvl(p.picture_name, p.category_id)
-            FROM products p
-            JOIN product_categories pc ON pc.category_id = p.category_id
-            WHERE p.available_from <= NOW() AND nvl(available_till, NOW()) >= NOW()
-            """
+        sql = """
+        SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
+               p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id
+        FROM products p
+        JOIN product_categories pc ON pc.category_id = p.category_id
+        WHERE 1=1
+        """
 
+        if only_active_yn == 'Y':
+            sql += " AND p.available_from <= NOW() AND nvl(p.available_till, NOW()) >= NOW()"
+
+        params = []
         if category_id is not None:
-            sql += " AND pc.category_id = %s"
-            db.cursor.execute(sql, (category_id,))
-        else:
-            db.cursor.execute(sql)
+            sql += " AND p.category_id = %s"
+            params.append(category_id)
+        if subcategory_id is not None:
+            sql += " AND p.subcategory_id = %s"
+            params.append(subcategory_id)
 
+        db.cursor.execute(sql, params)
+        if db.cursor.rowcount == 0:
+            return []
         products = db.cursor.fetchall()
 
         product_list = []
@@ -86,7 +105,8 @@ async def list_products(category_id: Optional[str] = None, only_active_yn: str =
                 mon_amt_label=prod[11],
                 available_from=str(prod[12].strftime('%Y-%m-%d')),
                 available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
-                picture_name=prod[14]
+                picture_name=prod[14],
+                subcategory_id=prod[15]
             )
             product_list.append(product)
 

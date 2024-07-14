@@ -109,12 +109,20 @@ class Product(BaseModel):
     available_from: Optional[str] = None
     available_till: Optional[str] = None
     picture_name: str
+    subcategory_id: Optional[int] = None
 
 
 class ProductCategory(BaseModel):
     category_id: str
     category_name: str
     category_description: str
+
+
+class ProductSubcategories(BaseModel):
+    subcategory_id: int
+    category_id: str
+    subcategory_name: str
+    subcategory_description: str
 
 
 class NewProduct(BaseModel):

@@ -154,13 +154,6 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Positioning the select element */
-.custom-select {
-    position: relative;
-    width: 100%;
-    max-width: 300px;
-}
-
 select {
     appearance: none;
     -webkit-appearance: none;
@@ -206,6 +199,13 @@ select option {
     box-sizing: border-box;
 }
 
+.custom-select {
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 .custom-select::before,
 .custom-select::after {
     --size: 0.3rem;
@@ -213,6 +213,8 @@ select option {
     content: "";
     right: 1rem;
     pointer-events: none;
+    z-index: 1;
+    background-color: white; /* Set the background to white */
 }
 
 .custom-select::before {
@@ -228,6 +230,13 @@ select option {
     border-top: var(--size) solid var(--color-black);
     top: 55%;
 }
+
+.custom-select span {
+    position: relative;
+    z-index: 1;
+    padding-right: 2rem; /* Add padding to avoid text overlap with arrows */
+}
+
 
 .form-container {
     display: flex;
@@ -922,4 +931,51 @@ button img {
     padding: 1px 4px; 
     border-radius: 6px; 
     display: inline-block; /* Ensures the padding and border-radius are applied correctly */
+}
+
+.heading-row {
+    display: flex;
+    justify-content: space-between;
+    /* margin-bottom: 20px; */
+}
+
+.subcategory-carousel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 20px;
+    padding: 20px 10px;
+    background-color: var(--color-bg-light);
+    white-space: nowrap;
+}
+
+.subcategory-carousel-card {
+    scroll-snap-align: start;
+    background-color: var(--color-bg-light);
+    /* border: 1px solid var(--color-border-light); */
+    border-radius: 10px;
+    width: 100px;
+    height: 60px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    box-sizing: border-box;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    text-wrap: wrap;
+    text-align: center;
+    flex: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: initial;
+}
+
+.subcategory-carousel-card:hover {
+    background-color: var(--color-border-light);
+    text-decoration: none;
+}
+
+.selected {
+    background-color: var(--color-border-light);
 }

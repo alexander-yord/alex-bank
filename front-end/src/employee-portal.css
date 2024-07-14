@@ -115,12 +115,6 @@ body {
     color: var(--color-text-dark);
 }
 
-.heading-row {
-    display: flex;
-    justify-content: space-between;
-    /* margin-bottom: 20px; */
-}
-
 
 
 
