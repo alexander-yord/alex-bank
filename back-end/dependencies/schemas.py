@@ -220,6 +220,7 @@ class AmendProductInstance(BaseModel):
     special_notes: Optional[str] = None
     actual_end_date: Optional[str] = None
     actual_revenue: Optional[float] = None
+    product_custom_columns: Optional[List[ProductCustomColumns]] = None
 
 
 class ProductCard(BaseModel):

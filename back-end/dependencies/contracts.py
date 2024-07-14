@@ -99,9 +99,11 @@ def generate_contract_string(product_uid: int):
             "Borrower's Signature: ___________________",
             "Date: _______________"
         ]
+    # elif product_info["category"] == "DER":
+    #     pass
     else:
         content = [
-            f"No contract can be generate."
+            f"No contract can be generated."
         ]
 
     json_string = json.dumps(content)

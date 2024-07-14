@@ -3,6 +3,7 @@ import datetime
 import jwt
 import configparser, os, sys
 from fastapi import HTTPException
+from . import schemas as s
 
 cursor = db.cursor
 cnx = db.cnx
@@ -134,3 +135,47 @@ def status_progressions(current_status: str):
 
     next_statuses = next_status_map.get(current_status, [])
     return [statuses[key] for key in next_statuses if key in statuses]
+
+
+def update_product_custom_fields(custom_column: s.ProductCustomColumns, is_client=True):
+    global cnx, cursor
+    if not cnx.is_connected():
+        cnx, cursor = db.connect()
+
+    stmt = """SELECT pccd.column_type, pccd.customer_visible_yn FROM product_custom_column_values pccv
+    JOIN product_custom_column_def pccd ON pccd.pcc_id = pccv.pcc_id WHERE pccv.pcc_uid = %s"""
+    cursor.execute(stmt, (custom_column.pcc_uid,))
+
+    if cursor.rowcount == 0:
+        raise HTTPException(404, "Product custom column not found")
+    row = cursor.fetchone()
+
+    column_name = ""
+    value = None
+    if row[1] == "Y" or not is_client:
+        if row[0] == "integer":
+            column_name = 'int_value'
+            value = custom_column.int_value
+        elif row[0] == "float":
+            column_name = "float_value"
+            value = custom_column.float_value
+        elif row[0] == "varchar":
+            column_name = "varchar_value"
+            value = custom_column.varchar_value
+        elif row[0] == "text":
+            column_name = "text_value"
+            value = custom_column.text_value
+        elif row[0] == "date":
+            column_name = "date_value"
+            value = custom_column.date_value
+        elif row[0] == "datetime":
+            column_name = "datetime_value"
+            value = custom_column.datetime_value
+        sql = f"UPDATE product_custom_column_values SET {column_name} = %s WHERE pcc_uid = %s"
+        print(sql)
+        cursor.execute(sql, (value, custom_column.pcc_uid))
+        cnx.commit()
+    else:
+        raise HTTPException(401, "User is not authorized to change this field.")
+
+    return

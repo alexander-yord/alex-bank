@@ -331,8 +331,8 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
                     float_value=row[8],
                     varchar_value=row[9],
                     text_value=row[10],
-                    date_value=row[11],
-                    datetime_value=row[12]
+                    date_value=str(row[11]),
+                    datetime_value=str(row[12])
                 ))
 
     stmt = """
@@ -537,20 +537,24 @@ def update_product_instance(
         update_fields.append("actual_revenue = %s")
         params.append(amendments.actual_revenue)
 
-    if not update_fields:
+    if not update_fields and not amendments.product_custom_columns:
         raise HTTPException(400, "No fields to update")
 
-    params.append(product_uid)
+    if update_fields:
+        params.append(product_uid)
 
-    stmt = f"""
-    UPDATE product_instance
-    SET {', '.join(update_fields)}
-    WHERE product_uid = %s
-    """
+        stmt = f"""
+        UPDATE product_instance
+        SET {', '.join(update_fields)}
+        WHERE product_uid = %s
+        """
 
-    db.cursor.execute(stmt, tuple(params))
-    db.cnx.commit()
-
+        db.cursor.execute(stmt, tuple(params))
+        db.cnx.commit()
+    if amendments.product_custom_columns:
+        print(amendments.product_custom_columns)
+        for pcc in amendments.product_custom_columns:
+            h.update_product_custom_fields(pcc, False)
     return {"message": "Product updated successfully"}
 
 

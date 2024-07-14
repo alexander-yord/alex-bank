@@ -135,7 +135,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="contract_id">Contract ID:</label>
-                                        <input type="number" disabled v-model="product_det.contract_id" id="contract_id" disabled>
+                                        <input type="number" v-model="product_det.contract_id" id="contract_id" disabled>
                                     </div>
                                     <div class="form-group">
                                         <label for="product_start_date">Product Start Date:</label>
@@ -156,6 +156,17 @@
                                     <div class="form-group">
                                         <label for="special_notes">Special Notes:</label>
                                         <textarea v-model="product_det.special_notes" id="special_notes" :disabled="!isEditable1"></textarea>
+                                    </div>
+
+                                    <div class="form-group" v-for="pcc in product_det.product_custom_columns">
+                                        <label>{{pcc.column_name}}</label>
+                                        <input type="number" v-if="pcc.column_type == 'integer'" v-model="pcc.int_value" :disabled="!isEditable1">
+                                        <input type="number" v-if="pcc.column_type == 'float'" v-model="pcc.float_value" :disabled="!isEditable1"> 
+                                        <input type="date" v-if="pcc.column_type == 'date'" v-model="pcc.date_value" :disabled="!isEditable1"> 
+                                        <input type="datetime-local" v-if="pcc.column_type == 'datetime'" v-model="pcc.datetime_value" :disabled="!isEditable1">
+                                        <input type="number" v-if="pcc.column_type == 'varchar'" v-model="pcc.varchar_value" :disabled="!isEditable1">
+                                        <input type="text" v-if="pcc.column_type == 'char'" v-model="pcc.char_value" :disabled="!isEditable1" maxlength="1">
+                                        <textarea v-if="pcc.column_type == 'text'" v-model="pcc.text_value" :disabled="!isEditable1"></textarea>
                                     </div>
     
                                     <div class="form-group">
@@ -327,7 +338,8 @@
                             "product_end_date": this.product_data.product_end_date, 
                             "yield_": this.product_data.yield_, 
                             "expected_revenue": this.product_data.expected_revenue, 
-                            "special_notes": this.product_data.special_notes
+                            "special_notes": this.product_data.special_notes, 
+                            "product_custom_columns": this.product_data.product_custom_columns
                         };
                         this.product_det = {
                             "amount": this.product_data.amount, 
@@ -336,7 +348,8 @@
                             "product_end_date": this.product_data.product_end_date, 
                             "yield_": this.product_data.yield_, 
                             "expected_revenue": this.product_data.expected_revenue, 
-                            "special_notes": this.product_data.special_notes
+                            "special_notes": this.product_data.special_notes, 
+                            "product_custom_columns": this.product_data.product_custom_columns
                         };
                         this.init_actuals = {
                             "actual_revenue": this.product_data.actual_revenue, 
@@ -464,12 +477,19 @@
                 async updateProductDet() {
                     const differences = {};
 
+                    console.log(this.product_det);
+                    console.log(this.init_product_det);
+
                     for (const key in this.product_det) {
+                        if (key === "product_custom_columns") {
+                            differences[key] = this.product_det[key];
+                        }
                         if (this.product_det[key] != this.init_product_det[key]) {
                             console.log("Met")
                             differences[key] = this.product_det[key];
                         }
-                    }
+                    } 
+
 
                     console.log(differences);
                     const response = await fetch(`${API_BASE_URL}/product/instance/${this.product_data.product_uid}`, {
