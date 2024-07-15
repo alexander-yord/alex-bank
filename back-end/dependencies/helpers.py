@@ -171,9 +171,15 @@ def update_product_custom_fields(custom_column: s.ProductCustomColumns, is_clien
         elif row[0] == "datetime":
             column_name = "datetime_value"
             value = custom_column.datetime_value
-        sql = f"UPDATE product_custom_column_values SET {column_name} = %s WHERE pcc_uid = %s"
-        print(sql)
-        cursor.execute(sql, (value, custom_column.pcc_uid))
+
+        # Prepare the SQL query with proper handling of None
+        if value is None:
+            sql = f"UPDATE product_custom_column_values SET {column_name} = NULL WHERE pcc_uid = %s"
+            cursor.execute(sql, (custom_column.pcc_uid,))
+        else:
+            sql = f"UPDATE product_custom_column_values SET {column_name} = %s WHERE pcc_uid = %s"
+            cursor.execute(sql, (value, custom_column.pcc_uid))
+
         cnx.commit()
     else:
         raise HTTPException(401, "User is not authorized to change this field.")

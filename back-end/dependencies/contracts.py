@@ -1,8 +1,9 @@
 from . import database as db
 import io
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.units import inch
 import json
 
@@ -19,7 +20,7 @@ def generate_contract_string(product_uid: int):
             CASE WHEN ac.country_code = 'BGR' THEN 'Bulgaria'
             WHEN ac.country_code = 'USA' THEN 'United States'
             ELSE 'OTH' END AS country, 
-            pr.category_id
+            pr.category_id, pr.name, pr.description
         FROM product_instance pi 
         JOIN accounts ac ON ac.account_id = pi.account_id
         JOIN applications appl ON appl.application_id = pi.application_id
@@ -54,8 +55,43 @@ def generate_contract_string(product_uid: int):
         "first_name": res[6],
         "last_name": res[7],
         "address": address,
-        "category": res[11]
+        "category": res[11],
+        "product_name": res[12],
+        "product_description": res[13]
     }
+
+    stmt = """
+    SELECT pccv.pcc_uid, pccv.pcc_id, pccv.product_uid, pccd.column_name, 
+    pccd.customer_populatable_yn, pccd.customer_visible_yn, pccd.column_type,
+    pccv.int_value, pccv.float_value, pccv.varchar_value, pccv.text_value, pccv.date_value, pccv.datetime_value
+    FROM product_custom_column_values pccv 
+    JOIN product_custom_column_def pccd ON pccd.pcc_id = pccv.pcc_id
+    WHERE product_uid = %s AND pccd.customer_visible_yn = 'Y'
+    """
+    db.cursor.execute(stmt, (product_uid,))
+
+    product_custom_columns = []
+    if db.cursor.rowcount != 0:
+        rows = db.cursor.fetchall()
+        for row in rows:
+            if row[6] == "integer":
+                value = row[7]
+            elif row[6] == "float":
+                value = row[8]
+            elif row[6] == "char" or row[6] == "varchar":
+                value = row[9]
+            elif row[6] == "text":
+                value = row[10]
+            elif row[6] == "date":
+                value = row[11].strftime('%B %d, %Y') if row[11] else None
+            elif row[6] == "datetime":
+                value = row[12].strftime('%B %d, %Y %H:%M:%S') if row[12] else None
+            else:
+                value = None
+            product_custom_columns.append({
+                "column_name": row[3],
+                "value": value
+            })
 
     # Contract content
     if product_info["category"] == 'LON':
@@ -99,8 +135,24 @@ def generate_contract_string(product_uid: int):
             "Borrower's Signature: ___________________",
             "Date: _______________"
         ]
-    # elif product_info["category"] == "DER":
-    #     pass
+    elif product_info["category"] == "DER":
+        content = [
+            f"This {product_info.get('product_name')} Contract Agreement (the 'Agreement') is made and entered into as of {product_info.get('now')}, by and between Alex Bank ('Issuer') and {product_info.get('first_name')} {product_info.get('last_name')}, with an address {product_info.get('address')} ('Holder').",
+            f"The Holder agrees to buy this product with Product UID {product_info.get('product_uid')} from the Issuer on the Product Begin Date ({product_info.get('product_begin_date')}).",
+            f"If a Product UID is linked to this Product, the owner of that Product shall be deemed the counterparty to this Product. Alex Bank shall act as an intermediary between the two parties but shall not assume liability for the fulfillment of any party's financial obligations. In consideration of its intermediary services, Alex Bank shall receive a commission, as detailed below.",
+            f"This {product_info.get('product_name')} shall be characterized by the following rule: {product_info.get('product_description')}. This may be altered, augmented, or superseded by any rule hereinafter delineated."
+            f"Unless as otherwise specified, the Issuer, or the substituting counterpatry, agrees that on the Product End Date ({product_info.get('product_end_date')}) and on any of the listed observation/exercise dates, if the option condition is met, the option may be exercised.",
+            {
+                "type": "table",
+                "data": [[pcc["column_name"], pcc["value"]] for pcc in product_custom_columns]
+            } if len(product_custom_columns) > 0 else None,
+            "IN WITNESS WHEREOF, the parties hereto have executed this Loan Contract Agreement as of the day and year first above written.",
+
+            "Lender's Signature: Alex Bank",
+            f"Date: {product_info.get('now')}",
+            "Borrower's Signature: ___________________",
+            "Date: _______________"
+        ]
     else:
         content = [
             f"No contract can be generated."
@@ -173,15 +225,31 @@ def contract_buffer(contract_id: int, unsigned: bool = False):
     flowables.append(Spacer(1, 24))
 
     # Title
-    title = Paragraph("Loan Contract Agreement", styles['Title'])
+    title = Paragraph("Alex Bank Contract Agreement", styles['Title'])
     flowables.append(title)
     flowables.append(Spacer(1, 24))
 
-    # Add content paragraphs
-    for line in content:
-        paragraph = Paragraph(line, styles['Normal'])
-        flowables.append(paragraph)
-        flowables.append(Spacer(1, 12))
+    # Add content paragraphs and tables
+    for item in content:
+        if isinstance(item, str):
+            # It's a paragraph
+            paragraph = Paragraph(item, styles['Normal'])
+            flowables.append(paragraph)
+            flowables.append(Spacer(1, 12))
+        elif isinstance(item, dict) and item.get("type") == "table":
+            # It's a table
+            data = item.get("data", [])
+            table = Table(data)
+            table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+
+            flowables.append(table)
+            flowables.append(Spacer(1, 24))
 
     # Build the PDF
     doc.build(flowables)

@@ -164,7 +164,7 @@
                                         <input type="number" v-if="pcc.column_type == 'float'" v-model="pcc.float_value" :disabled="!isEditable1"> 
                                         <input type="date" v-if="pcc.column_type == 'date'" v-model="pcc.date_value" :disabled="!isEditable1"> 
                                         <input type="datetime-local" v-if="pcc.column_type == 'datetime'" v-model="pcc.datetime_value" :disabled="!isEditable1">
-                                        <input type="number" v-if="pcc.column_type == 'varchar'" v-model="pcc.varchar_value" :disabled="!isEditable1">
+                                        <input type="text" v-if="pcc.column_type == 'varchar'" v-model="pcc.varchar_value" :disabled="!isEditable1">
                                         <input type="text" v-if="pcc.column_type == 'char'" v-model="pcc.char_value" :disabled="!isEditable1" maxlength="1">
                                         <textarea v-if="pcc.column_type == 'text'" v-model="pcc.text_value" :disabled="!isEditable1"></textarea>
                                     </div>

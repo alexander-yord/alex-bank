@@ -89,7 +89,7 @@ CREATE TABLE `product_custom_column_values` (
   `product_uid` integer,
   `int_value` integer,
   `float_value` float,
-  `varchar_value` char(1),
+  `varchar_value` varchar(255),
   `text_value` text,
   `date_value` date,
   `datetime_value` datetime
@@ -106,7 +106,10 @@ CREATE TABLE `applications` (
   `collateral` varchar(255),
   `approved_yn` char(1),
   `approved_by` integer,
-  `approval_dt` timestamp
+  `approval_dt` timestamp,
+  `lead_status` varchar(3),
+  `lead_probability` float,
+  `visible_yn` char(1)
 );
 
 CREATE TABLE `product_instance` (
@@ -127,6 +130,13 @@ CREATE TABLE `product_instance` (
   `latest_note` text,
   `latest_note_public_yn` char(1),
   `notifications_yn` char(1) DEFAULT 'Y'
+);
+
+CREATE TABLE `lead_statuses` (
+  `order_no` integer,
+  `code` varchar(3) PRIMARY KEY,
+  `status_name` varchar(255),
+  `status_description` varchar(255)
 );
 
 CREATE TABLE `product_statuses` (
@@ -253,3 +263,5 @@ ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`product_id`) REFERENCE
 ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`pcc_id`) REFERENCES `product_custom_column_def` (`pcc_id`);
 
 ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
+
+ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);

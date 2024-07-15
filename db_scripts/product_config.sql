@@ -7,11 +7,12 @@ values
  
 -- product subcategories
 INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description) VALUES
+('DER', 'Futures Contract', 'A financial contract which compels the exchange of the underlying on the exercise date.'),
 ('DER', 'European Option', 'A financial derivative that can only be exercised at expiration.'),
 ('DER', 'American Option', 'A financial derivative that can be exercised at any time before or on its expiration date.'),
 ('DER', 'Bermudan Option', 'A financial derivative that can be exercised at specific dates before expiration.'),
 ('DER', 'Asian Option', 'A financial derivative whose payoff depends on the average price of the underlying asset over a set period.'),
-('DER', 'Basket Option/Derivative', 'A financial derivative based on the value of a weighted portfolio of multiple underlying assets.'),
+('DER', 'Basket Option', 'A financial derivative based on the value of a weighted portfolio of multiple underlying assets.'),
 ('DER', 'Range Option', 'A financial derivative that provides a payoff if the underlying asset\'s price stays within a predetermined range during a specified period.');
 
 
