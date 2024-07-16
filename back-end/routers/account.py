@@ -57,6 +57,11 @@ def get_accounts(country_code: Optional[List[str]] = Query(None),
     return result
 
 
+@router.get("/search/{search_str}")
+async def search_for_account(search_str: str, token: str = Depends(s.oauth2_scheme)):
+    pass
+
+
 @router.get("/{account_id}")
 async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)

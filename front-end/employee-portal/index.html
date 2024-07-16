@@ -44,7 +44,7 @@
                 <div class="card">
                     <div class="heading">
                         <h3>Assigned Products</h3>
-                        <select v-model="assigned_show">
+                        <select v-model="assigned_show" style="margin: 0;">
                             <option value="active">Active ({{products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code)).length}}/{{products.length}})</option>
                             <option value="preview">Preview ({{Math.min(3, products.length)}}/{{products.length}})</option>
                             <option value="all">All ({{products.length}})</option>
