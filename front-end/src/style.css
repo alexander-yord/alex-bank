@@ -985,3 +985,20 @@ button img {
 .selected {
     background-color: var(--color-border-light);
 }
+
+.card .heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.card .heading h3 {
+    margin: 0;
+}
+
+.card .heading select {
+    width: auto;
+    border: 1px solid rgb(200, 200, 200);
+}
+

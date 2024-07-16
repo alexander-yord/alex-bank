@@ -213,6 +213,8 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
         params.append(contract_id)
 
     db.cursor.execute(query, params)
+    if db.cursor.rowcount == 0:
+        return []
     rows = db.cursor.fetchall()
 
     result = [s.ProductCard(
