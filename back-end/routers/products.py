@@ -1,8 +1,3 @@
-import os
-import io
-import sys
-import configparser
-from pathlib import Path
 from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
 from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
@@ -36,37 +31,61 @@ async def get_product_categories():
     return category_list
 
 
+@router.get("/subcategories", response_model=List[s.ProductSubcategories])
+async def get_product_subcategories(category_id: Optional[str] = None):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    print (category_id)
+    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description FROM product_subcategories " \
+           "WHERE 1=1"
+    if category_id is not None:
+        stmt += " AND category_id = %s"
+        db.cursor.execute(stmt, (category_id,))
+    else:
+        db.cursor.execute(stmt)
+
+    if db.cursor.rowcount == 0:
+        return []
+    rows = db.cursor.fetchall()
+    return [s.ProductSubcategories(
+        subcategory_id=row[0],
+        category_id=row[1],
+        subcategory_name=row[2],
+        subcategory_description=row[3]
+    ) for row in rows]
+
+
 @router.get("/products", response_model=List[s.Product])
-async def list_products(category_id: Optional[str] = None, only_active_yn: str = 'Y'):
+async def list_products(category_id: Optional[str] = None, subcategory_id: Optional[str] = None,
+                        only_active_yn: str = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
     try:
-        if only_active_yn == 'N':
-            sql = """
-            SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-                   p.available_from, p.available_till
-            FROM products p
-            JOIN product_categories pc ON pc.category_id = p.category_id
-            WHERE 1=1
-            """
-        else:
-            sql = """
-            SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
-                   p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-                   p.available_from, p.available_till
-            FROM products p
-            JOIN product_categories pc ON pc.category_id = p.category_id
-            WHERE p.available_from <= NOW() AND nvl(available_till, NOW()) >= NOW()
-            """
+        sql = """
+        SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
+               p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id
+        FROM products p
+        JOIN product_categories pc ON pc.category_id = p.category_id
+        WHERE 1=1
+        """
 
+        if only_active_yn == 'Y':
+            sql += " AND p.available_from <= NOW() AND nvl(p.available_till, NOW()) >= NOW()"
+
+        params = []
         if category_id is not None:
-            sql += " AND pc.category_id = %s"
-            db.cursor.execute(sql, (category_id,))
-        else:
-            db.cursor.execute(sql)
+            sql += " AND p.category_id = %s"
+            params.append(category_id)
+        if subcategory_id is not None:
+            sql += " AND p.subcategory_id = %s"
+            params.append(subcategory_id)
 
+        db.cursor.execute(sql, params)
+        if db.cursor.rowcount == 0:
+            return []
         products = db.cursor.fetchall()
 
         product_list = []
@@ -85,7 +104,9 @@ async def list_products(category_id: Optional[str] = None, only_active_yn: str =
                 percentage_label=prod[10],
                 mon_amt_label=prod[11],
                 available_from=str(prod[12].strftime('%Y-%m-%d')),
-                available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None
+                available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
+                picture_name=prod[14],
+                subcategory_id=prod[15]
             )
             product_list.append(product)
 
@@ -105,7 +126,7 @@ async def info_about_product(product_id: int):
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-               p.available_from, p.available_till
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id)
         FROM products p
         JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
@@ -131,7 +152,8 @@ async def info_about_product(product_id: int):
             percentage_label=product[10],
             mon_amt_label=product[11],
             available_from=str(product[12].strftime('%Y-%m-%d')),
-            available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None
+            available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None,
+            picture_name=product[14]
         )
 
         return product_data
@@ -163,7 +185,7 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
             pi.product_uid, pi.application_id, pi.contract_id, appl.approved_by,
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
             pi.status_code, ps.status_name, p.category_id, p.currency, 
-            ac.first_name, ac.last_name, ac.account_id
+            ac.first_name, ac.last_name, ac.account_id, nvl(p.picture_name, p.category_id)
         FROM product_instance pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN accounts ac ON ac.account_id = pi.account_id
@@ -191,6 +213,8 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
         params.append(contract_id)
 
     db.cursor.execute(query, params)
+    if db.cursor.rowcount == 0:
+        return []
     rows = db.cursor.fetchall()
 
     result = [s.ProductCard(
@@ -207,7 +231,8 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
         currency=row[10],
         first_name=row[11],
         last_name=row[12],
-        account_id=row[13]
+        account_id=row[13],
+        picture_name=row[14]
     ) for row in rows]
 
     return result
@@ -283,6 +308,36 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
         statuses.append(item)
 
     stmt = """
+    SELECT pccv.pcc_uid, pccv.pcc_id, pccv.product_uid, pccd.column_name, 
+    pccd.customer_populatable_yn, pccd.customer_visible_yn, pccd.column_type,
+    pccv.int_value, pccv.float_value, pccv.varchar_value, pccv.text_value, pccv.date_value, pccv.datetime_value
+    FROM product_custom_column_values pccv 
+    JOIN product_custom_column_def pccd ON pccd.pcc_id = pccv.pcc_id
+    WHERE product_uid = %s
+    """
+    db.cursor.execute(stmt, (product_uid,))
+    product_custom_columns = []
+    if db.cursor.rowcount > 0:
+        rows = db.cursor.fetchall()
+        for row in rows:
+            if usr_account_role in ['C', 'A', 'E'] or row[5] == 'Y':
+                product_custom_columns.append(s.ProductCustomColumns(
+                    pcc_uid=row[0],
+                    pcc_id=row[1],
+                    product_uid=row[2],
+                    column_name=row[3],
+                    customer_populatable_yn=row[4],
+                    customer_visible_yn=row[5],
+                    column_type=row[6],
+                    int_value=row[7],
+                    float_value=row[8],
+                    varchar_value=row[9],
+                    text_value=row[10],
+                    date_value=str(row[11]),
+                    datetime_value=str(row[12])
+                ))
+
+    stmt = """
     SELECT pi.product_uid, pi.account_id, pi.status_code, ps.status_name, ps.status_description, pi.amount, 
     pi.contract_id, pi.product_start_date, pi.product_end_date, pi.actual_end_date, pi.special_notes, pi.application_id, 
     appl.approved_by, appl.amount_requested, appl.special_notes, appl.collateral, appl.approved_yn, appl.approval_dt, 
@@ -302,6 +357,7 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
             product_uid=res[0],
             account_id=res[1],
             statuses=statuses,
+            product_custom_columns=product_custom_columns,
             amount=res[5],
             contract_id=res[6],
             product_start_date=str(res[7]) if res[7] is not None else None,
@@ -327,6 +383,7 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
             product_uid=res[0],
             account_id=res[1],
             statuses=statuses,
+            product_custom_columns = product_custom_columns,
             amount=res[5],
             contract_id=res[6],
             product_start_date=str(res[7]) if res[7] is not None else None,
@@ -482,20 +539,24 @@ def update_product_instance(
         update_fields.append("actual_revenue = %s")
         params.append(amendments.actual_revenue)
 
-    if not update_fields:
+    if not update_fields and not amendments.product_custom_columns:
         raise HTTPException(400, "No fields to update")
 
-    params.append(product_uid)
+    if update_fields:
+        params.append(product_uid)
 
-    stmt = f"""
-    UPDATE product_instance
-    SET {', '.join(update_fields)}
-    WHERE product_uid = %s
-    """
+        stmt = f"""
+        UPDATE product_instance
+        SET {', '.join(update_fields)}
+        WHERE product_uid = %s
+        """
 
-    db.cursor.execute(stmt, tuple(params))
-    db.cnx.commit()
-
+        db.cursor.execute(stmt, tuple(params))
+        db.cnx.commit()
+    if amendments.product_custom_columns:
+        print(amendments.product_custom_columns)
+        for pcc in amendments.product_custom_columns:
+            h.update_product_custom_fields(pcc, False)
     return {"message": "Product updated successfully"}
 
 

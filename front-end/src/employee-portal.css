@@ -115,12 +115,47 @@ body {
     color: var(--color-text-dark);
 }
 
-.heading-row {
-    display: flex;
-    justify-content: space-between;
-    /* margin-bottom: 20px; */
+.inline-custom-select {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
 }
 
+.inline-custom-select {
+    margin-top: 0px !important; 
+    height: 40px !important; 
+    
+    padding-bottom: 5px !important;
+}
 
+.inline-custom-select::before,
+.inline-custom-select::after {
+    --size: 0.3rem;
+    position: absolute;
+    content: "";
+    right: 1rem;
+    pointer-events: none;
+    z-index: 1;
+    background-color: white; /* Set the background to white */
+}
 
+.inline-custom-select span {
+    position: relative;
+    z-index: 1;
+    padding-right: 2rem; /* Add padding to avoid text overlap with arrows */
+}
+
+.inline-custom-select::before {
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-bottom: var(--size) solid var(--color-black);
+    top: 30%;
+}
+
+.inline-custom-select::after {
+    border-left: var(--size) solid transparent;
+    border-right: var(--size) solid transparent;
+    border-top: var(--size) solid var(--color-black);
+    top: 50%;
+}
 

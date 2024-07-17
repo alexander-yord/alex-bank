@@ -44,7 +44,8 @@ async def provide_drop_down_options():
             "default_yn": str(row[0])
         })
 
-    db.cursor.execute("SELECT code, status_name, call_to_action, status_description FROM product_statuses")
+    db.cursor.execute("SELECT code, status_name, call_to_action, status_description FROM product_statuses "
+                      "ORDER BY order_no")
     rows = db.cursor.fetchall()
     for row in rows:
         statuses.append(s.Statuses(

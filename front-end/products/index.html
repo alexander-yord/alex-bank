@@ -33,20 +33,39 @@
   </nav>
 
   <div class="content">
-    <h1>Our Products</h1>
+    <h2>Our {{category_name}}Products</h2> 
 
-    <div v-if="page_is_for_category_id != null" class="product-grid">
-        <a v-for="prod in products" :href="'info.html?product_id='+prod.product_id" class="product-card">
-            <!-- <img :src="'../img/products/' + prod.category_id + '.png'" alt="Product Image"> -->
-            <div class="product-title">{{ prod.name }}</div>
-            <div class="product-description">{{ prod.description }}.</div>
+    <div v-if="page_is_for_category_id != null">
+      <div v-if="product_subcategories.length != 0" class="subcategory-carousel-container">
+        <a 
+          class="subcategory-carousel-card" 
+          :class="{ selected: selectedSubcategory === 0 }"
+          @click="selectSubcategory(0)"
+        >
+          All
         </a>
+        <a 
+          class="subcategory-carousel-card" 
+          v-for="subcat in product_subcategories" 
+          :key="subcat.id"
+          :class="{ selected: selectedSubcategory === subcat.subcategory_id }"
+          @click="selectSubcategory(subcat.subcategory_id)"
+        >
+          {{ subcat.subcategory_name }}
+        </a>
+      </div>
+      <div class="product-grid">
+          <a v-for="prod in products.filter(item => item.subcategory_id == selectedSubcategory || selectedSubcategory == 0)" :href="'info.html?product_id='+prod.product_id" class="product-card">
+              <div class="product-title">{{ prod.name }}</div>
+              <div class="product-description">{{ prod.description }}. ({{prod.percentage_label}}: {{(prod.percentage*100).toFixed(2)}}%)</div>
+          </a>
+      </div>
     </div>
     <div v-else class="product-grid">
         <a v-for="cat in product_categories.slice().reverse()" :key="cat.category_id" :href="'index.html?category_id='+cat.category_id" class="product-card">
             <img :src="'../img/products/' + cat.category_id + '.png'" alt="Product Image">
             <div class="product-title">{{ cat.category_name }}</div>
-            <div class="product-description">{{ cat.category_description }}.</div>
+            <div class="product-description">{{ cat.category_description }}</div>
         </a>
     </div>
   </div>
@@ -61,8 +80,11 @@
         isLoggedIn: isLoggedIn(),
         user_role: sessionStorage.getItem('user_role'),
         product_categories: [],
+        product_subcategories: [],
         page_is_for_category_id: null, 
-        products: []
+        category_name: null,
+        products: [], 
+        selectedSubcategory: 0
       };
     },
     async mounted() {
@@ -102,6 +124,21 @@
                 }
                 const data = await response.json();
                 this.products = data; 
+
+                if (this.page_is_for_category_id != null){
+                  this.category_name = this.product_categories.find(cat => cat.category_id === this.page_is_for_category_id).category_name+' ';
+                  console.log(this.category_name);
+
+                  const response = await fetch(`${API_BASE_URL}/product/subcategories?category_id=${this.page_is_for_category_id}`, {
+                    method: "GET"
+                  });
+                  if (!response.ok) {
+                    console.error("An error fetch the product subcategories occurred.");
+                    this.product_subcategories = [];
+                  }
+                  const data = await response.json();
+                  this.product_subcategories = data;
+                }
             }
             else {
                 return ;
@@ -109,6 +146,11 @@
         } catch (error) {
             console.error('Error fetching product categories:', error);
         }
+      }, 
+      selectSubcategory(subcategory) {
+        this.selectedSubcategory = subcategory;
+        console.log(this.products);
+        console.log(this.selectedSubcategory);
       }
     }
   }).mount('#app');

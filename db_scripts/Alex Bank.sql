@@ -46,6 +46,7 @@ CREATE TABLE `account_worthiness` (
 CREATE TABLE `products` (
   `product_id` integer PRIMARY KEY AUTO_INCREMENT,
   `category_id` varchar(3),
+  `subcategory_id` integer,
   `name` varchar(255),
   `description` text,
   `terms_and_conditions` text,
@@ -56,13 +57,44 @@ CREATE TABLE `products` (
   `percentage_label` varchar(255),
   `mon_amt_label` varchar(255),
   `available_from` datetime,
-  `available_till` datetime
+  `available_till` datetime,
+  `picture_name` varchar(255)
 );
 
 CREATE TABLE `product_categories` (
   `category_id` varchar(3) PRIMARY KEY,
   `category_name` varchar(255),
   `description` varchar(255)
+);
+
+CREATE TABLE `product_subcategories` (
+  `subcategory_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `category_id` varchar(3),
+  `subcategory_name` varchar(255),
+  `subcategory_description` varchar(255)
+);
+
+CREATE TABLE `product_custom_column_def` (
+  `pcc_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `product_id` integer NOT NULL,
+  `column_name` varchar(255),
+  `customer_visible_yn` char(1),
+  `customer_populatable_yn` char(1),
+  `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
+  `default_value` varchar(255),
+  `exercise_date_yn` char(1)
+);
+
+CREATE TABLE `product_custom_column_values` (
+  `pcc_uid` integer PRIMARY KEY AUTO_INCREMENT,
+  `pcc_id` integer,
+  `product_uid` integer,
+  `int_value` integer,
+  `float_value` float,
+  `varchar_value` varchar(255),
+  `text_value` text,
+  `date_value` date,
+  `datetime_value` datetime
 );
 
 CREATE TABLE `applications` (
@@ -76,7 +108,10 @@ CREATE TABLE `applications` (
   `collateral` varchar(255),
   `approved_yn` char(1),
   `approved_by` integer,
-  `approval_dt` timestamp
+  `approval_dt` timestamp,
+  `lead_status` varchar(3),
+  `lead_probability` float,
+  `visible_yn` char(1)
 );
 
 CREATE TABLE `product_instance` (
@@ -99,7 +134,15 @@ CREATE TABLE `product_instance` (
   `notifications_yn` char(1) DEFAULT 'Y'
 );
 
+CREATE TABLE `lead_statuses` (
+  `order_no` integer,
+  `code` varchar(3) PRIMARY KEY,
+  `status_name` varchar(255),
+  `status_description` varchar(255)
+);
+
 CREATE TABLE `product_statuses` (
+  `order_no` integer,
   `code` varchar(3) PRIMARY KEY,
   `status_name` varchar(255),
   `call_to_action` varchar(255),
@@ -212,3 +255,15 @@ ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `contr
 ALTER TABLE `contracts` ADD FOREIGN KEY (`document_id`) REFERENCES `documents` (`document_id`);
 
 ALTER TABLE `product_instance` ADD FOREIGN KEY (`latest_update_user_id`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `product_subcategories` ADD FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`category_id`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`subcategory_id`) REFERENCES `product_subcategories` (`subcategory_id`);
+
+ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`);
+
+ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`pcc_id`) REFERENCES `product_custom_column_def` (`pcc_id`);
+
+ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
+
+ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);

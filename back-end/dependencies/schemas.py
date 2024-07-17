@@ -24,6 +24,17 @@ class MyAccount(BaseModel):
     verification_status: str
 
 
+class AccountCard(BaseModel):
+    account_id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    verification_code: str
+    verification_emoji: str
+    account_group_code: str
+    account_group_name: str
+
 class Password(BaseModel):
     password: str
 
@@ -108,12 +119,21 @@ class Product(BaseModel):
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
     available_till: Optional[str] = None
+    picture_name: str
+    subcategory_id: Optional[int] = None
 
 
 class ProductCategory(BaseModel):
     category_id: str
     category_name: str
     category_description: str
+
+
+class ProductSubcategories(BaseModel):
+    subcategory_id: int
+    category_id: str
+    subcategory_name: str
+    subcategory_description: str
 
 
 class NewProduct(BaseModel):
@@ -135,10 +155,27 @@ class StatusUpdates(BaseModel):
     public_yn: Optional[str] = None
 
 
+class ProductCustomColumns(BaseModel):
+    pcc_uid: int
+    pcc_id: int
+    product_uid: int
+    column_name: str
+    customer_populatable_yn: bool
+    customer_visible_yn: bool
+    column_type: str
+    int_value: Optional[int]
+    float_value: Optional[float]
+    varchar_value: Optional[str]
+    text_value: Optional[str]
+    date_value: Optional[str]
+    datetime_value: Optional[str]
+
+
 class ProductInstancePublic(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_custom_columns: List[ProductCustomColumns]
     product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
@@ -162,6 +199,7 @@ class ProductInstancePrivate(BaseModel):
     product_uid: int
     account_id: int
     statuses: List[StatusUpdates]
+    product_custom_columns: List[ProductCustomColumns]
     product_id: int
     amount: Optional[float] = None
     contract_id: Optional[int] = None
@@ -193,6 +231,7 @@ class AmendProductInstance(BaseModel):
     special_notes: Optional[str] = None
     actual_end_date: Optional[str] = None
     actual_revenue: Optional[float] = None
+    product_custom_columns: Optional[List[ProductCustomColumns]] = None
 
 
 class ProductCard(BaseModel):
@@ -210,5 +249,6 @@ class ProductCard(BaseModel):
     account_id: Optional[int] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    picture_name: Optional[str] = None
 
 

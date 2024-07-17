@@ -82,9 +82,9 @@ body {
 
 /* Main content with 10% margin on left and right */
 .content {
-    margin: 74px 10% 0 10%;
+    margin: 74px 10% 20px 10%;
     background-color: var(--color-bg-light); 
-    padding: 20px;
+    padding-top: 20px;
     box-sizing: border-box;
 }
 
@@ -106,9 +106,20 @@ body {
     padding: 10px 0;
 }
 
+/* Media query for mobile devices */
+@media (max-width: 768px) {
+    .content {
+        padding: 20px 0;
+        margin: 74px 16px 20px 16px;
+    }
+    .navbar .wrapper {
+        margin: 0px 16px;
+    }
+}
+
 .navbar img {
     height: 50px;
-    margin: 0px 20px;
+    margin: 0px;
 }
 
 .navbar ul {
@@ -141,13 +152,6 @@ a {
 
 a:hover {
     text-decoration: underline;
-}
-
-/* Positioning the select element */
-.custom-select {
-    position: relative;
-    width: 100%;
-    max-width: 300px;
 }
 
 select {
@@ -195,6 +199,12 @@ select option {
     box-sizing: border-box;
 }
 
+.custom-select {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
 .custom-select::before,
 .custom-select::after {
     --size: 0.3rem;
@@ -202,6 +212,8 @@ select option {
     content: "";
     right: 1rem;
     pointer-events: none;
+    z-index: 1;
+    background-color: white; /* Set the background to white */
 }
 
 .custom-select::before {
@@ -217,6 +229,13 @@ select option {
     border-top: var(--size) solid var(--color-black);
     top: 55%;
 }
+
+.custom-select span {
+    position: relative;
+    z-index: 1;
+    padding-right: 2rem; /* Add padding to avoid text overlap with arrows */
+}
+
 
 .form-container {
     display: flex;
@@ -681,6 +700,7 @@ button img {
     width: 10px;
     height: 100%;
     border-left: 2px solid var(--color-border-disabled);
+    margin-top: 3.5px;
 }
 .StepProgress-item {
     position: relative;
@@ -711,26 +731,32 @@ button img {
 }
 .StepProgress-item.is-done::before {
     border-left: 2px solid var(--color-accent-green);
+    margin-top: 3.5px;
 }
 .StepProgress-item.is-done::after {
     content: "✔";
     font-size: 10px;
     color: var(--color-text-light);
     text-align: center;
+    padding-top: 0.5px;
+    margin-top: 3.5px;
     border: 2px solid var(--color-accent-green);
     background-color: var(--color-accent-green);
 }
 .StepProgress-item.current::before {
     border-left: 2px solid var(--color-accent-green);
+    margin-top: 3.5px;
 }
 .StepProgress-item.current::after {
     content: counter(list);
     padding-top: 1px;
+    margin-top: 3.5px;
     width: 19px;
     height: 18px;
     top: -4px;
     left: -40px;
     font-size: 14px;
+    font-weight: bold;
     text-align: center;
     color: var(--color-accent-green);
     border: 2px solid var(--color-accent-green);
@@ -912,3 +938,67 @@ button img {
     border-radius: 6px; 
     display: inline-block; /* Ensures the padding and border-radius are applied correctly */
 }
+
+.heading-row {
+    display: flex;
+    justify-content: space-between;
+    /* margin-bottom: 20px; */
+}
+
+.subcategory-carousel-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 20px;
+    padding: 20px 10px;
+    background-color: var(--color-bg-light);
+    white-space: nowrap;
+}
+
+.subcategory-carousel-card {
+    scroll-snap-align: start;
+    background-color: var(--color-bg-light);
+    /* border: 1px solid var(--color-border-light); */
+    border-radius: 10px;
+    width: 100px;
+    height: 60px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    box-sizing: border-box;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    text-wrap: wrap;
+    text-align: center;
+    flex: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: initial;
+}
+
+.subcategory-carousel-card:hover {
+    background-color: var(--color-border-light);
+    text-decoration: none;
+}
+
+.selected {
+    background-color: var(--color-border-light);
+}
+
+.card .heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.card .heading h3 {
+    margin: 0;
+}
+
+.card .heading select {
+    width: auto;
+    border: 1px solid rgb(200, 200, 200);
+}
+

@@ -61,12 +61,18 @@
                             {{ opt.status_name }}
                         </a>
                     </div>
-                    <button style="height:40px; width: 40px;" @click="loadProducts"><img width="17px" src="../assets/magnifying-glass-solid.svg"></button>
+                    <div class="inline-custom-select">
+                        <select class="inline-custom-select" id="product_id" v-model="selected_product_id">
+                          <option value="0">All Products</option>
+                          <option v-for="prod in product_types" :value="prod.product_id">{{prod.name}}</option>
+                        </select>
+                      </div>
+                    <button style="height:40px; width: 40px; margin: 0;" @click="loadProducts"><img width="17px" src="../assets/magnifying-glass-solid.svg"></button>
                 </div>
                 <br>
                 <div class="product-grid" v-if="Object.keys(products).length">
                     <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
-                        <img :src="'../img/products/'+prod.category_id+'.png'"> 
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
                         <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
@@ -98,7 +104,9 @@
                     last_name: sessionStorage.getItem("last_name"),
                     user_role: sessionStorage.getItem("user_role"),
                     statuses: [], 
-                    products: []
+                    products: [], 
+                    product_types: [], 
+                    selected_product_id: 0
                 };
             },
             methods: {
@@ -153,6 +161,14 @@
                         const data = await response.json();
                         this.statuses = data["statuses"];
                         console.log(this.statuses);
+
+                        const response1 = await fetch(`${API_BASE_URL}/product/products`, {method: "GET"});
+                        if (!response1.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data1 = await response1.json();
+                        this.product_types = data1;
+                        console.log(this.product_types);
                     } catch (error) {
                         console.error('Error fetching statuses:', error);
                     }
@@ -162,11 +178,20 @@
                     const filteredStatuses = this.statuses.filter(status => status.show === false);
                     
                     // Step 2: Construct the query string
-                    const statusCodes = filteredStatuses.map(status => `status_code=${status.status_code}`).join('&');
+                    let queryString = filteredStatuses.map(status => `status_code=${status.status_code}`).join('&');
+                    
+                    // Add the selected product ID to the query string if it is not 0
+                    if (this.selected_product_id !== 0) {
+                        if (queryString == ''){
+                            queryString += `product_id=${this.selected_product_id}`;
+                        } else {
+                            queryString += `&product_id=${this.selected_product_id}`;
+                        }
+                    }
 
                     // Step 3: Construct the full URL
                     const accountId = sessionStorage.getItem('account_id');
-                    const url = `${API_BASE_URL}/product/instances/?${statusCodes}`;
+                    const url = `${API_BASE_URL}/product/instances/?${queryString}`;
 
                     // Step 4: Fetch the data
                     try {
