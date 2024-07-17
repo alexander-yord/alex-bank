@@ -42,27 +42,63 @@
 
                 <div class="heading-row">
                     <h2>Manage Accounts</h2> 
-                    <div class="search-container">
+                    <!-- <div class="search-container">
                         <input type="text" id="search-input" placeholder="Go to Account ID..." @keyup.enter="goToAccount" />
                         <button id="search-button" @click="goToAccount">
                             <img src="../assets/arrow-right-solid.svg" alt="Search">
                         </button>
-                    </div>
+                    </div> -->
                 </div>
 
-                <!-- <div>
-                    <div class="tags-container" id="tags-container" style="height: 30px;">
-                        <span class="tag" v-for="opt in statuses.filter(status => !status.show)" :key="opt.code">
-                            {{ opt.name }}<span class="tag-close" @click="showOption(opt)">x</span>
-                        </span>
-                        <div class="arrow-container" id="arrow-button"></div>
-                    </div>            
-                    <div id="myDropdown" class="dropdown-content">
-                        <a style="cursor: pointer;" v-for="opt in statuses.filter(status => status.show)" :key="opt.code" @click="hideOption(opt)">
-                            {{ opt.name }}
-                        </a>
-                    </div>
-                </div> -->
+                <div class="card">
+                    <h3>Search for account:</h3>
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="e.g., John Doe ..." @keyup.enter="searchForAccount" />
+                        <button id="search-button" @click="searchForAccount">
+                            <img src="../assets/magnifying-glass-solid.svg" alt="Search">
+                        </button>
+                    </div> 
+                    <div style="width:100%;"></div>
+
+                    <details>
+                        <summary>Account Search Tutorial</summary>
+                        <p>In the search field above, you can enter multiple search criteria, separated by whitespace. We will explain what you can include and filter:</p>
+                        <ul>
+                            <li>You can directly type an account's 7-digit Account ID.</li>
+                            <li>First name and/or last name; case insensitive. Note, you can include more than one spellings, so long as you include both names.</li>
+                            <li>Email (has to be the full email address, as entered in the DB); case insensitive.</li>
+                            <li>Account Group: enter <u>group:ABC</u> where <u>ABC</u> is the Account Group Code. 
+                                <details>
+                                    <summary>See all Account Group Codes</summary>
+                                    <ul>
+                                        <li v-for="group in account_groups_list"> {{group.group_code}}: {{group.group_name}} </li>
+                                    </ul>
+                                </details>
+                            </li>
+                            <li>Country Code: enter <u>country:ABC</u> where <u>ABC</u> is the Country Code.
+                                <details>
+                                    <summary>See all Country Codes</summary>
+                                    <ul>
+                                        <li>BGR: Bulgaria </li>
+                                        <li>USA: United States of America</li>
+                                        <li>OTH: Others</li>
+                                    </ul>
+                                </details>
+                            </li>
+                            <li>Phone Number: enter <u>country:123456789</u> where <u>123456789</u> is a 4-15-digit phone number. It can include <u>+123</u> (the country code), however, it is set up to search for substrings in the phone number, so, for optimal result, you can skip the country code.</li>
+                        </ul>
+                    </details>
+                </div>
+                <br>
+                <div class="product-grid">
+                    <a class="product-card" v-for="ac in accounts" :href="'account.html?account_id='+ac.account_id">
+                        <div class="product-title">{{ac.first_name}} {{ac.last_name}} {{ac.verification_emoji}}</div>
+                        <div class="product-description">{{ac.account_id}} <span class="highlight">{{ac.account_group_name}} </span> </div>
+                        <div class="product-description">{{ac.email}} <span v-if="(ac.phone != null && ac.phone != '') && (ac.email != null && ac.email != '')">|</span> {{ac.phone}} </div>
+                        <!--<div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
+                        <div class="product-description">{{prod.description}}</div> -->
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -76,13 +112,6 @@
     </div>
 
     <script>
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     const arrowButton = document.getElementById('arrow-button');
-            
-        //     arrowButton.addEventListener('click', function() {
-        //         document.getElementById("myDropdown").classList.toggle("show");
-        //     });
-        // });
 
         const { createApp } = Vue;
         createApp({
@@ -95,11 +124,8 @@
                     first_name: sessionStorage.getItem("first_name"),
                     last_name: sessionStorage.getItem("last_name"),
                     user_role: sessionStorage.getItem("user_role"),
-                    statuses: [
-                        { "code": "CMP", "name": "Complete", "show": true }, 
-                        { "code": "WOF", "name": "Written Off", "show": true }, 
-                        { "code": "ORD", "name": "Overdue", "show": true }
-                    ]
+                    account_groups_list: [],
+                    accounts: []
                 };
             },
             methods: {
@@ -129,11 +155,46 @@
                     if (query) {
                         window.location.href = `account.html?account_id=${encodeURIComponent(query)}`;
                     }
+                }, 
+                async loadPage() {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/front-end/dd-options`, {method: "GET"});
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.account_groups_list = data["account_groups"];
+                        console.log(this.account_groups_list);
+                    } catch (error) {
+                        console.error('Error fetching statuses:', error);
+                    }
+                }, 
+                async searchForAccount() {
+                    const search_string = document.getElementById('search-input').value;
+                    const regex = /^\d{7}$/;
+                    if (regex.test(search_string)) {
+                        window.location.href = `account.html?account_id=${encodeURIComponent(search_string)}`;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/account/search?search_str=${search_string}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    // Do something with the data
+                    this.accounts = data;
+                    console.log(data);
                 }
             }, 
             mounted() {
                 this.loadMenu();
                 redirectIfNotLoggedIn();
+                this.loadPage();
             }
         }).mount('#app');
     </script>

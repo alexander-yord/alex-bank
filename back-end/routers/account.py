@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from typing import Annotated, Optional, List
+import re
 from dependencies import database as db, helpers as h, schemas as s, mail as m
 
 router = APIRouter(
@@ -57,9 +58,96 @@ def get_accounts(country_code: Optional[List[str]] = Query(None),
     return result
 
 
-@router.get("/search/{search_str}")
+@router.get("/search", response_model=List[s.AccountCard])
 async def search_for_account(search_str: str, token: str = Depends(s.oauth2_scheme)):
-    pass
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:
+        raise HTTPException(401, "User does not have privileges")
+
+    # Define regular expressions
+    patterns = {
+        "name": r"^[a-zA-Z0-9]+$",
+        "email": r"^[\w\.]+@([\w-]+\.)+[\w-]{2,4}$",
+        "group": r"^group:[A-Z]{1,3}$",
+        "country_code": r"^country_code:[A-Z]{1,3}$",
+        "phone": r"^phone:[+0-9]{4,15}$"
+    }
+
+    # Split the input string by whitespace
+    words = search_str.split()
+
+    # Initialize lists to hold matched words
+    names = []
+    email = None
+    group = None
+    phone = None
+    country_code = None
+
+    # Check each word against the regular expressions
+    for word in words:
+        if re.match(patterns["name"], word):
+            names.append(word)
+        elif re.match(patterns["email"], word):
+            email = word
+        elif re.match(patterns["group"], word):
+            group = word.split(":")[1]
+        elif re.match(patterns["country_code"], word):
+            country_code = word.split(":")[1]
+        elif re.match(patterns["phone"], word):
+            phone = word.split(":")[1]
+
+    # Construct the SQL query
+    query = """
+    SELECT account_id, first_name, last_name, email, phone, verification, account_group, ag.group_name
+    FROM accounts ac 
+    JOIN account_groups ag ON ag.group_code = ac.account_group
+    WHERE """
+    conditions = []
+    bindings = []
+
+    if names:
+        name_str = ', '.join("'"+name+"'" for name in names)
+        if len(names) == 1:
+            conditions.append(f"(LOWER(first_name) IN ({name_str.lower()}) OR LOWER(last_name) IN ({name_str.lower()}))")
+        else:
+            conditions.append(f"(LOWER(first_name) IN ({name_str.lower()}) AND LOWER(last_name) IN ({name_str.lower()}))")
+    if email:
+        conditions.append(f"LOWER(email) = %s")
+        bindings.append(email.lower())
+    if group:
+        conditions.append(f"UPPER(account_group) = %s")
+        bindings.append(group.upper())
+    if country_code:
+        conditions.append(f"UPPER(country_code) = %s")
+        bindings.append(country_code.upper())
+    if phone:
+        conditions.append(f"phone LIKE %s")
+        bindings.append('%' + phone + '%')
+
+    if conditions:
+        query += " AND ".join(conditions)
+    else:
+        query += " account_id != 1"  # No conditions matched, so select all
+
+    db.cursor.execute(query, tuple(bindings))
+
+    if db.cursor.rowcount == 0:
+        return []
+    rows = db.cursor.fetchall()
+    return [s.AccountCard(
+        account_id=row[0],
+        first_name=row[1],
+        last_name=row[2],
+        email=row[3],
+        phone=row[4],
+        verification_code=row[5],
+        verification_emoji=h.verification_emoji(row[5]),
+        account_group_code=row[6],
+        account_group_name=row[7]
+    ) for row in rows]
+
 
 
 @router.get("/{account_id}")

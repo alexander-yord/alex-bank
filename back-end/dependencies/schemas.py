@@ -24,6 +24,17 @@ class MyAccount(BaseModel):
     verification_status: str
 
 
+class AccountCard(BaseModel):
+    account_id: int
+    first_name: str
+    last_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    verification_code: str
+    verification_emoji: str
+    account_group_code: str
+    account_group_name: str
+
 class Password(BaseModel):
     password: str
 
