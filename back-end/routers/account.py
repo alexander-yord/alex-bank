@@ -149,7 +149,6 @@ async def search_for_account(search_str: str, token: str = Depends(s.oauth2_sche
     ) for row in rows]
 
 
-
 @router.get("/{account_id}")
 async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
@@ -281,6 +280,10 @@ async def update_account_information(account_id: int, data: s.AmendAccount, toke
             raise HTTPException(422, "Email is too long")
         stmt = "UPDATE accounts SET email = %s WHERE account_id = %s"
         db.cursor.execute(stmt, (data.email, account_id))
+        db.cnx.commit()
+
+        stmt = "UPDATE accounts SET verification = 'R' WHERE account_id = %s"
+        db.cursor.execute(stmt, (account_id,))
         db.cnx.commit()
 
     if data.country_code is not None:

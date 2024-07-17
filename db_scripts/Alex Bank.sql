@@ -80,7 +80,9 @@ CREATE TABLE `product_custom_column_def` (
   `column_name` varchar(255),
   `customer_visible_yn` char(1),
   `customer_populatable_yn` char(1),
-  `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime')
+  `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
+  `default_value` varchar(255),
+  `exercise_date_yn` char(1)
 );
 
 CREATE TABLE `product_custom_column_values` (

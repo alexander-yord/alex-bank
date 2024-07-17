@@ -67,11 +67,12 @@ INSERT INTO product_statuses (order_no, code, status_name, call_to_action, statu
 	(9, 'SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
 	(10, 'AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
 	(11, 'NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
-	(12, 'TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
-	(13, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
-	(14, 'CMP', 'Complete', 'Complete', 'Complete'),
-	(15, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
-	(16, 'WOF', 'Written Off', 'Write Off', 'Written Off');
+    (12, 'EXC', 'Exercise Date', 'Exercise Date', 'Indicates that the current date is an exercise date'),
+	(13, 'TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
+	(14, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
+	(15, 'CMP', 'Complete', 'Complete', 'Complete'),
+	(16, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
+	(17, 'WOF', 'Written Off', 'Write Off', 'Written Off');
 
 DELIMITER //
 
@@ -103,10 +104,11 @@ BEGIN
     DECLARE pcc_id INT;
     DECLARE column_name VARCHAR(255);
     DECLARE column_type VARCHAR(255);
+    DECLARE default_value VARCHAR(255);
 
     -- Declare a cursor to select all custom columns for the product_id
     DECLARE custom_column_cursor CURSOR FOR
-        SELECT pccd.pcc_id, pccd.column_name, pccd.column_type
+        SELECT pccd.pcc_id, pccd.column_name, pccd.column_type, pccd.default_value
         FROM product_instance pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN product_custom_column_def pccd ON appl.product_id = pccd.product_id
@@ -118,14 +120,35 @@ BEGIN
     OPEN custom_column_cursor;
 
     custom_columns: LOOP
-        FETCH custom_column_cursor INTO pcc_id, column_name, column_type;
+        FETCH custom_column_cursor INTO pcc_id, column_name, column_type, default_value;
         IF done THEN
             LEAVE custom_columns;
         END IF;
 
         -- Insert a row into product_custom_column_values for each custom column
-        INSERT INTO product_custom_column_values (product_uid, pcc_id)
-        VALUES (NEW.product_uid, pcc_id); 
+        CASE 
+			WHEN column_type = "integer" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, int_value)
+				VALUES (NEW.product_uid, pcc_id, CAST(default_value AS SIGNED));
+			WHEN column_type = "float" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, float_value)
+				VALUES (NEW.product_uid, pcc_id, CAST(default_value AS FLOAT));
+			WHEN column_type = "varchar" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, varchar_value)
+				VALUES (NEW.product_uid, pcc_id, default_value);
+			WHEN column_type = "text" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, text_value)
+				VALUES (NEW.product_uid, pcc_id, default_value);
+			WHEN column_type = "date" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, date_value)
+				VALUES (NEW.product_uid, pcc_id, CAST(default_value AS DATE));
+			WHEN column_type = "datetime" THEN 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id, datetime_value)
+				VALUES (NEW.product_uid, pcc_id, CAST(default_value AS DATETIME));
+            ELSE 
+				INSERT INTO product_custom_column_values (product_uid, pcc_id)
+				VALUES (NEW.product_uid, pcc_id);
+        END CASE;
     END LOOP;
 
     CLOSE custom_column_cursor;
