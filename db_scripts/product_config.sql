@@ -221,3 +221,453 @@ values
    </li>
 </ol>
 <p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 3, 0.0200, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL);
+
+
+-- Products Election Polling Derivatives 
+insert into products (`category_id`, `subcategory_id`, `name`, `description`, 
+`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`, `picture_name`, `terms_and_conditions`)
+values 
+('DER', 2, 'European Trump Call (Strike: 3.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Strike Date:
+        <ul>
+            <li>The strike date is the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>The underlying poll lead must be higher than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is higher than the strike poll lead on the strike date.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Actual Poll Lead% - Strike Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 2, 'European Trump Call (Strike: 3.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Strike Date:
+        <ul>
+            <li>The strike date is the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>The underlying poll lead must be higher than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is higher than the strike poll lead on the strike date.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Actual Poll Lead% - Strike Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 2, 'European Trump Put (Strike: 1.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Strike Date:
+        <ul>
+            <li>The strike date is the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>The underlying poll lead must be lower than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the strike date.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Strike Lead% - Actual Poll Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 2, 'European Trump Put (Strike: 1.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Strike Date:
+        <ul>
+            <li>The strike date is the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>The underlying poll lead must be lower than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the strike date.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Strike Lead% - Actual Poll Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 4, 'Bermudan Trump Call (Strike: 3.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Observation & Strike Date:
+        <ul>
+            <li>The observation and strike dates are the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>There will be three observation dates and one final strike date. All of them will be determined prior to the Product Begin Date. </li>
+            <li>The underlying poll lead must be higher than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the observation or strike dates.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Actual Poll Lead% - Strike Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 4, 'Bermudan Trump Call (Strike: 3.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Observation & Strike Date:
+        <ul>
+            <li>The observation and strike dates are the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>There will be three observation dates and one final strike date. All of them will be determined prior to the Product Begin Date. </li>
+            <li>The underlying poll lead must be higher than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the observation or strike dates.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Actual Poll Lead% - Strike Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 4, 'Bermudan Trump Put (Strike: (1.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Observation & Strike Date:
+        <ul>
+            <li>The observation and strike dates are the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>There will be three observation dates and one final strike date. All of them will be determined prior to the Product Begin Date. </li>
+            <li>The underlying poll lead must be lower than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the observation or strike dates.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Strike Lead% - Actual Poll Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+"),
+('DER', 4, 'Bermudan Trump Put (Strike: (1.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+<ol>
+    <li>Application:
+        <ul>
+            <li>By submitting an application, the customer agrees to these Terms and Conditions.</li>
+            <li>When applying for the derivative, the customer may request modifications.</li>
+            <li>Alex Bank will review each application and reserves the right to propose modifications, which the customer may accept or not, and to deny an application with no justification.</li>
+            <li>Upon approval, Alex Bank will price the instrument. Signature to the contract constitutes agreement by the customer to disburse to Alex Bank the amount of the price on or before the Product Start Date. Failure to do so shall result in product cancellation.</li>
+        </ul>
+    </li>
+    <li>Observation & Strike Date:
+        <ul>
+            <li>The observation and strike dates are the date on which the poll lead is observed to determine if the Call is exercised.</li>
+            <li>There will be three observation dates and one final strike date. All of them will be determined prior to the Product Begin Date. </li>
+            <li>The underlying poll lead must be lower than the strike poll lead on the strike date for the Call to be exercised.</li>
+        </ul>
+    </li>
+    <li>Underlying:
+        <p>The poll lead shall be taken from the latest available data on <a href='https://projects.fivethirtyeight.com/polls/president-general/2024/national/'>FiveThirtyEight</a>.
+        </p>
+    </li>
+    <li>Exercise of the Call:
+        <ul>
+            <li>The Call will be exercised if the underlying poll lead is lower than the strike poll lead on the observation or strike dates.</li>
+            <li>If the Call is exercised, the customer will be entitled to the Pay-Off amount specified (Pay-Off Amount = (Strike Lead% - Actual Poll Lead%)*Notional).</li>
+        </ul>
+    </li>
+    <li>Payment Terms:
+        <ul>
+            <li>The payment will be made in BGN.</li>
+            <li>The Pay-Off amount will be payable if the Call is exercised.</li>
+        </ul>
+    </li>
+    <li>Risk Acknowledgement:
+        <ul>
+            <li>The customer acknowledges that the value of the underlying and the outcome on the strike date are subject to market conditions and uncertainties.</li>
+            <li>The customer assumes all risks associated with this product.</li>
+        </ul>
+    </li>
+    <li>Limitation of Liability:
+        <p>Alex Bank shall not be liable for any losses or damages arising from the exercise or non-exercise of the Call, except as provided by law.</p>
+    </li>
+    <li>Amendments:
+        <p>Alex Bank reserves the right to amend these terms and conditions at any time. Any amendments will be communicated to the customer in a timely manner.</p>
+    </li>
+    <li>Acceptance:
+        <p>By entering into this agreement, the customer accepts and agrees to these terms and conditions.</p>
+    </li>
+</ol>
+");
+
+
+insert into product_custom_column_def (`product_id`, `column_name`, `customer_visible_yn`, `customer_populatable_yn`, `column_type`, `default_value`, `exercise_date_yn`)
+values 
+(5, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(5, "Strike Price (% Lead)", "Y", "N", "float", "3.0", NULL), 
+(5, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Actual Poll Lead% - Strike Poll Lead%)*Notional", NULL), 
+(5, "Volatility", "N", "N", "float", "0.327", NULL),
+(6, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(6, "Strike Price (% Lead)", "Y", "N", "float", "3.5", NULL), 
+(6, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Actual Poll Lead% - Strike Poll Lead%)*Notional", NULL), 
+(6, "Volatility", "N", "N", "float", "0.327", NULL),
+(7, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(7, "Strike Price (% Lead)", "Y", "N", "float", "1.5", NULL), 
+(7, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Strike Poll Lead% - Actual Poll Lead%)*Notional", NULL), 
+(7, "Volatility", "N", "N", "float", "0.327", NULL),
+(8, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(8, "Strike Price (% Lead)", "Y", "N", "float", "1.0", NULL), 
+(8, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Strike Poll Lead% - Actual Poll Lead%)*Notional", NULL), 
+(8, "Volatility", "N", "N", "float", "0.327", NULL),
+(9, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(9, "Strike Price (% Lead)", "Y", "N", "float", "3.0", NULL), 
+(9, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Actual Poll Lead% - Strike Poll Lead%)*Notional", NULL), 
+(9, "Volatility", "N", "N", "float", "0.327", NULL),
+(9, "First Observation Date", "Y", "N", "date", NULL, "Y"),
+(9, "Second Observation Date", "Y", "N", "date", NULL, "Y"),
+(9, "Third Observation Date", "Y", "N", "date", NULL, "Y"),
+(10, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(10, "Strike Price (% Lead)", "Y", "N", "float", "3.5", NULL), 
+(10, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Actual Poll Lead% - Strike Poll Lead%)*Notional", NULL), 
+(10, "Volatility", "N", "N", "float", "0.327", NULL),
+(10, "First Observation Date", "Y", "N", "date", NULL, "Y"),
+(10, "Second Observation Date", "Y", "N", "date", NULL, "Y"),
+(10, "Third Observation Date", "Y", "N", "date", NULL, "Y"),
+(11, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(11, "Strike Price (% Lead)", "Y", "N", "float", "1.5", NULL), 
+(11, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Strike Poll Lead% - Actual Poll Lead%)*Notional", NULL), 
+(11, "Volatility", "N", "N", "float", "0.327", NULL),
+(11, "First Observation Date", "Y", "N", "date", NULL, "Y"),
+(11, "Second Observation Date", "Y", "N", "date", NULL, "Y"),
+(11, "Third Observation Date", "Y", "N", "date", NULL, "Y"),
+(12, "Option Price (BGN)", "Y", "N", "float", NULL, NULL), 
+(12, "Strike Price (% Lead)", "Y", "N", "float", "1.0", NULL), 
+(12, "Pay-off Formula", "Y", "N", "varchar", "Payoff = (Strike Poll Lead% - Actual Poll Lead%)*Notional", NULL), 
+(12, "Volatility", "N", "N", "float", "0.327", NULL),
+(12, "First Observation Date", "Y", "N", "date", NULL, "Y"),
+(12, "Second Observation Date", "Y", "N", "date", NULL, "Y"),
+(12, "Third Observation Date", "Y", "N", "date", NULL, "Y");

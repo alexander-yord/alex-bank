@@ -57,7 +57,7 @@
       <div class="product-grid">
           <a v-for="prod in products.filter(item => item.subcategory_id == selectedSubcategory || selectedSubcategory == 0)" :href="'info.html?product_id='+prod.product_id" class="product-card">
               <div class="product-title">{{ prod.name }}</div>
-              <div class="product-description">{{ prod.description }}. ({{prod.percentage_label}}: {{(prod.percentage*100).toFixed(2)}}%)</div>
+              <div class="product-description">{{ prod.description }}.</div>
           </a>
       </div>
     </div>
