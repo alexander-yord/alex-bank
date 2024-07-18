@@ -324,6 +324,29 @@ async def update_account_group(account_id: int, data: s.AmendAccountGroup, token
     return {"status": "Success!"}
 
 
+@router.put("/{account_id}/role/{new_user_role}")
+async def update_account_role(account_id: int, new_user_role: str, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C']:
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Account {account_id} does not exist")
+
+    db.cursor.execute("SELECT role FROM user_roles WHERE role = %s",
+                      (new_user_role,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(409, "Not a valid user role")
+
+    stmt = "UPDATE accounts SET user_role = %s WHERE account_id = %s"
+    db.cursor.execute(stmt, (new_user_role, account_id))
+    db.cnx.commit()
+
+    return {"status": "Success!"}
+
+
 @router.post("/{account_id}/credentials")
 async def update_account_credentials(account_id: int, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)

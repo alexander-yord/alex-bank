@@ -159,3 +159,28 @@ body {
     top: 50%;
 }
 
+/* Table styles */
+.table-no-borders {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.table-no-borders .row-odd {
+    background-color: var(--color-bg-light);
+}
+
+.table-no-borders .row-even {
+    background-color: var(--color-border-light);
+}
+
+.table-no-borders tr {
+    border: none;
+}
+
+.table-no-borders td, 
+.table-no-borders th {
+    border: none;
+    padding: 8px;
+    text-align: left;
+}
+
