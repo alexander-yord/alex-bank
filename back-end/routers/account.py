@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Header, Query, Depends
+from fastapi import APIRouter, HTTPException, Header, Query, Depends, Response
 from typing import Annotated, Optional, List
 import re
 from dependencies import database as db, helpers as h, schemas as s, mail as m
@@ -150,15 +150,22 @@ async def search_for_account(search_str: str, token: str = Depends(s.oauth2_sche
 
 
 @router.get("/{account_id}")
-async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme)):
+async def get_account_info(account_id: int, response: Response, token: str = Depends(s.oauth2_scheme)):
+    # Set Cache-Control header to prevent caching
+    response.headers["Cache-Control"] = "no-store"
+
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    else:
+        db.cursor.close()
+        db.cnx.close()
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
-    SELECT a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, 
+    SELECT SQL_NO_CACHE a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, 
     CASE 
         WHEN country_code = 'BGR' THEN 'Bulgaria' 
         WHEN country_code = 'USA' THEN 'United States' 
@@ -176,6 +183,7 @@ async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Account {account_id} does not exist")
     row = db.cursor.fetchone()
+    print(row)
 
     result = {
         "account_id": row[0],
