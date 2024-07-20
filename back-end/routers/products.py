@@ -164,12 +164,12 @@ async def info_about_product(product_id: int):
 
 
 @router.get("/{product_id}/instances")
-async def get_product_instances():
+async def get_product_instancess():
     pass
 
 
 @router.get("/instances/", response_model=List[s.ProductCard])
-async def get_product_instances(status_code: Optional[List[str]] = Query(None),
+async def get_product_instancess(status_code: Optional[List[str]] = Query(None),
                                 product_id: Optional[int] = None,
                                 product_uid: Optional[int] = None,
                                 contract_id: Optional[int] = None,
@@ -186,7 +186,7 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
             pi.status_code, ps.status_name, p.category_id, p.currency, 
             ac.first_name, ac.last_name, ac.account_id, nvl(p.picture_name, p.category_id)
-        FROM product_instance pi
+        FROM product_instances pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN accounts ac ON ac.account_id = pi.account_id
         JOIN products p ON p.product_id = appl.product_id
@@ -240,11 +240,11 @@ async def get_product_instances(status_code: Optional[List[str]] = Query(None),
 
 @router.get("/instance/{product_uid}",
             response_model=Union[s.ProductInstancePrivate, s.ProductInstancePublic])
-async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_scheme)):
+async def get_product_instances(product_uid: int, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT account_id FROM product_instances WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
     account_id = db.cursor.fetchone()[0]
@@ -265,7 +265,7 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
             NULL AS update_note, 
             NULL AS update_note_public_yn
         FROM applications appl 
-        JOIN product_instance pi ON pi.application_id=appl.application_id
+        JOIN product_instances pi ON pi.application_id=appl.application_id
         JOIN product_statuses ps ON ps.code='APL' 
         UNION ALL 
         SELECT 
@@ -344,7 +344,7 @@ async def get_product_instance(product_uid: int, token: str = Depends(s.oauth2_s
     pi.yield, pi.actual_revenue, appl.product_id, pi.expected_revenue, 
     CASE WHEN appl.standard_yn = 'Y' THEN 'Standard' ELSE 'Custom' END AS standard, 
     notifications_yn
-    FROM product_instance pi 
+    FROM product_instances pi 
     LEFT JOIN applications appl ON appl.application_id = pi.application_id
     JOIN product_statuses ps ON ps.code = pi.status_code 
     WHERE pi.product_uid = %s
@@ -415,7 +415,7 @@ async def update_product_status(product_uid: int, new_status: str,
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
-    db.cursor.execute("SELECT status_code, notifications_yn FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT status_code, notifications_yn FROM product_instances WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
     row = db.cursor.fetchone()
@@ -426,20 +426,20 @@ async def update_product_status(product_uid: int, new_status: str,
         raise HTTPException(403, f"Status {new_status} not allowed after {current_status} or does not exist")
 
     if update_note.content is not None:
-        stmt = "UPDATE product_instance SET " \
+        stmt = "UPDATE product_instances SET " \
                "status_code = %s, latest_update_user_id = %s, latest_note = %s, latest_note_public_yn = %s " \
                "WHERE product_uid = %s"
         db.cursor.execute(stmt, (new_status, usr_account_id, update_note.content,
                                  update_note.public_yn if update_note.public_yn == 'Y' else 'N', product_uid))
     else:
-        stmt = "UPDATE product_instance SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
+        stmt = "UPDATE product_instances SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
         db.cursor.execute(stmt, (new_status, usr_account_id, product_uid))
     db.cnx.commit()
 
     if new_status in ['APR', 'DEN']:
         stmt = """
         UPDATE applications SET approved_yn = %s, approved_by = %s, approval_dt = now()
-        WHERE application_id = (SELECT application_id FROM product_instance WHERE product_uid = %s)
+        WHERE application_id = (SELECT application_id FROM product_instances WHERE product_uid = %s)
         """
         db.cursor.execute(stmt, ('Y' if current_status == 'APR' else 'N', usr_account_id, product_uid))
         db.cnx.commit()
@@ -463,7 +463,7 @@ async def client_update_product_status(product_uid: int, new_status: str,
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    db.cursor.execute("SELECT status_code, account_id, notifications_yn FROM product_instance WHERE product_uid = %s",
+    db.cursor.execute("SELECT status_code, account_id, notifications_yn FROM product_instances WHERE product_uid = %s",
                       (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
@@ -475,13 +475,13 @@ async def client_update_product_status(product_uid: int, new_status: str,
         raise HTTPException(403, "This action cannot be performed by the client")
 
     if update_note.content is not None:
-        stmt = "UPDATE product_instance SET " \
+        stmt = "UPDATE product_instances SET " \
                "status_code = %s, latest_update_user_id = %s, latest_note = %s, latest_note_public_yn = %s " \
                "WHERE product_uid = %s"
         db.cursor.execute(stmt, (new_status, usr_account_id, update_note.content,
                                  update_note.public_yn if update_note.public_yn == 'Y' else 'N', product_uid))
     else:
-        stmt = "UPDATE product_instance SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
+        stmt = "UPDATE product_instances SET status_code = %s, latest_update_user_id = %s WHERE product_uid = %s"
         db.cursor.execute(stmt, (new_status, usr_account_id, product_uid))
     db.cnx.commit()
 
@@ -494,7 +494,7 @@ async def client_update_product_status(product_uid: int, new_status: str,
 
 
 @router.patch("/instance/{product_uid}")
-def update_product_instance(
+def update_product_instances(
         product_uid: int,
         amendments: s.AmendProductInstance,
         token: str = Depends(s.oauth2_scheme)
@@ -504,7 +504,7 @@ def update_product_instance(
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['C', 'A', 'E']:
         raise HTTPException(401, "User does not have privileges")
-    db.cursor.execute("SELECT status_code FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT status_code FROM product_instances WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} does not exist")
 
@@ -546,7 +546,7 @@ def update_product_instance(
         params.append(product_uid)
 
         stmt = f"""
-        UPDATE product_instance
+        UPDATE product_instances
         SET {', '.join(update_fields)}
         WHERE product_uid = %s
         """
@@ -565,7 +565,7 @@ async def digitally_sign_contract(product_uid: int, token: str = Depends(s.oauth
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    db.cursor.execute("SELECT account_id, status_code, contract_id FROM product_instance WHERE product_uid = %s",
+    db.cursor.execute("SELECT account_id, status_code, contract_id FROM product_instances WHERE product_uid = %s",
                       (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"No product with Product UID {product_uid} found.")
@@ -581,7 +581,7 @@ async def digitally_sign_contract(product_uid: int, token: str = Depends(s.oauth
 
     c.sign_contract(res[2], usr_account_id)
 
-    stmt = "UPDATE product_instance SET status_code = 'AWT', latest_update_user_id = %s WHERE product_uid = %s"
+    stmt = "UPDATE product_instances SET status_code = 'AWT', latest_update_user_id = %s WHERE product_uid = %s"
     db.cursor.execute(stmt, (usr_account_id, product_uid))
     db.cnx.commit()
 
@@ -595,7 +595,7 @@ async def get_pdf_contract(product_uid: int, token: str = Depends(s.oauth2_schem
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    db.cursor.execute("SELECT account_id, contract_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT account_id, contract_id FROM product_instances WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} not found")
     res = db.cursor.fetchone()
@@ -615,7 +615,7 @@ async def update_product_notifications_status(product_uid: int, new_preference: 
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
-    db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+    db.cursor.execute("SELECT account_id FROM product_instances WHERE product_uid = %s", (product_uid,))
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Product {product_uid} not found")
     account_id = db.cursor.fetchone()[0]
@@ -625,7 +625,7 @@ async def update_product_notifications_status(product_uid: int, new_preference: 
         raise HTTPException(403, f"{new_preference} not a valid status")
 
     try:
-        db.cursor.execute("UPDATE product_instance SET notifications_yn = %s WHERE product_uid = %s",
+        db.cursor.execute("UPDATE product_instances SET notifications_yn = %s WHERE product_uid = %s",
                           (new_preference, product_uid))
         db.cnx.commit()
     except Exception as e:
@@ -650,7 +650,7 @@ async def update_product_notifications_status(product_uid: int, new_preference: 
 #         print(err)
 #         raise HTTPException(status_code=500, detail=str(err))
 #
-#     db.cursor.execute("SELECT contract_id, account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+#     db.cursor.execute("SELECT contract_id, account_id FROM product_instances WHERE product_uid = %s", (product_uid,))
 #     if db.cursor.rowcount != 1:
 #         raise HTTPException(404, f"Product {product_uid} does not exist")
 #     res = db.cursor.fetchone()
@@ -690,7 +690,7 @@ async def update_product_notifications_status(product_uid: int, new_preference: 
 #     content = await file.read()
 #     if len(content) > MAX_FILE_SIZE:
 #         raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
-#     db.cursor.execute("SELECT account_id FROM product_instance WHERE product_uid = %s", (product_uid,))
+#     db.cursor.execute("SELECT account_id FROM product_instances WHERE product_uid = %s", (product_uid,))
 #     if db.cursor.rowcount != 1:
 #         raise HTTPException(404, f"Product {product_uid} not found.")
 #     account_id = db.cursor.fetchone()[0]
@@ -715,7 +715,7 @@ async def update_product_notifications_status(product_uid: int, new_preference: 
 #     db.cursor.execute(stmt, (new_file_name, document_id))
 #     db.cnx.commit()
 #
-#     stmt = "UPDATE product_instance SET contract_id = 1 WHERE product_uid = %s"
+#     stmt = "UPDATE product_instances SET contract_id = 1 WHERE product_uid = %s"
 #     db.cursor.execute(stmt, (product_uid,))
 #     db.cnx.commit()
 #

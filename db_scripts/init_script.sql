@@ -38,7 +38,7 @@ values (0, 'Automated', 'Action', 'BGR', 'A', 'Y', 'EMP');
 alter table `accounts` AUTO_INCREMENT=2000000;
 
 -- product instance increment starting value
-alter table `product_instance` AUTO_INCREMENT=300000;
+alter table `product_instances` AUTO_INCREMENT=300000;
 
 -- default admin user
 insert into `accounts` (`first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
@@ -77,8 +77,8 @@ INSERT INTO product_statuses (order_no, code, status_name, call_to_action, statu
 DELIMITER //
 
 -- product status update trigger
-CREATE TRIGGER product_instance_status_update
-BEFORE UPDATE ON product_instance
+CREATE TRIGGER product_instances_status_update
+BEFORE UPDATE ON product_instances
 FOR EACH ROW
 BEGIN
   IF NEW.status_code != OLD.status_code THEN
@@ -96,8 +96,8 @@ BEGIN
 END;  
 //
 
-CREATE TRIGGER after_insert_product_instance
-AFTER INSERT ON product_instance
+CREATE TRIGGER after_insert_product_instances
+AFTER INSERT ON product_instances
 FOR EACH ROW
 BEGIN
     DECLARE done INT DEFAULT 0;
@@ -109,7 +109,7 @@ BEGIN
     -- Declare a cursor to select all custom columns for the product_id
     DECLARE custom_column_cursor CURSOR FOR
         SELECT pccd.pcc_id, pccd.column_name, pccd.column_type, pccd.default_value
-        FROM product_instance pi
+        FROM product_instances pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN product_custom_column_def pccd ON appl.product_id = pccd.product_id
         WHERE pi.product_uid = NEW.product_uid;

@@ -373,7 +373,7 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
             pi.status_code, ps.status_name, p.category_id, p.currency, 
             nvl(p.picture_name, p.category_id)
-        FROM product_instance pi
+        FROM product_instances pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN products p ON p.product_id = appl.product_id
         JOIN product_statuses ps ON ps.code = pi.status_code
@@ -428,7 +428,7 @@ async def product_sale(account_id: int, product_id: int, data: s.NewProduct, tok
     application_id = db.cursor.fetchone()[0]
 
     stmt2 = """
-    INSERT INTO product_instance (application_id, account_id, status_code, latest_note)
+    INSERT INTO product_instances (application_id, account_id, status_code, latest_note)
     VALUES (%s, %s, 'APL', '')
     """
     db.cursor.execute(stmt2, (application_id, account_id))

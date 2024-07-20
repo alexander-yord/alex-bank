@@ -114,7 +114,7 @@ CREATE TABLE `applications` (
   `visible_yn` char(1)
 );
 
-CREATE TABLE `product_instance` (
+CREATE TABLE `product_instances` (
   `product_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `application_id` integer NOT NULL,
   `account_id` integer,
@@ -198,7 +198,9 @@ CREATE TABLE `account_worthiness_notes` (
 
 CREATE TABLE `contracts` (
   `contract_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `contract_title` varchar(255),
   `unsigned_contract` text,
+  `amended_contract` text,
   `signature_date` date,
   `signed_contract` text,
   `document_id` integer
@@ -218,11 +220,11 @@ ALTER TABLE `applications` ADD FOREIGN KEY (`product_id`) REFERENCES `products` 
 
 ALTER TABLE `documents` ADD FOREIGN KEY (`document_profile`) REFERENCES `document_profiles` (`doc_profile_id`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`);
+ALTER TABLE `product_instances` ADD FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`);
 
 ALTER TABLE `products` ADD FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`category_id`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
+ALTER TABLE `product_instances` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
 
 ALTER TABLE `account_worthiness` ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`);
 
@@ -240,9 +242,9 @@ ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`wc_step_uid`) REFERENCE
 
 ALTER TABLE `account_worthiness_notes` ADD FOREIGN KEY (`prime_uid`) REFERENCES `account_worthiness` (`prime_uid`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`status_code`) REFERENCES `product_statuses` (`code`);
+ALTER TABLE `product_instances` ADD FOREIGN KEY (`status_code`) REFERENCES `product_statuses` (`code`);
 
-ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
+ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instances` (`product_uid`);
 
 ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `product_statuses` (`code`);
 
@@ -250,11 +252,11 @@ ALTER TABLE `product_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `pro
 
 ALTER TABLE `applications` ADD FOREIGN KEY (`approved_by`) REFERENCES `accounts` (`account_id`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`contract_id`);
+ALTER TABLE `product_instances` ADD FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`contract_id`);
 
 ALTER TABLE `contracts` ADD FOREIGN KEY (`document_id`) REFERENCES `documents` (`document_id`);
 
-ALTER TABLE `product_instance` ADD FOREIGN KEY (`latest_update_user_id`) REFERENCES `accounts` (`account_id`);
+ALTER TABLE `product_instances` ADD FOREIGN KEY (`latest_update_user_id`) REFERENCES `accounts` (`account_id`);
 
 ALTER TABLE `product_subcategories` ADD FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`category_id`);
 
@@ -264,6 +266,6 @@ ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`product_id`) REFERENCE
 
 ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`pcc_id`) REFERENCES `product_custom_column_def` (`pcc_id`);
 
-ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instance` (`product_uid`);
+ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instances` (`product_uid`);
 
 ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);

@@ -21,7 +21,7 @@ def generate_contract_string(product_uid: int):
             WHEN ac.country_code = 'USA' THEN 'United States'
             ELSE 'OTH' END AS country, 
             pr.category_id, pr.name, pr.description
-        FROM product_instance pi 
+        FROM product_instances pi 
         JOIN accounts ac ON ac.account_id = pi.account_id
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN products pr ON appl.product_id = pr.product_id
@@ -274,7 +274,7 @@ def generate_contract_string(product_uid: int):
     db.cursor.execute("SELECT LAST_INSERT_ID()")
     contract_id = db.cursor.fetchone()[0]
 
-    db.cursor.execute("UPDATE product_instance SET contract_id = %s WHERE product_uid = %s", (contract_id, product_uid))
+    db.cursor.execute("UPDATE product_instances SET contract_id = %s WHERE product_uid = %s", (contract_id, product_uid))
     db.cnx.commit()
     return
 

@@ -156,7 +156,7 @@ def send_contract_email(product_uid: int, email: str = None):
     if email is None:
         stmt = """SELECT 
                     ac.email, ac.first_name, ac.last_name, pi.contract_id, pr.name
-                FROM product_instance pi
+                FROM product_instances pi
                 JOIN accounts ac 
                   ON ac.account_id = pi.account_id
                 JOIN applications appl
@@ -242,7 +242,7 @@ def send_product_status_update_email(product_uid: int, new_status: str):
 
     stmt = """
     SELECT pi.product_uid, ac.email, ac.first_name, ac.last_name, p.name, ps.status_name
-    FROM product_instance pi 
+    FROM product_instances pi 
     JOIN accounts ac ON pi.account_id = ac.account_id
     JOIN applications appl ON appl.application_id = pi.application_id
     JOIN products p ON p.product_id = appl.product_id

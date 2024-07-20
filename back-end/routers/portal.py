@@ -25,7 +25,7 @@ def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_id: int
         p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
         pi.status_code, ps.status_name, p.category_id, p.currency, 
         ac.first_name, ac.last_name, ac.account_id, nvl(p.picture_name, p.category_id)
-    FROM product_instance pi
+    FROM product_instances pi
     JOIN applications appl ON appl.application_id = pi.application_id
     JOIN accounts ac ON ac.account_id = pi.account_id
     JOIN products p ON p.product_id = appl.product_id
