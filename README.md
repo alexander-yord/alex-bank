@@ -44,6 +44,9 @@ DB_NAME = alex_bank
 MAIL_USER = 
 MAIL_PASS = 
 
+[LOG]
+SERVICE_LOG =
+
 [UPLOAD]
 UPLOAD_DIR = 
 
@@ -60,8 +63,12 @@ If you want to deactivate the virtual environment:
 ```sh
 deactivate
 ```
+
+## Services 
+There are two service files located in `back-end/services/`. The `updateStatuses.py` updates product statuses on/after due and exercise dates. The `sendEmails.py` script sends product status update emails. The `schedule.sh` creates a cronjob to run the first script at 0:01am and the second one at 8am.  
+
 ## Front-End 
 You will need a live server for the front-end. You can create your own account then, or alternatively, you can log into the admin user with initial password `qwerty`. It is highly recommended that you change it immediately. 
 
 > [!NOTE]
-> By default, the back-end API is set at `http://127.0.0.1:8000/api`, however, your instance may be located elsewhere, on a different port. Change the `API_BASE_URL` variable in the `alex-bank/front-end/src/functions.js`.
+> By default, the back-end API is set at `http://127.0.0.1:8000/api`, however, your instance may be located elsewhere, on a different port. Adjust the API port to 8000. 

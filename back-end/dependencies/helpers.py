@@ -13,6 +13,14 @@ try:
     cfile.read(os.path.join(sys.path[0], "config.ini"))
 
     SECRET_KEY = cfile["ENCRYPT"]["SECRET_KEY"]
+except KeyError:
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "../config.ini"))
+
+        SECRET_KEY = cfile["ENCRYPT"]["SECRET_KEY"]
+    except KeyError as err:
+        print(f"No key found for ENCRYPT {err}")
 except FileNotFoundError as err:
     SECRET_KEY = None
     print(err)
