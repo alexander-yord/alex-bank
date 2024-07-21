@@ -68,7 +68,7 @@ INSERT INTO product_statuses (order_no, code, status_name, call_to_action, statu
 	(10, 'AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
 	(11, 'NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
     (12, 'EXC', 'Exercise Date', 'Exercise Date', 'Indicates that the current date is an exercise date'),
-	(13, 'TRG', 'Triggered', 'Trigger', 'An instrument condition has been triggered'),
+	(13, 'TRG', 'Exercised', 'Exercise', 'An instrument condition has been triggered'),
 	(14, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
 	(15, 'CMP', 'Complete', 'Complete', 'Complete'),
 	(16, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
