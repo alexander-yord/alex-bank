@@ -65,7 +65,7 @@ deactivate
 ```
 
 ## Services 
-There are two service files located in `back-end/services/`. The `updateStatuses.py` updates product statuses on/after due and exercise dates. The `sendEmails.py` script sends product status update emails. The `schedule.sh` creates a cronjob to run the first script at 0:01am and the second one at 8am.  
+There are two service files located in `back-end/services/`. The `updateStatuses.py` updates product statuses on/after due and exercise dates. The `sendEmails.py` script sends product status update emails. The `schedule.sh` creates a cronjob to run the first script at 0:01am and the second one at 8am. You need to have created the log file (which you specified in the config.ini file, at [LOG][SERVICE_LOG]) and give read and write permissions to everyone. 
 
 ## Front-End 
 You will need a live server for the front-end. You can create your own account then, or alternatively, you can log into the admin user with initial password `qwerty`. It is highly recommended that you change it immediately. 

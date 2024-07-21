@@ -104,7 +104,8 @@ def update_status_to_normal():
     (select pi.product_uid from product_instances pi
     join product_custom_column_values pccv ON pccv.product_uid = pi.product_uid
     join product_custom_column_def pccd ON pccd.pcc_id = pccv.pcc_id
-    where pccd.exercise_date_yn = "Y" and DATE(pccv.date_value) != DATE(NOW()) and pi.status_code = "EXC")
+    where pccd.exercise_date_yn = "Y" and DATE(pccv.date_value) = DATE(DATE_ADD(NOW(), INTERVAL -1 DAY)) 
+    and pi.status_code = "EXC")
     """
 
     try:

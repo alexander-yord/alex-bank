@@ -134,6 +134,7 @@ def status_progressions(current_status: str):
         "SGN": ["AWT", "NOR", "DUE", "CMP"],
         "AWT": ["NOR", "DUE", "CMP"],
         "NOR": ["DUE", "CMP"],
+        "EXC": ["TRG", "DUE", "CMP"],
         "TRG": ["DUE", "CMP"],
         "DUE": ["CMP"],
         "ORD": ["CMP"],
