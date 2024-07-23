@@ -67,11 +67,7 @@
         "children": [
             {
                 "displayName": "Manage Employees",
-                "url": "something.html"
-            },
-            {
-                "displayName": "Add Employee",
-                "url": "something.html"
+                "url": "employees.html"
             }
         ]
     }
