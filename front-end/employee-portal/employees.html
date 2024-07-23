@@ -65,15 +65,27 @@
                         <td>{{account.account_id}} </td>
                         <td>{{account.first_name}} {{account.last_name}} </td>
                         <td>
-                            <select style="margin: 0px;">
-                                <option v-for="role in user_role_list">{{role.description}}</option>
+                            <select style="margin: 0px; background: none; border: none;" :disabled="account.account_id != editing_account_id" v-model="account.user_role_code">
+                                <option v-for="role in user_role_list" :value="role.role">{{role.description}}</option>
                             </select>
                         </td>
                         <td class="button-container">
-                            <button v-if="editing_account_id == account.account_id" class="icon-button"><img src="../assets/check-solid.svg" width="15px"></button>
+                            <button v-if="editing_account_id == account.account_id" class="icon-button" @click="change_account_role(account.account_id, account.user_role_code)"><img src="../assets/check-solid.svg" width="15px"></button>
                             <button v-if="editing_account_id == account.account_id" class="icon-button" @click="edit_account(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
                             <button v-if="editing_account_id != account.account_id" class="icon-button" @click="edit_account(account.account_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
-                            <button v-if="editing_account_id != account.account_id" class="icon-button"><img src="../assets/trash-solid.svg" width="15px"></button>
+                            <button v-if="editing_account_id != account.account_id" class="icon-button" @click="change_account_role(account.account_id, 'U')"><img src="../assets/trash-solid.svg" width="15px"></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input v-model="search_account_id" type="text" placeholder="Add a new account" style="margin: 0px; background: none; border: none;" @keyup="search_account"></td>
+                        <td>{{new_account.first_name}} {{new_account.last_name}} </td>
+                        <td><select v-if="new_account.account_id != null" v-model="new_account_role" style="margin: 0px; background: none; border: none;">
+                            <option v-for="role in user_role_list" :value="role.role">{{role.description}}</option>
+                        </select></td>
+                        <td class="button-container">
+                            <button v-if="new_account.account_id != null" class="icon-button" @click="change_account_role(search_account_id, new_account_role)"><img src="../assets/check-solid.svg" width="15px"></button>
+                            <button v-if="new_account.account_id != null" class="icon-button" @click="search_account_id = null; new_account = {}"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
+                            
                         </td>
                     </tr>
                   </table>
@@ -103,7 +115,10 @@
                     editing_account_id: null,
                     openIndex: null, 
                     user_role_list: [], 
-                    accounts: []
+                    accounts: [], 
+                    search_account_id: null,
+                    new_account: {}, 
+                    new_account_role: "E"
                 };
             },
             methods: {
@@ -158,6 +173,44 @@
                 },
                 edit_account(account_id) {
                     this.editing_account_id = account_id;
+                }, 
+                async change_account_role(account_id, new_role) {
+                    if (!confirm("Are you sure you want to make this change")) {
+                        return;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/account/${account_id}/role/${new_role}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok){
+                        console.log("Error updating user role.");
+                        return;
+                    }
+                    window.location.reload();
+                }, 
+                async search_account () {
+                    const response = await fetch(`${API_BASE_URL}/account/${this.search_account_id}`, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    
+                    if (!response.ok){
+                        console.log("Error finding this user.");
+                        this.new_account = {};
+                        return;
+                    } 
+
+                    const data = await response.json();
+
+                    this.new_account = data;
                 }
             }, 
             mounted() {
