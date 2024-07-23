@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Ensure the script is run as root
-if [ "$(id -u)" != "0" ]; then
-  echo "This script must be run as root" 1>&2
-  exit 1
-fi
-
-chmod ugo+x sendEmails.py
-chmod ugo+x updateStatuses.py
-
 # Define the paths to the Python scripts
 SCRIPT1="updateStatuses.py"
 SCRIPT2="sendEmails.py"
@@ -44,3 +35,5 @@ crontab $CRON_TEMP
 rm $CRON_TEMP
 
 echo "Cron jobs added successfully."
+
+crontab -l
