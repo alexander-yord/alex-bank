@@ -62,7 +62,7 @@
                         <td>Actions</td>
                     </tr>
                     <tr v-for="account in accounts">
-                        <td>{{account.account_id}} </td>
+                        <td><a :href="'account.html?account_id='+account.account_id">{{account.account_id}}</a></td>
                         <td>{{account.first_name}} {{account.last_name}} </td>
                         <td>
                             <select style="margin: 0px; background: none; border: none;" :disabled="account.account_id != editing_account_id" v-model="account.user_role_code">
