@@ -51,7 +51,7 @@ def send_due_emails():
     logging.info("Starting to send Due Emails")
     for product in products:
         m.send_due_emails(product)
-        logging.debug(f"Email sent for Product UID: {product}")
+        logging.info(f"Email sent for Product UID: {product}")
 
     logging.info(f"Sending Due Emails successfully completed. {len(products)} emails sent")
 

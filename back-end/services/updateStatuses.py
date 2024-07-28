@@ -57,7 +57,7 @@ def update_status_to_overdue():
         db.cnx, db.cursor = db.connect()
 
     stmt = "UPDATE product_instances SET status_code='ORD', latest_update_user_id=1, latest_note=NULL " \
-           "WHERE DATE(product_end_date) = DATE(DATE_ADD(NOW(), INTERVAL 7 DAY)) and status_code = 'DUE'"
+           "WHERE DATE(product_end_date) = DATE(DATE_ADD(NOW(), INTERVAL -7 DAY)) and status_code = 'DUE'"
 
     try:
         db.cursor.execute(stmt)
