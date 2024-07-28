@@ -15,8 +15,8 @@ SCRIPT1_PATH=$(pwd)/$SCRIPT1
 SCRIPT2_PATH=$(pwd)/$SCRIPT2
 
 # Define the cron job lines
-CRON_JOB1="1 0 * * * /bin/bash -c 'source /path/to/venv/bin/activate && python3 $SCRIPT1_PATH' "
-CRON_JOB2="0 7 * * * /bin/bash -c 'source /path/to/venv/bin/activate && python3 $SCRIPT2_PATH' "
+CRON_JOB1="1 0 * * * /bin/bash -c 'source $(pwd)/../venv/bin/activate && python3 $SCRIPT1_PATH' "
+CRON_JOB2="0 7 * * * /bin/bash -c 'source $(pwd)/../venv/bin/activate && python3 $SCRIPT2_PATH' "
 
 # Create a temporary file for the crontab
 CRON_TEMP=$(mktemp)

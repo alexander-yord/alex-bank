@@ -354,7 +354,7 @@ async def update_account_role(account_id: int, new_user_role: str, token: str = 
     new_group = "EMP" if new_user_role in ["A", "C", "E"] else "FTC"
     stmt = "UPDATE accounts SET account_group = %s WHERE account_id = %s"
     db.cursor.execute(stmt, (new_group, account_id))
-    
+
     db.cnx.commit()
 
     return {"status": "Success!"}
