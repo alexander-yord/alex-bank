@@ -30,9 +30,9 @@
         <div v-if="isLoggedIn" class="content">
             <div v-if="product_info != null">
                 <h2>{{product_info.name}} <div class="info">
-                    <img v-if="product_data.notifications=='Y'" src="../assets/bell-solid.svg" class="info-icon" alt="Info icon">
-                    <img v-else-if="product_data.notifications=='P'" src="../assets/bullhorn-solid.svg" class="info-icon" alt="Info icon">
-                    <img v-else-if="product_data.notifications=='N'" src="../assets/bell-slash-solid.svg" class="info-icon" alt="Info icon">
+                    <img v-if="product_data.notifications=='Y'" src="../assets/bell-solid.svg" style="width: 20px;" class="info-icon" alt="Info icon">
+                    <img v-else-if="product_data.notifications=='P'" src="../assets/bullhorn-solid.svg" style="width: 20px;" class="info-icon" alt="Info icon">
+                    <img v-else-if="product_data.notifications=='N'" src="../assets/bell-slash-solid.svg" style="width: 25px; height: 25px;" class="info-icon" alt="Info icon">
                     <span v-if="product_data.notifications=='Y'" class="extra-info">
                         Receive notifications for every status change. <br>
                         <a @click="changeNotificationPreferences('P')" style="cursor: pointer;">Important Only</a> <a @click="changeNotificationPreferences('N')" style="cursor: pointer;">No Notifications</a>

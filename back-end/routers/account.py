@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Header, Query, Depends
+from fastapi import APIRouter, HTTPException, Header, Query, Depends, Response
 from typing import Annotated, Optional, List
 import re
 from dependencies import database as db, helpers as h, schemas as s, mail as m
@@ -150,15 +150,22 @@ async def search_for_account(search_str: str, token: str = Depends(s.oauth2_sche
 
 
 @router.get("/{account_id}")
-async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme)):
+async def get_account_info(account_id: int, response: Response, token: str = Depends(s.oauth2_scheme)):
+    # Set Cache-Control header to prevent caching
+    response.headers["Cache-Control"] = "no-store"
+
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    else:
+        db.cursor.close()
+        db.cnx.close()
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['C', 'A', 'E'] and not account_id == usr_account_id:
         raise HTTPException(401, "User does not have privileges")
 
     stmt = """
-    SELECT a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, 
+    SELECT SQL_NO_CACHE a.account_id, a.first_name, a.last_name, a.email, a.phone, a.country_code, 
     CASE 
         WHEN country_code = 'BGR' THEN 'Bulgaria' 
         WHEN country_code = 'USA' THEN 'United States' 
@@ -176,6 +183,7 @@ async def get_account_info(account_id: int, token: str = Depends(s.oauth2_scheme
     if db.cursor.rowcount == 0:
         raise HTTPException(404, f"Account {account_id} does not exist")
     row = db.cursor.fetchone()
+    print(row)
 
     result = {
         "account_id": row[0],
@@ -324,6 +332,34 @@ async def update_account_group(account_id: int, data: s.AmendAccountGroup, token
     return {"status": "Success!"}
 
 
+@router.put("/{account_id}/role/{new_user_role}")
+async def update_account_role(account_id: int, new_user_role: str, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C']:
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Account {account_id} does not exist")
+
+    db.cursor.execute("SELECT role FROM user_roles WHERE role = %s",
+                      (new_user_role,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(409, "Not a valid user role")
+
+    stmt = "UPDATE accounts SET user_role = %s WHERE account_id = %s"
+    db.cursor.execute(stmt, (new_user_role, account_id))
+
+    new_group = "EMP" if new_user_role in ["A", "C", "E"] else "FTC"
+    stmt = "UPDATE accounts SET account_group = %s WHERE account_id = %s"
+    db.cursor.execute(stmt, (new_group, account_id))
+
+    db.cnx.commit()
+
+    return {"status": "Success!"}
+
+
 @router.post("/{account_id}/credentials")
 async def update_account_credentials(account_id: int, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
@@ -350,7 +386,7 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
             p.name, p.description, NVL(pi.amount, appl.amount_requested) AS amount, 
             pi.status_code, ps.status_name, p.category_id, p.currency, 
             nvl(p.picture_name, p.category_id)
-        FROM product_instance pi
+        FROM product_instances pi
         JOIN applications appl ON appl.application_id = pi.application_id
         JOIN products p ON p.product_id = appl.product_id
         JOIN product_statuses ps ON ps.code = pi.status_code
@@ -405,7 +441,7 @@ async def product_sale(account_id: int, product_id: int, data: s.NewProduct, tok
     application_id = db.cursor.fetchone()[0]
 
     stmt2 = """
-    INSERT INTO product_instance (application_id, account_id, status_code, latest_note)
+    INSERT INTO product_instances (application_id, account_id, status_code, latest_note)
     VALUES (%s, %s, 'APL', '')
     """
     db.cursor.execute(stmt2, (application_id, account_id))

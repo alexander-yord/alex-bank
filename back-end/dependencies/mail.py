@@ -156,7 +156,7 @@ def send_contract_email(product_uid: int, email: str = None):
     if email is None:
         stmt = """SELECT 
                     ac.email, ac.first_name, ac.last_name, pi.contract_id, pr.name
-                FROM product_instance pi
+                FROM product_instances pi
                 JOIN accounts ac 
                   ON ac.account_id = pi.account_id
                 JOIN applications appl
@@ -222,47 +222,8 @@ def send_contract_email(product_uid: int, email: str = None):
         print(f"Failed to send email: {e}")
 
 
-def send_product_status_update_email(product_uid: int, new_status: str):
-    if not db.cnx.is_connected():
-        db.cnx, db.cursor = db.connect()
-
-    try:
-        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
-        cfile.read(os.path.join(sys.path[0], "config.ini"))
-
-        smtp_server = "smtp.gmail.com"
-        smtp_port = 587
-        smtp_user = cfile["SMTP"]["MAIL_USER"]
-        smtp_password = cfile["SMTP"]["MAIL_PASS"]
-
-    except Exception as err:
-        print(err)
-        return
-
-
-    stmt = """
-    SELECT pi.product_uid, ac.email, ac.first_name, ac.last_name, p.name, ps.status_name
-    FROM product_instance pi 
-    JOIN accounts ac ON pi.account_id = ac.account_id
-    JOIN applications appl ON appl.application_id = pi.application_id
-    JOIN products p ON p.product_id = appl.product_id
-    JOIN product_statuses ps ON ps.code = pi.status_code
-    WHERE pi.product_uid = %s"""
-
-    db.cursor.execute(stmt, (product_uid,))
-    if db.cursor.rowcount != 1:
-        return
-    row = db.cursor.fetchone()
-
-    data = {
-        "product_uid": row[0],
-        "email": row[1],
-        "first_name": row[2],
-        "last_name": row[3],
-        "product_name": row[4],
-        "status_name": row[5]
-    }
-    styling = """
+# Constant String - Styling for all emails
+styling = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -315,6 +276,48 @@ def send_product_status_update_email(product_uid: int, new_status: str):
         </style>
     </head>
     """
+
+
+def send_product_status_update_email(product_uid: int, new_status: str):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+
+    except Exception as err:
+        print(err)
+        return
+
+
+    stmt = """
+    SELECT pi.product_uid, ac.email, ac.first_name, ac.last_name, p.name, ps.status_name
+    FROM product_instances pi 
+    JOIN accounts ac ON pi.account_id = ac.account_id
+    JOIN applications appl ON appl.application_id = pi.application_id
+    JOIN products p ON p.product_id = appl.product_id
+    JOIN product_statuses ps ON ps.code = pi.status_code
+    WHERE pi.product_uid = %s"""
+
+    db.cursor.execute(stmt, (product_uid,))
+    if db.cursor.rowcount != 1:
+        return
+    row = db.cursor.fetchone()
+
+    data = {
+        "product_uid": row[0],
+        "email": row[1],
+        "first_name": row[2],
+        "last_name": row[3],
+        "product_name": row[4],
+        "status_name": row[5]
+    }
 
     if new_status == "APL":
         content = f"""
@@ -392,5 +395,239 @@ def send_product_status_update_email(product_uid: int, new_status: str):
     except Exception as e:
         print(f"Failed to send email: {e}")
 
-    ...
+
+def send_due_emails(product_uid: int):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+
+    except KeyError:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "../config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+    except Exception as err:
+        print(err)
+        return
+
+
+    stmt = """
+    SELECT pi.product_uid, ac.email, ac.first_name, ac.last_name, p.name, ps.status_name, p.category_id
+    FROM product_instances pi 
+    JOIN accounts ac ON pi.account_id = ac.account_id
+    JOIN applications appl ON appl.application_id = pi.application_id
+    JOIN products p ON p.product_id = appl.product_id
+    JOIN product_statuses ps ON ps.code = pi.status_code
+    WHERE pi.product_uid = %s"""
+
+    db.cursor.execute(stmt, (product_uid,))
+    if db.cursor.rowcount != 1:
+        return
+    row = db.cursor.fetchone()
+
+    data = {
+        "product_uid": row[0],
+        "email": row[1],
+        "first_name": row[2],
+        "last_name": row[3],
+        "product_name": row[4],
+        "status_name": row[5],
+        "category_id": row[6]
+    }
+
+    if data.get("category_id") == "DER":
+        content = f"""
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Exercise Date</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear {data.get("first_name")} {data.get("last_name")},</p>
+                        <p>Your Product {data.get("product_name")} (Product UID: {data.get("product_uid")}) has an exercise/strike day today. </p>
+                        <p>Please go to <a href="https://alex-bank.com/myaccount/product.html?product_uid={data.get("product_uid")}">Alex Bank (Product UID: {data.get("product_uid")})</a> to check what the next steps are.</p>
+                        <p>In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.</p>
+                        <p>Best regards,</p>
+                        <p>Alex Bank</p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; 2024 Alex Bank. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        body = f"Dear {data.get('first_name')} {data.get('last_name')},\n\n"
+        f"Your Product {data.get('product_name')} (Product UID: {data.get('product_uid')}) has an exercise/strike day today.\n\n"
+        f"Please go to https://alex-bank.com/myaccount/product.html?product_uid={data.get('product_uid')} to check what the next steps are.\n\n"
+        f"In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.\n\n"
+        "Best regards,\n"
+        "Alex Bank"
+    else:
+        content = f"""
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Status Update: Due</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear {data.get("first_name")} {data.get("last_name")},</p>
+                        <p>Your Product {data.get("product_name")} (Product UID: {data.get("product_uid")}) is now <b>Due</b>. </p>
+                        <p>Please go to <a href="https://alex-bank.com/myaccount/product.html?product_uid={data.get("product_uid")}">Alex Bank (Product UID: {data.get("product_uid")})</a> to check what the next steps are.</p>
+                        <p>In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.</p>
+                        <p>Best regards,</p>
+                        <p>Alex Bank</p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; 2024 Alex Bank. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        body = f"Dear {data.get('first_name')} {data.get('last_name')},\n\n"
+        f"Your Product {data.get('product_name')} (Product UID: {data.get('product_uid')}) is now Due.\n\n"
+        f"Please go to https://alex-bank.com/myaccount/product.html?product_uid={data.get('product_uid')} to check what the next steps are.\n\n"
+        f"In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.\n\n"
+        "Best regards,\n"
+        "Alex Bank"
+
+    html = styling + content
+
+    msg = MIMEMultipart("alternative")
+    msg["From"] = smtp_user
+    msg["To"] = data.get("email")
+    msg["Subject"] = f"{data.get('product_uid')} - Exercise Date" if data.get("category_id") == "DER" else f"{data.get('product_uid')} - Due"
+
+    part1 = MIMEText(body, "plain")
+    part2 = MIMEText(html, "html")
+    msg.attach(part1)
+    msg.attach(part2)
+
+    # Send the email
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        print("Email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
+def send_overdue_emails(product_uid: int):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+
+    except KeyError:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "../config.ini"))
+
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        smtp_user = cfile["SMTP"]["MAIL_USER"]
+        smtp_password = cfile["SMTP"]["MAIL_PASS"]
+    except Exception as err:
+        print(err)
+        return
+
+
+    stmt = """
+    SELECT pi.product_uid, ac.email, ac.first_name, ac.last_name, p.name, ps.status_name, 
+    p.category_id, pi.product_begin_date
+    FROM product_instances pi 
+    JOIN accounts ac ON pi.account_id = ac.account_id
+    JOIN applications appl ON appl.application_id = pi.application_id
+    JOIN products p ON p.product_id = appl.product_id
+    JOIN product_statuses ps ON ps.code = pi.status_code
+    WHERE pi.product_uid = %s"""
+
+    db.cursor.execute(stmt, (product_uid,))
+    if db.cursor.rowcount != 1:
+        return
+    row = db.cursor.fetchone()
+
+    data = {
+        "product_uid": row[0],
+        "email": row[1],
+        "first_name": row[2],
+        "last_name": row[3],
+        "product_name": row[4],
+        "status_name": row[5],
+        "category_id": row[6],
+        "product_begin_date": row[7]
+    }
+
+    if data.get("category_id") == "DER":
+        return
+    else:
+        content = f"""
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Status Update: Due</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear {data.get("first_name")} {data.get("last_name")},</p>
+                        <p>Your Product {data.get("product_name")} (Product UID: {data.get("product_uid")}) has been due since {data.get('product_begin_date')}. </p>
+                        <p>Please go to <a href="https://alex-bank.com/myaccount/product.html?product_uid={data.get("product_uid")}">Alex Bank (Product UID: {data.get("product_uid")})</a> to check what the next steps are.</p>
+                        <p>In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.</p>
+                        <p>Best regards,</p>
+                        <p>Alex Bank</p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; 2024 Alex Bank. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        body = f"Dear {data.get('first_name')} {data.get('last_name')},\n\n"
+        f"Your Product {data.get('product_name')} (Product UID: {data.get('product_uid')}) has been due since {data.get('product_begin_date')}.\n\n"
+        f"Please go to https://alex-bank.com/myaccount/product.html?product_uid={data.get('product_uid')} to check what the next steps are.\n\n"
+        f"In the meantime, if you have any questions or need further assistance, please do not hesitate to contact us.\n\n"
+        "Best regards,\n"
+        "Alex Bank"
+
+    html = styling + content
+
+    msg = MIMEMultipart("alternative")
+    msg["From"] = smtp_user
+    msg["To"] = data.get("email")
+    msg["Subject"] = f"{data.get('product_uid')} - Status Update: {data.get('status_name')}"
+
+    part1 = MIMEText(body, "plain")
+    part2 = MIMEText(html, "html")
+    msg.attach(part1)
+    msg.attach(part2)
+
+    # Send the email
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        print("Email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 

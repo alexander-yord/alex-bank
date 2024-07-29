@@ -159,3 +159,63 @@ body {
     top: 50%;
 }
 
+/* Table styles */
+.table-no-borders {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.table-no-borders .row-odd {
+    background-color: var(--color-bg-light);
+}
+
+.table-no-borders .row-even {
+    background-color: var(--color-border-light);
+}
+
+.table-no-borders tr {
+    border: none;
+}
+
+.table-no-borders td, 
+.table-no-borders th {
+    border: none;
+    padding: 8px;
+    text-align: left;
+}
+
+
+button img {
+    display: inline-block;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button img {
+    width: 100%;
+    height: 100%;
+}
+
+.icon-button:hover {
+    transform: translateY(-2px);
+    box-shadow: none;
+    background: none;
+}
+
+.button-container {
+    display: flex;
+    gap: 15px; /* Adjust this value to control the space between the buttons */
+}
+
+

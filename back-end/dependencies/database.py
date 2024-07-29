@@ -8,7 +8,14 @@ def connect():
     try:
         cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
         cfile.read(os.path.join(sys.path[0], "config.ini"))
-        # if you are running it in a local development environment, remove "api/"
+
+        cnx = sql.connect(host=cfile["DATABASE"]["DB_HOST"],
+                          user=cfile["DATABASE"]["DB_USER"],
+                          password=cfile["DATABASE"]["DB_PASS"],
+                          database=cfile["DATABASE"]["DB_NAME"])
+    except KeyError:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "../config.ini"))
 
         cnx = sql.connect(host=cfile["DATABASE"]["DB_HOST"],
                           user=cfile["DATABASE"]["DB_USER"],

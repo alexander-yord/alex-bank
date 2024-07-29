@@ -13,6 +13,14 @@ try:
     cfile.read(os.path.join(sys.path[0], "config.ini"))
 
     SECRET_KEY = cfile["ENCRYPT"]["SECRET_KEY"]
+except KeyError:
+    try:
+        cfile = configparser.ConfigParser()  # reads credentials from the config.ini file (git ignored)
+        cfile.read(os.path.join(sys.path[0], "../config.ini"))
+
+        SECRET_KEY = cfile["ENCRYPT"]["SECRET_KEY"]
+    except KeyError as err:
+        print(f"No key found for ENCRYPT {err}")
 except FileNotFoundError as err:
     SECRET_KEY = None
     print(err)
@@ -89,7 +97,8 @@ def available_next_status(current_status: str):
         "APR": ["SGN", "CNL"],
         "SGN": ["AWT", "CNL"],
         "AWT": ["NOR", "CNL"],
-        "NOR": ["TRG", "DUE"],
+        "NOR": ["DUE", "EXC"],
+        "EXC": ["TRG", "NOR"],
         "TRG": ["DUE"],
         "DUE": ["CMP", "ORD"],
         "ORD": ["CMP", "WOF"],
@@ -125,6 +134,7 @@ def status_progressions(current_status: str):
         "SGN": ["AWT", "NOR", "DUE", "CMP"],
         "AWT": ["NOR", "DUE", "CMP"],
         "NOR": ["DUE", "CMP"],
+        "EXC": ["TRG", "DUE", "CMP"],
         "TRG": ["DUE", "CMP"],
         "DUE": ["CMP"],
         "ORD": ["CMP"],
