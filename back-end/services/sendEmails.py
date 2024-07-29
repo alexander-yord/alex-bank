@@ -43,17 +43,17 @@ def send_due_emails():
 
     db.cursor.execute(stmt)
     if db.cursor.rowcount == 0:
-        logging.info(f"No DUE products today to send an email to.")
+        logging.info(f"No DUE or EXC products today to send an email to.")
         return
 
     products = db.cursor.fetchall()[:][0]
 
-    logging.info("Starting to send Due Emails")
+    logging.info("Starting to send Due and Exercise Day Emails")
     for product in products:
         m.send_due_emails(product)
         logging.info(f"Email sent for Product UID: {product}")
 
-    logging.info(f"Sending Due Emails successfully completed. {len(products)} emails sent")
+    logging.info(f"Sending Due/Exercise Date Emails successfully completed. {len(products)} emails sent")
 
 
 def send_overdue_emails():
@@ -69,9 +69,9 @@ def send_overdue_emails():
 
     products = db.cursor.fetchall()[:][0]
 
-    logging.info("Starting to send Due Emails")
+    logging.info("Starting to send Overdue Emails")
     for product in products:
-        m.send_due_emails(product)
+        m.send_overdue_emails(product)
         logging.debug(f"Email sent for Product UID: {product}")
 
     logging.info(f"Sending Overdue Emails successfully completed. {len(products)} emails sent")

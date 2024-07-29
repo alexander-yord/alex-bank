@@ -63,7 +63,7 @@ def update_status_to_overdue():
         db.cursor.execute(stmt)
         db.cnx.commit()
         rows_updated = db.cursor.rowcount
-        logging.info(f"Status updated to 'ORD' for {rows_updated} product(s) with today's end date.")
+        logging.info(f"Status updated to 'ORD' for {rows_updated} product(s) with end date 7 days ago.")
     except Exception as e:
         logging.error(f"Failed to update status: {e}")
 
