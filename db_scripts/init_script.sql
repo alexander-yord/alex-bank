@@ -30,7 +30,7 @@ values
     ('LTP', 'Long Term Partner', 'Long term partner of Alex Bank or affiliated entities', 'N'), 
     ('EMP', 'Employee', 'Code for any employee, inlcuding admins, C-suite, and regular employees', 'N');
 
--- API userl; does not have credentials, i.e., cannot login with it
+-- API user; does not have credentials, i.e., cannot login with it
 insert into `accounts` (`account_id`, `first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
 values (0, 'Automated', 'Action', 'BGR', 'A', 'Y', 'EMP');
 
@@ -56,23 +56,23 @@ values
 
 -- product statuses
 INSERT INTO product_statuses (order_no, code, status_name, call_to_action, status_description) VALUES
-	(1, 'APL', 'Applied', NULL, 'Application submitted'),
-	(2, 'REV', 'Reviewed', 'Review', 'Application is under review'),
-    (3, 'AGR', 'Agreed', 'Agree', 'The client agrees to the change proposed by the employee'), 
-    (4, 'DIS', 'Disagreed', 'Disagree', 'The client does not agree with the change proposed by the employee'),
-	(5, 'CNL', 'Cancelled', 'Cancel', 'The application or the exchange of the underlying was cancelled'),
-	(6, 'AMD', 'Amended', 'Amend', 'An employee made a change, and the client has to agree to it'),
-	(7, 'APR', 'Approved', 'Approve', 'Application is approved'),
-	(8, 'DEN', 'Denied', 'Deny', 'Application is denied'),
-	(9, 'SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
-	(10, 'AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
-	(11, 'NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
-    (12, 'EXC', 'Exercise Date', 'Exercise Date', 'Indicates that the current date is an exercise date'),
-	(13, 'TRG', 'Exercised', 'Exercise', 'An instrument condition has been triggered'),
-	(14, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
-	(15, 'CMP', 'Complete', 'Complete', 'Complete'),
-	(16, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
-	(17, 'WOF', 'Written Off', 'Write Off', 'Written Off');
+	(10, 'APL', 'Applied', NULL, 'Application submitted'),
+	(20, 'REV', 'Reviewed', 'Review', 'Application is under review'),
+    (21, 'AGR', 'Agreed', 'Agree', 'The client agrees to the change proposed by the employee'), 
+    (22, 'DIS', 'Disagreed', 'Disagree', 'The client does not agree with the change proposed by the employee'),
+	(101, 'CNL', 'Cancelled', 'Cancel', 'The application or the exchange of the underlying was cancelled'),
+	(23, 'AMD', 'Amended', 'Amend', 'An employee made a change, and the client has to agree to it'),
+	(30, 'APR', 'Approved', 'Approve', 'Application is approved'),
+	(102, 'DEN', 'Denied', 'Deny', 'Application is denied'),
+	(35, 'SGN', 'Sent for Signing', 'Send for Signing', 'Contract has been sent for signing'),
+	(40, 'AWT', 'Awaiting Disbursement Date', 'Sign', 'Awaiting Begin Date'),
+	(50, 'NOR', 'Current', 'Disbursed', 'Exchange of the underlying occurred and the end date is not reached yet'),
+    (60, 'EXC', 'Exercise Date', 'Exercise Date', 'Indicates that the current date is an exercise date'),
+	(65, 'TRG', 'Exercised', 'Exercise', 'An instrument condition has been triggered'),
+	(70, 'DUE', 'Final Exchange Due', 'Final Exchange Due', 'Final exchange is due'),
+	(100, 'CMP', 'Complete', 'Complete', 'Complete'),
+	(80, 'ORD', 'Overdue', 'Overdue', 'Overdue'),
+	(103, 'WOF', 'Written Off', 'Write Off', 'Written Off');
 
 DELIMITER //
 

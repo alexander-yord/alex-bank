@@ -58,20 +58,23 @@ CREATE TABLE `products` (
   `mon_amt_label` varchar(255),
   `available_from` datetime,
   `available_till` datetime,
-  `picture_name` varchar(255)
+  `picture_name` varchar(255),
+  `picture` blob
 );
 
 CREATE TABLE `product_categories` (
   `category_id` varchar(3) PRIMARY KEY,
   `category_name` varchar(255),
-  `description` varchar(255)
+  `description` varchar(255),
+  `catalog_yn` char(1)
 );
 
 CREATE TABLE `product_subcategories` (
   `subcategory_id` integer PRIMARY KEY AUTO_INCREMENT,
   `category_id` varchar(3),
   `subcategory_name` varchar(255),
-  `subcategory_description` varchar(255)
+  `subcategory_description` varchar(255),
+  `catalog_yn` char(1)
 );
 
 CREATE TABLE `product_custom_column_def` (
@@ -82,7 +85,8 @@ CREATE TABLE `product_custom_column_def` (
   `customer_populatable_yn` char(1),
   `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
   `default_value` varchar(255),
-  `exercise_date_yn` char(1)
+  `exercise_date_yn` char(1),
+  `available_before` varchar(3)
 );
 
 CREATE TABLE `product_custom_column_values` (
@@ -131,7 +135,7 @@ CREATE TABLE `product_instances` (
   `latest_update_user_id` integer,
   `latest_note` text,
   `latest_note_public_yn` char(1),
-  `notifications_yn` char(1) DEFAULT 'Y'
+  `notifications_yn` char(1) DEFAULT 'P'
 );
 
 CREATE TABLE `lead_statuses` (
@@ -150,6 +154,7 @@ CREATE TABLE `product_statuses` (
 );
 
 CREATE TABLE `product_status_updates` (
+  `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `product_uid` integer,
   `was_status` varchar(3),
   `is_code` varchar(3),
@@ -269,3 +274,5 @@ ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`pcc_id`) REFERENCES
 ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instances` (`product_uid`);
 
 ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`available_before`) REFERENCES `product_statuses` (`code`);
