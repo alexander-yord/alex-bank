@@ -35,6 +35,7 @@ class AccountCard(BaseModel):
     account_group_code: str
     account_group_name: str
 
+
 class Password(BaseModel):
     password: str
 
@@ -127,6 +128,7 @@ class ProductCategory(BaseModel):
     category_id: str
     category_name: str
     category_description: str
+    catalog_yn: str
 
 
 class ProductSubcategories(BaseModel):
@@ -134,6 +136,7 @@ class ProductSubcategories(BaseModel):
     category_id: str
     subcategory_name: str
     subcategory_description: str
+    catalog_yn: str
 
 
 class NewProduct(BaseModel):

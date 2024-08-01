@@ -1,5 +1,6 @@
 from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
+import random, string
 from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
 from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query, Body, Depends
 
@@ -10,11 +11,14 @@ router = APIRouter(
 
 
 @router.get("/categories", response_model=List[s.ProductCategory])
-async def get_product_categories():
+async def get_product_categories(only_catalog_yn: Optional[str] = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    stmt = "SELECT category_id, category_name, description FROM product_categories"
+    if only_catalog_yn == 'N':
+        stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories"
+    else:
+        stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories WHERE catalog_yn = 'Y'"
     db.cursor.execute(stmt)
     if db.cursor.rowcount == 0:
         raise HTTPException(500, "No categories found")
@@ -26,24 +30,63 @@ async def get_product_categories():
         category_list.append(s.ProductCategory(
             category_id=row[0],
             category_name=row[1],
-            category_description=row[2]
+            category_description=row[2],
+            catalog_yn=row[3]
         ))
     return category_list
 
 
+@router.post("/category", response_model=s.ProductCategory)
+async def create_new_category(category_info: s.ProductCategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    code = category_info.category_id[:3]
+    while True:
+        db.cursor.execute("SELECT count(*) from product_categories WHERE category_id = %s", (code,))
+        if db.cursor.fetchone()[0] == 0:
+            break
+        code = code[0] + ''.join(random.choices(string.ascii_uppercase + string.digits, k=2))
+
+    stmt = "INSERT INTO product_categories (category_id, category_name, description, catalog_yn) " \
+           "VALUES (%s, %s, %s, %s)"
+    try:
+        db.cursor.execute(stmt, (code, category_info.category_name, category_info.category_description,
+                                 category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"))
+        db.cnx.commit()
+    except Exception as err:
+        raise HTTPException(500, err)
+    return s.ProductCategory(
+        category_id=code,
+        category_name=category_info.category_name,
+        category_description=category_info.category_description,
+        catalog_yn=category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"
+    )
+
+
+@router.put("/category", response_model=s.ProductCategory)
+async def update_category(category_info: s.ProductCategory, token: str = Depends(s.oauth2_scheme)):
+    pass
+
+
 @router.get("/subcategories", response_model=List[s.ProductSubcategories])
-async def get_product_subcategories(category_id: Optional[str] = None):
+async def get_product_subcategories(category_id: Optional[str] = None, only_catalog_yn: Optional[str] = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    print (category_id)
-    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description FROM product_subcategories " \
-           "WHERE 1=1"
+    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn " \
+           "FROM product_subcategories WHERE 1=1"
+    params = []
     if category_id is not None:
         stmt += " AND category_id = %s"
-        db.cursor.execute(stmt, (category_id,))
-    else:
-        db.cursor.execute(stmt)
+        params.append(category_id)
+    if only_catalog_yn != "N":
+        stmt += " AND catalog_yn = 'Y'"
+
+    db.cursor.execute(stmt, tuple(params))
 
     if db.cursor.rowcount == 0:
         return []
@@ -52,7 +95,8 @@ async def get_product_subcategories(category_id: Optional[str] = None):
         subcategory_id=row[0],
         category_id=row[1],
         subcategory_name=row[2],
-        subcategory_description=row[3]
+        subcategory_description=row[3],
+        catalog_yn=row[4]
     ) for row in rows]
 
 
