@@ -131,8 +131,29 @@ class ProductCategory(BaseModel):
     catalog_yn: str
 
 
+class AmendProductCategory(BaseModel):
+    category_name: Optional[str] = None
+    category_description: Optional[str] = None
+    catalog_yn: Optional[str] = None
+
+
 class ProductSubcategories(BaseModel):
     subcategory_id: int
+    category_id: str
+    subcategory_name: str
+    subcategory_description: str
+    catalog_yn: str
+    product_count: Optional[int] = None
+
+
+class AmendProductSubcategory(BaseModel):
+    category_id: Optional[str] = None
+    subcategory_name: Optional[str] = None
+    subcategory_description: Optional[str] = None
+    catalog_yn: Optional[str] = None
+
+
+class NewProductSubcategory(BaseModel):
     category_id: str
     subcategory_name: str
     subcategory_description: str

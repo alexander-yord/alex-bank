@@ -67,9 +67,42 @@ async def create_new_category(category_info: s.ProductCategory, token: str = Dep
     )
 
 
-@router.put("/category", response_model=s.ProductCategory)
-async def update_category(category_info: s.ProductCategory, token: str = Depends(s.oauth2_scheme)):
-    pass
+@router.patch("/category/{category_id}")
+async def update_category(category_id: str, category_info: s.AmendProductCategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s",
+                      (category_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product category {category_id} not found.")
+
+    # Prepare the update statement dynamically based on provided fields
+    update_fields = []
+    update_values = []
+
+    if category_info.category_name is not None:
+        update_fields.append("category_name = %s")
+        update_values.append(category_info.category_name)
+
+    if category_info.category_description is not None:
+        update_fields.append("description = %s")
+        update_values.append(category_info.category_description)
+
+    if category_info.catalog_yn is not None:
+        update_fields.append("catalog_yn = %s")
+        update_values.append('Y' if category_info.catalog_yn == 'Y' else 'N')
+
+    if update_fields:
+        update_values.append(category_id)
+        stmt = f"UPDATE product_categories SET {', '.join(update_fields)} WHERE category_id = %s"
+        db.cursor.execute(stmt, tuple(update_values))
+        db.cnx.commit()
+
+    return {"status": "Success!"}
 
 
 @router.get("/subcategories", response_model=List[s.ProductSubcategories])
@@ -77,8 +110,10 @@ async def get_product_subcategories(category_id: Optional[str] = None, only_cata
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn " \
-           "FROM product_subcategories WHERE 1=1"
+    stmt = "SELECT DISTINCT ps.subcategory_id, ps.category_id, ps.subcategory_name, ps.subcategory_description, " \
+           "ps.catalog_yn, count(product_id) OVER (PARTITION BY subcategory_id) as row_cnt " \
+           "FROM product_subcategories ps LEFT JOIN products p ON p.subcategory_id = ps.subcategory_id " \
+           "WHERE 1=1 "
     params = []
     if category_id is not None:
         stmt += " AND category_id = %s"
@@ -96,8 +131,125 @@ async def get_product_subcategories(category_id: Optional[str] = None, only_cata
         category_id=row[1],
         subcategory_name=row[2],
         subcategory_description=row[3],
-        catalog_yn=row[4]
+        catalog_yn=row[4],
+        product_count=row[5]
     ) for row in rows]
+
+
+@router.post("/subcategory", response_model=s.ProductSubcategories)
+async def create_new_subcategory(subcategory_info: s.NewProductSubcategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s", (subcategory_info.category_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+
+    stmt = "INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description, catalog_yn) " \
+           "VALUES (%s, %s, %s, %s)"
+    db.cursor.execute(stmt, (subcategory_info.category_id, subcategory_info.subcategory_name,
+                             subcategory_info.subcategory_description, "Y" if subcategory_info.catalog_yn == 'Y' else 'N'))
+    db.cnx.commit()
+    db.cursor.execute("SELECT LAST_INSERT_ID()")
+    subcategory_id = db.cursor.fetchone()[0]
+
+    return s.ProductSubcategories(
+        subcategory_id=subcategory_id,
+        category_id=subcategory_info.category_id,
+        subcategory_name=subcategory_info.subcategory_name,
+        subcategory_description=subcategory_info.subcategory_description,
+        catalog_yn="Y" if subcategory_info.catalog_yn == 'Y' else 'N'
+    )
+
+
+@router.patch("/subcategory/{subcategory_id}", response_model=s.ProductSubcategories)
+async def modify_subcategory(subcategory_id: int, subcategory_info: s.AmendProductSubcategory,
+                             token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT subcategory_id FROM product_subcategories WHERE subcategory_id = %s",
+                      (subcategory_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product subcategory {subcategory_id} not found.")
+
+    # Prepare the update statement dynamically based on provided fields
+    update_fields = []
+    update_values = []
+
+    if subcategory_info.category_id is not None:
+        # Validate the new category_id
+        db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s",
+                          (subcategory_info.category_id,))
+        if db.cursor.rowcount == 0:
+            raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+        update_fields.append("category_id = %s")
+        update_values.append(subcategory_info.category_id)
+
+    if subcategory_info.subcategory_name is not None:
+        update_fields.append("subcategory_name = %s")
+        update_values.append(subcategory_info.subcategory_name)
+
+    if subcategory_info.subcategory_description is not None:
+        update_fields.append("subcategory_description = %s")
+        update_values.append(subcategory_info.subcategory_description)
+
+    if subcategory_info.catalog_yn is not None:
+        update_fields.append("catalog_yn = %s")
+        update_values.append('Y' if subcategory_info.catalog_yn == 'Y' else 'N')
+
+    if update_fields:
+        update_values.append(subcategory_id)
+        stmt = f"UPDATE product_subcategories SET {', '.join(update_fields)} WHERE subcategory_id = %s"
+        db.cursor.execute(stmt, tuple(update_values))
+        db.cnx.commit()
+
+    # Return the updated subcategory
+    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn " \
+           "FROM product_subcategories WHERE subcategory_id = %s"
+    db.cursor.execute(stmt, (subcategory_id,))
+    row = db.cursor.fetchone()
+    return s.ProductSubcategories(
+        subcategory_id=row[0],
+        category_id=row[1],
+        subcategory_name=row[2],
+        subcategory_description=row[3],
+        catalog_yn=row[4]
+    )
+
+
+@router.delete("/subcategory/{subcategory_id}")
+async def delete_subcategory(subcategory_id: int, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT subcategory_id FROM product_subcategories WHERE subcategory_id = %s",
+                      (subcategory_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product subcategory {subcategory_id} not found.")
+
+    db.cursor.execute("SELECT count(*) FROM products WHERE subcategory_id = %s", (subcategory_id,))
+    if db.cursor.fetchone()[0] != 0:
+        raise HTTPException(400, "There are products in this subcategory; therefore, you cannot delete it.")
+
+    try:
+        db.cursor.execute("DELETE FROM product_subcategories WHERE subcategory_id = %s", (subcategory_id,))
+        db.cnx.commit()
+        db.cnx.close()
+        return {"status": f"Successfully deleted {subcategory_id}"}
+    except Exception as err:
+        db.cnx.rollback()
+        db.cnx.close()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.get("/products", response_model=List[s.Product])

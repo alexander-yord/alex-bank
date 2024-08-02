@@ -64,17 +64,17 @@ CREATE TABLE `products` (
 
 CREATE TABLE `product_categories` (
   `category_id` varchar(3) PRIMARY KEY,
-  `category_name` varchar(255),
-  `description` varchar(255),
-  `catalog_yn` char(1)
+  `category_name` varchar(255) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
 );
 
 CREATE TABLE `product_subcategories` (
   `subcategory_id` integer PRIMARY KEY AUTO_INCREMENT,
-  `category_id` varchar(3),
-  `subcategory_name` varchar(255),
-  `subcategory_description` varchar(255),
-  `catalog_yn` char(1)
+  `category_id` varchar(3) NOT NULL,
+  `subcategory_name` varchar(255) NOT NULL,
+  `subcategory_description` varchar(255) NOT NULL,
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
 );
 
 CREATE TABLE `product_custom_column_def` (

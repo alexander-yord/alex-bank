@@ -46,9 +46,13 @@
     {
         "displayName": "Products",
         "icon": "../assets/store-solid.svg",
-        "privileges": ["A", "C", "E"],
+        "privileges": ["A", "C"],
         "dataGroup": "group4",
         "children": [
+            {
+                "displayName": "Manage Product Categories & Subcategories", 
+                "url": "manage-categories.html"
+            },
             {
                 "displayName": "Manage Product",
                 "url": "something.html"
