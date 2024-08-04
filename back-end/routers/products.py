@@ -387,7 +387,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
             picture_name=product[14],
             draft_yn=product[15],
             draft_owner=product[16],
-            custom_column_definition=custom_columns
+            custom_columns=custom_columns
         )
 
         return product_data

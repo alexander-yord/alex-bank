@@ -135,7 +135,7 @@ class Product(BaseModel):
     subcategory_id: Optional[int] = None
     draft_yn: Optional[str] = None
     draft_owner: Optional[int] = None
-    custom_column_definition: Optional[List[ProductCustomColumnDefinition]] = None
+    custom_columns: Optional[List[ProductCustomColumnDefinition]] = None
 
 
 class ProductCategory(BaseModel):
