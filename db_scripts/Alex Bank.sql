@@ -59,7 +59,8 @@ CREATE TABLE `products` (
   `available_from` datetime,
   `available_till` datetime,
   `picture_name` varchar(255),
-  `picture` blob
+  `draft_yn` char(1),
+  `draft_owner` integer
 );
 
 CREATE TABLE `product_categories` (
@@ -113,6 +114,7 @@ CREATE TABLE `applications` (
   `approved_yn` char(1),
   `approved_by` integer,
   `approval_dt` timestamp,
+  `lead_notes` text,
   `lead_status` varchar(3),
   `lead_probability` float,
   `visible_yn` char(1)
@@ -151,6 +153,15 @@ CREATE TABLE `product_statuses` (
   `status_name` varchar(255),
   `call_to_action` varchar(255),
   `status_description` varchar(255)
+);
+
+CREATE TABLE `lead_status_updates` (
+  `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
+  `application_id` integer,
+  `was_status` varchar(3),
+  `is_code` varchar(3),
+  `update_dt` timestamp DEFAULT (now()),
+  `update_user` int
 );
 
 CREATE TABLE `product_status_updates` (
@@ -276,3 +287,13 @@ ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFER
 ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);
 
 ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`available_before`) REFERENCES `product_statuses` (`code`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`draft_owner`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`update_user`) REFERENCES `accounts` (`account_id`);

@@ -111,15 +111,15 @@ async def get_product_subcategories(category_id: Optional[str] = None, only_cata
         db.cnx, db.cursor = db.connect()
 
     stmt = "SELECT DISTINCT ps.subcategory_id, ps.category_id, ps.subcategory_name, ps.subcategory_description, " \
-           "ps.catalog_yn, count(product_id) OVER (PARTITION BY subcategory_id) as row_cnt " \
+           "ps.catalog_yn, count(product_id) OVER (PARTITION BY ps.subcategory_id) as row_cnt " \
            "FROM product_subcategories ps LEFT JOIN products p ON p.subcategory_id = ps.subcategory_id " \
            "WHERE 1=1 "
     params = []
     if category_id is not None:
-        stmt += " AND category_id = %s"
+        stmt += " AND ps.category_id = %s"
         params.append(category_id)
     if only_catalog_yn != "N":
-        stmt += " AND catalog_yn = 'Y'"
+        stmt += " AND ps.catalog_yn = 'Y'"
 
     db.cursor.execute(stmt, tuple(params))
 
@@ -254,7 +254,8 @@ async def delete_subcategory(subcategory_id: int, token: str = Depends(s.oauth2_
 
 @router.get("/products", response_model=List[s.Product])
 async def list_products(category_id: Optional[str] = None, subcategory_id: Optional[str] = None,
-                        only_active_yn: str = 'Y'):
+                        only_active_yn: str = 'Y', include_drafts_yn: str = 'N',
+                        token: str | None = Depends(s.optional_oauth2_scheme)):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -262,7 +263,8 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id,
+               p.draft_yn, p.draft_owner
         FROM products p
         JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE 1=1
@@ -270,6 +272,12 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
 
         if only_active_yn == 'Y':
             sql += " AND p.available_from <= NOW() AND nvl(p.available_till, NOW()) >= NOW()"
+        if include_drafts_yn == 'Y':
+            usr_account_id, usr_account_role = h.verify_token(token)
+            if usr_account_role not in ['C', 'A']:
+                raise HTTPException(401, "User does not have privileges")
+        else:
+            sql += " AND p.draft_yn = 'N'"
 
         params = []
         if category_id is not None:
@@ -302,7 +310,9 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
                 available_from=str(prod[12].strftime('%Y-%m-%d')),
                 available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
                 picture_name=prod[14],
-                subcategory_id=prod[15]
+                subcategory_id=prod[15],
+                draft_yn=prod[16],
+                draft_owner=prod[17]
             )
             product_list.append(product)
 
@@ -314,7 +324,7 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
 
 
 @router.get("/{product_id}", response_model=s.Product)
-async def info_about_product(product_id: int):
+async def info_about_product(product_id: int, token: str | None = Depends(s.optional_oauth2_scheme)):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -322,17 +332,42 @@ async def info_about_product(product_id: int):
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-               p.available_from, p.available_till, nvl(p.picture_name, p.category_id)
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), 
+               p.draft_yn, p.draft_owner
         FROM products p
         JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
         """
 
         db.cursor.execute(sql, (product_id,))
+
+        if db.cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Product not found")
+
         product = db.cursor.fetchone()
 
-        if product is None:
-            raise HTTPException(status_code=404, detail="Product not found")
+        if product[15] == 'Y':
+            usr_account_id, usr_account_role = h.verify_token(token)
+            if usr_account_role not in ['C', 'A']:
+                raise HTTPException(401, "User does not have privileges")
+
+        stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, default_value, " \
+               "exercise_date_yn, available_before FROM product_custom_column_def WHERE product_id = %s"
+        db.cursor.execute(stmt, (product_id,))
+
+        if db.cursor.rowcount == 0:
+            custom_columns = []
+        else:
+            rows = db.cursor.fetchall()
+            custom_columns = [s.ProductCustomColumnDefinition(
+                pcc_id=row[0],
+                column_name=row[1],
+                customer_visible_yn=row[2],
+                customer_populatable_yn=row[3],
+                column_type=row[4],
+                exercise_date_yn=str(row[5]) if row[5] is None else None,
+                available_before=row[6]
+            ) for row in rows]
 
         product_data = s.Product(
             product_id=product[0],
@@ -349,7 +384,10 @@ async def info_about_product(product_id: int):
             mon_amt_label=product[11],
             available_from=str(product[12].strftime('%Y-%m-%d')),
             available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None,
-            picture_name=product[14]
+            picture_name=product[14],
+            draft_yn=product[15],
+            draft_owner=product[16],
+            custom_column_definition=custom_columns
         )
 
         return product_data

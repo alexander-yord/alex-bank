@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 
 class LoggedInUser(BaseModel):
@@ -105,12 +106,22 @@ class BroadAccountFilters(BaseModel):
     account_group: Optional[List[str]] = Query(None)
 
 
+class ProductCustomColumnDefinition(BaseModel):
+    pcc_id: int
+    column_name: str
+    customer_visible_yn: Optional[str] = None
+    customer_populatable_yn: Optional[str] = None
+    column_type: str
+    exercise_date_yn: Optional[str] = None
+    available_before: Optional[str] = None
+
+
 class Product(BaseModel):
     product_id: int
-    category_id: str
-    category_name: str
-    name: str
-    description: str
+    category_id: Optional[str] = None
+    category_name: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
     terms_and_conditions: Optional[str] = None
     currency: Optional[str] = None
     term: Optional[int] = None
@@ -120,8 +131,11 @@ class Product(BaseModel):
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
     available_till: Optional[str] = None
-    picture_name: str
+    picture_name: Optional[str] = None
     subcategory_id: Optional[int] = None
+    draft_yn: Optional[str] = None
+    draft_owner: Optional[int] = None
+    custom_column_definition: Optional[List[ProductCustomColumnDefinition]] = None
 
 
 class ProductCategory(BaseModel):
