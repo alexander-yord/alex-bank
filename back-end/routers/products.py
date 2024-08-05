@@ -372,7 +372,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
                 customer_populatable_yn=row[3],
                 column_type=row[4],
                 default_value=row[5],
-                exercise_date_yn=str(row[6]) if row[6] is None else None,
+                exercise_date_yn=str(row[6]) if row[6] is not None else None,
                 available_before=row[7]
             ) for row in rows]
 
@@ -405,7 +405,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
 
 
 @router.post("/draft")
-async def create_new_product(product: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
+async def create_new_product_draft(product: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
     """
     Notes:
     - the API allows regular employees to create product drafts, but the product's `available_from` and `available till`
@@ -443,8 +443,8 @@ async def create_new_product(product: s.NewProduct, token: str = Depends(s.oauth
                 column.order_no = index
 
             sql_insert = "INSERT INTO draft_product_custom_column_def " \
-                         "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
-                         "default_value, exercise_date_yn, available_before) VALUES "
+                         "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, " \
+                         "column_type, default_value, exercise_date_yn, available_before) VALUES "
             values = []
 
             for column in ordered_columns:
@@ -464,7 +464,6 @@ async def create_new_product(product: s.NewProduct, token: str = Depends(s.oauth
 
             sql_query = sql_insert + placeholders
 
-            # Assuming you're using a database cursor (e.g., cursor in psycopg2)
             db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
             custom_column_count = db.cursor.rowcount
         db.cnx.commit()
@@ -476,8 +475,61 @@ async def create_new_product(product: s.NewProduct, token: str = Depends(s.oauth
 
 
 @router.put("/{product_id}")
-async def modify_product(product_id):
-    pass
+async def modify_product(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    update_fields = {}
+    if product.category_id is not None:
+        update_fields["category_id"] = product.category_id
+    if product.subcategory_id is not None:
+        update_fields["subcategory_id"] = product.subcategory_id
+    if product.name is not None:
+        update_fields["name"] = product.name
+    if product.description is not None:
+        update_fields["description"] = product.description
+    if product.currency is not None:
+        update_fields["currency"] = product.currency
+    if product.term is not None:
+        update_fields["term"] = product.term
+    if product.percentage is not None:
+        update_fields["percentage"] = product.percentage
+    if product.monetary_amount is not None:
+        update_fields["monetary_amount"] = product.monetary_amount
+    if product.percentage_label is not None:
+        update_fields["percentage_label"] = product.percentage_label
+    if product.mon_amt_label is not None:
+        update_fields["mon_amt_label"] = product.mon_amt_label
+    if product.available_from is not None:
+        update_fields["available_from"] = product.available_from
+    if product.available_till is not None:
+        update_fields["available_till"] = product.available_till
+    if product.picture_name is not None:
+        update_fields["picture_name"] = product.picture_name
+    if product.draft_owner is not None:
+        update_fields["draft_owner"] = product.draft_owner
+    if product.terms_and_conditions is not None:
+        update_fields["terms_and_conditions"] = product.terms_and_conditions
+
+    if not update_fields:
+        raise HTTPException(400, "No fields to update")
+
+    set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+    values = list(update_fields.values())
+
+    try:
+        stmt = f"UPDATE products SET {set_clause} WHERE product_id = %s"
+        values.append(product_id)
+        db.cursor.execute(stmt, values)
+
+        db.cnx.commit()
+        return {"status": f"Success! Draft product with ID {product_id} has been updated"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.patch("/draft/{product_id}")
@@ -516,7 +568,8 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
     if product.picture_name is not None:
         update_fields["picture_name"] = product.picture_name
     if product.draft_yn is not None:
-        update_fields["draft_yn"] = product.draft_yn
+        if usr_account_role not in ['C', 'A']:
+            update_fields["draft_yn"] = 'Y' if product.draft_yn == 'Y' else 'N'
     if product.draft_owner is not None:
         update_fields["draft_owner"] = product.draft_owner
     if product.terms_and_conditions is not None:
@@ -532,6 +585,9 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
         stmt = f"UPDATE products SET {set_clause} WHERE product_id = %s"
         values.append(product_id)
         db.cursor.execute(stmt, values)
+
+        if update_fields.get("draft_yn") == 'Y':
+            db.cursor.execute("SELECT copy_product_custom_column_def(%s)", (product_id,))
 
         db.cnx.commit()
         return {"status": f"Success! Draft product with ID {product_id} has been updated"}
@@ -564,8 +620,61 @@ async def delete_product_draft(product_id: int, token: str = Depends(s.oauth2_sc
 
 
 @router.put("/draft/{product_id}/custom-columns")
-async def modify_a_draft_products_custom_columns():
-    pass
+async def modify_a_draft_products_custom_columns(product_id: int, columns: List[s.NewProductCustomColumnDefinition],
+                                                 token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT draft_owner FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} does not exist.")
+    draft_owner = db.cursor.fetchone()[0]
+    # I.e., it's not the user's draft and the user is not a C-Suit/Admin
+    if draft_owner != usr_account_id and usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        db.cursor.execute("DELETE FROM draft_product_custom_column_def WHERE product_id = %s", (product_id,))
+
+        if not columns:
+            db.cnx.commit()
+            return {"status": "Success!"}
+        ordered_columns = sorted(columns, key=lambda column: column.order_no or 100)
+
+        for index, column in enumerate(ordered_columns):
+            column.order_no = index
+
+        sql_insert = "INSERT INTO draft_product_custom_column_def " \
+                     "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                     "default_value, exercise_date_yn, available_before) VALUES "
+        values = []
+
+        for column in ordered_columns:
+            values.append((
+                product_id,
+                column.order_no,
+                column.column_name,
+                'Y' if column.customer_visible_yn == 'Y' else 'N',
+                'Y' if column.customer_populatable_yn == 'Y' else 'N',
+                column.column_type,
+                column.default_value,
+                column.exercise_date_yn,
+                column.available_before
+            ))
+
+        placeholders = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(values))
+
+        sql_query = sql_insert + placeholders
+
+        db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
+        custom_column_count = db.cursor.rowcount
+        db.cnx.commit()
+        return {"status": f"Success! {custom_column_count} custom columns have been added for {product_id}."}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.get("/instances/", response_model=List[s.ProductCard])
