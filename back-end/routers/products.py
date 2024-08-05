@@ -397,8 +397,33 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
         raise HTTPException(status_code=500, detail=str(err))
 
 
-@router.get("/{product_id}/instances")
-async def get_product_instancess():
+@router.post("")
+async def create_new_product():
+    pass
+
+
+@router.put("/{product_id}")
+async def modify_product(product_id):
+    pass
+
+
+@router.patch("/draft/{product_id}")
+async def modify_product_draft(product_id):
+    pass
+
+
+@router.delete("/draft/{product_id}")
+async def delete_product_draft():
+    pass
+
+
+@router.post("/draft/{product_id}/custom-columns")
+async def add_custom_column_to_a_product_draft():
+    pass
+
+
+@router.put("/draft/{product_id}/custom-columns")
+async def modify_a_draft_products_custom_columns():
     pass
 
 
