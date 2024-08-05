@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Literal
 from fastapi import Query
 from fastapi.security import OAuth2PasswordBearer
 
@@ -107,11 +107,24 @@ class BroadAccountFilters(BaseModel):
 
 
 class ProductCustomColumnDefinition(BaseModel):
-    pcc_id: int
+    pcc_id: Optional[int] = None
+    order_no: Optional[int] = None
     column_name: str
     customer_visible_yn: Optional[str] = None
     customer_populatable_yn: Optional[str] = None
-    column_type: str
+    column_type: Literal['integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime']
+    default_value: Optional[str] = None
+    exercise_date_yn: Optional[str] = None
+    available_before: Optional[str] = None
+
+
+class NewProductCustomColumnDefinition(BaseModel):
+    order_no: int
+    column_name: str
+    customer_visible_yn: Optional[str] = None
+    customer_populatable_yn: Optional[str] = None
+    column_type: Literal['integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime']
+    default_value: Optional[str] = None
     exercise_date_yn: Optional[str] = None
     available_before: Optional[str] = None
 
@@ -136,6 +149,45 @@ class Product(BaseModel):
     draft_yn: Optional[str] = None
     draft_owner: Optional[int] = None
     custom_columns: Optional[List[ProductCustomColumnDefinition]] = None
+
+
+class NewProduct(BaseModel):
+    category_id: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    terms_and_conditions: Optional[str] = None
+    currency: Optional[str] = None
+    term: Optional[int] = None
+    percentage: Optional[float] = None
+    monetary_amount: Optional[float] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
+    available_from: Optional[str] = None
+    available_till: Optional[str] = None
+    picture_name: Optional[str] = None
+    subcategory_id: Optional[int] = None
+    draft_yn: Optional[str] = None
+    draft_owner: Optional[int] = None
+    custom_columns: Optional[List[NewProductCustomColumnDefinition]] = None
+
+
+class AmendProduct(BaseModel):
+    category_id: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    terms_and_conditions: Optional[str] = None
+    currency: Optional[str] = None
+    term: Optional[int] = None
+    percentage: Optional[float] = None
+    monetary_amount: Optional[float] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
+    available_from: Optional[str] = None
+    available_till: Optional[str] = None
+    picture_name: Optional[str] = None
+    subcategory_id: Optional[int] = None
+    draft_yn: Optional[str] = None
+    draft_owner: Optional[int] = None
 
 
 class ProductCategory(BaseModel):
@@ -174,7 +226,7 @@ class NewProductSubcategory(BaseModel):
     catalog_yn: str
 
 
-class NewProduct(BaseModel):
+class NewProductInstance(BaseModel):
     amount_requested: float
     collateral: Optional[str] = None
     standard_yn: str

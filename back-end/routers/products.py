@@ -348,11 +348,16 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
 
         if product[15] == 'Y':
             usr_account_id, usr_account_role = h.verify_token(token)
-            if usr_account_role not in ['C', 'A']:
+            # I.e., it's not the user's draft and the user is not a C-Suit/Admin
+            if product[16] != usr_account_id and usr_account_role not in ['C', 'A']:
                 raise HTTPException(401, "User does not have privileges")
-
-        stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, default_value, " \
-               "exercise_date_yn, available_before FROM product_custom_column_def WHERE product_id = %s"
+            stmt = "SELECT order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                   "default_value, exercise_date_yn, available_before FROM draft_product_custom_column_def " \
+                   "WHERE product_id = %s"
+        else:
+            stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                   "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
+                   "WHERE product_id = %s"
         db.cursor.execute(stmt, (product_id,))
 
         if db.cursor.rowcount == 0:
@@ -360,13 +365,15 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
         else:
             rows = db.cursor.fetchall()
             custom_columns = [s.ProductCustomColumnDefinition(
-                pcc_id=row[0],
+                pcc_id=row[0] if product[15] == 'N' else None,
+                order_no=row[0] if product[15] == 'Y' else None,
                 column_name=row[1],
                 customer_visible_yn=row[2],
                 customer_populatable_yn=row[3],
                 column_type=row[4],
-                exercise_date_yn=str(row[5]) if row[5] is None else None,
-                available_before=row[6]
+                default_value=row[5],
+                exercise_date_yn=str(row[6]) if row[6] is None else None,
+                available_before=row[7]
             ) for row in rows]
 
         product_data = s.Product(
@@ -382,7 +389,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
             monetary_amount=product[9],
             percentage_label=product[10],
             mon_amt_label=product[11],
-            available_from=str(product[12].strftime('%Y-%m-%d')),
+            available_from=str(product[12].strftime('%Y-%m-%d')) if product[12] is not None else None,
             available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None,
             picture_name=product[14],
             draft_yn=product[15],
@@ -397,9 +404,75 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
         raise HTTPException(status_code=500, detail=str(err))
 
 
-@router.post("")
-async def create_new_product():
-    pass
+@router.post("/draft")
+async def create_new_product(product: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
+    """
+    Notes:
+    - the API allows regular employees to create product drafts, but the product's `available_from` and `available till`
+    will be null, so that they cannot be shown in the product catalog. This is done, so that regular employees can
+    create custom products, but not actual products.
+    - regardless of the `draft_yn` provided, it will always be set to 'Y'. The API does not allow creating directly a
+    product, without reviewing the draft at least once.
+    """
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        stmt = "INSERT INTO products (category_id, subcategory_id, name, description, currency, term, percentage, " \
+               "monetary_amount, percentage_label, mon_amt_label, available_from, available_till, draft_yn, draft_owner, " \
+               "terms_and_conditions, picture_name) VALUES " \
+               "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        db.cursor.execute(stmt, (product.category_id, product.subcategory_id, product.name, product.description,
+                                 product.currency, product.term, product.percentage, product.monetary_amount,
+                                 product.percentage_label, product.mon_amt_label,
+                                 product.available_from if usr_account_role in ['C', 'A'] else None,
+                                 product.available_till if usr_account_role in ['C', 'A'] else None,
+                                 'Y', usr_account_id, product.terms_and_conditions, product.picture_name))
+
+        db.cursor.execute("SELECT LAST_INSERT_ID()")
+        product_id = db.cursor.fetchone()[0]
+
+        custom_column_count = 0
+        if product.custom_columns:
+            ordered_columns = sorted(product.custom_columns, key=lambda column: column.order_no or 100)
+
+            for index, column in enumerate(ordered_columns):
+                column.order_no = index
+
+            sql_insert = "INSERT INTO draft_product_custom_column_def " \
+                         "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                         "default_value, exercise_date_yn, available_before) VALUES "
+            values = []
+
+            for column in ordered_columns:
+                values.append((
+                    product_id,
+                    column.order_no,
+                    column.column_name,
+                    'Y' if column.customer_visible_yn == 'Y' else 'N',
+                    'Y' if column.customer_populatable_yn == 'Y' else 'N',
+                    column.column_type,
+                    column.default_value,
+                    column.exercise_date_yn,
+                    column.available_before
+                ))
+
+            placeholders = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(values))
+
+            sql_query = sql_insert + placeholders
+
+            # Assuming you're using a database cursor (e.g., cursor in psycopg2)
+            db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
+            custom_column_count = db.cursor.rowcount
+        db.cnx.commit()
+        return {"status": f"Success! Draft product created with ID: {product_id}, "
+                          f"and {custom_column_count} custom columns"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.put("/{product_id}")
@@ -408,18 +481,86 @@ async def modify_product(product_id):
 
 
 @router.patch("/draft/{product_id}")
-async def modify_product_draft(product_id):
-    pass
+async def modify_product_draft(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+
+    update_fields = {}
+    if product.category_id is not None:
+        update_fields["category_id"] = product.category_id
+    if product.subcategory_id is not None:
+        update_fields["subcategory_id"] = product.subcategory_id
+    if product.name is not None:
+        update_fields["name"] = product.name
+    if product.description is not None:
+        update_fields["description"] = product.description
+    if product.currency is not None:
+        update_fields["currency"] = product.currency
+    if product.term is not None:
+        update_fields["term"] = product.term
+    if product.percentage is not None:
+        update_fields["percentage"] = product.percentage
+    if product.monetary_amount is not None:
+        update_fields["monetary_amount"] = product.monetary_amount
+    if product.percentage_label is not None:
+        update_fields["percentage_label"] = product.percentage_label
+    if product.mon_amt_label is not None:
+        update_fields["mon_amt_label"] = product.mon_amt_label
+    if product.available_from is not None:
+        update_fields["available_from"] = product.available_from
+    if product.available_till is not None:
+        update_fields["available_till"] = product.available_till
+    if product.picture_name is not None:
+        update_fields["picture_name"] = product.picture_name
+    if product.draft_yn is not None:
+        update_fields["draft_yn"] = product.draft_yn
+    if product.draft_owner is not None:
+        update_fields["draft_owner"] = product.draft_owner
+    if product.terms_and_conditions is not None:
+        update_fields["terms_and_conditions"] = product.terms_and_conditions
+
+    if not update_fields:
+        raise HTTPException(400, "No fields to update")
+
+    set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+    values = list(update_fields.values())
+
+    try:
+        stmt = f"UPDATE products SET {set_clause} WHERE product_id = %s"
+        values.append(product_id)
+        db.cursor.execute(stmt, values)
+
+        db.cnx.commit()
+        return {"status": f"Success! Draft product with ID {product_id} has been updated"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.delete("/draft/{product_id}")
-async def delete_product_draft():
-    pass
+async def delete_product_draft(product_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:
+        raise HTTPException(401, "User does not have privileges")
 
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
 
-@router.post("/draft/{product_id}/custom-columns")
-async def add_custom_column_to_a_product_draft():
-    pass
+    if db.cursor.rowcount == 0 or db.cursor.fetchone()[0] == 'N':
+        raise HTTPException(404, f"Product {product_id} either does not exist or is not a draft.")
+
+    try:
+        db.cursor.execute("DELETE FROM draft_product_custom_column_def WHERE product_id = %s", (product_id,))
+        db.cursor.execute("DELETE FROM products WHERE product_id = %s", (product_id,))
+        db.cnx.commit()
+        return {"status": f"Success! Product {product_id} has successfully been deleted."}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.put("/draft/{product_id}/custom-columns")

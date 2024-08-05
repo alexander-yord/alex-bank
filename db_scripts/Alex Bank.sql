@@ -78,6 +78,19 @@ CREATE TABLE `product_subcategories` (
   `catalog_yn` char(1) NOT NULL DEFAULT 'N'
 );
 
+CREATE TABLE `draft_product_custom_column_def` (
+  `product_id` integer NOT NULL,
+  `order_no` integer,
+  `column_name` varchar(255),
+  `customer_visible_yn` char(1),
+  `customer_populatable_yn` char(1),
+  `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
+  `default_value` varchar(255),
+  `exercise_date_yn` char(1),
+  `available_before` varchar(3),
+  PRIMARY KEY (`product_id`, `order_no`)
+);
+
 CREATE TABLE `product_custom_column_def` (
   `pcc_id` integer PRIMARY KEY AUTO_INCREMENT,
   `product_id` integer NOT NULL,
@@ -297,3 +310,7 @@ ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `lea
 ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `lead_statuses` (`code`);
 
 ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`update_user`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `draft_product_custom_column_def` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`);
+
+ALTER TABLE `draft_product_custom_column_def` ADD FOREIGN KEY (`available_before`) REFERENCES `product_statuses` (`code`);
