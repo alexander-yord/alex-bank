@@ -307,7 +307,7 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
                 monetary_amount=prod[9],
                 percentage_label=prod[10],
                 mon_amt_label=prod[11],
-                available_from=str(prod[12].strftime('%Y-%m-%d')),
+                available_from=str(prod[12].strftime('%Y-%m-%d')) if prod[12] is not None else None,
                 available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
                 picture_name=prod[14],
                 subcategory_id=prod[15],
@@ -398,6 +398,67 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
         )
 
         return product_data
+
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=500, detail=str(err))
+
+
+@router.get("/drafts/", response_model=List[s.Product])
+async def list_products(view_all_yn: Optional[str] = 'N', token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can see their own drafts
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        sql = """
+        SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
+               p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id,
+               p.draft_yn, p.draft_owner
+        FROM products p
+        JOIN product_categories pc ON pc.category_id = p.category_id
+        WHERE p.draft_yn = 'Y' 
+        """
+
+        if view_all_yn == 'Y':
+            if usr_account_role not in ['C', 'A']:  # only Admins / C-Suite  people can see all drafts
+                raise HTTPException(401, "User does not have privileges")
+        else:
+            sql += f" AND p.draft_owner = {usr_account_id}"
+
+        db.cursor.execute(sql)
+        if db.cursor.rowcount == 0:
+            return []
+        products = db.cursor.fetchall()
+
+        product_list = []
+        for prod in products:
+            product = s.Product(
+                product_id=prod[0],
+                category_id=prod[1],
+                category_name=prod[2],
+                name=prod[3],
+                description=prod[4],
+                terms_and_conditions=prod[5],
+                currency=prod[6],
+                term=prod[7],
+                percentage=prod[8],
+                monetary_amount=prod[9],
+                percentage_label=prod[10],
+                mon_amt_label=prod[11],
+                available_from=str(prod[12].strftime('%Y-%m-%d')) if prod[12] is not None else None,
+                available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
+                picture_name=prod[14],
+                subcategory_id=prod[15],
+                draft_yn=prod[16],
+                draft_owner=prod[17]
+            )
+            product_list.append(product)
+
+        return product_list
 
     except Exception as err:
         print(err)

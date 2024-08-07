@@ -71,7 +71,7 @@
                 </div>
                 <br>
                 <div class="product-grid" v-if="Object.keys(products).length">
-                    <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
+                    <a class="product-card" v-for="prod in products" :href="'instance.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
@@ -149,7 +149,7 @@
                 goToProduct() {
                     const query = document.getElementById('search-input').value;
                     if (query) {
-                        window.location.href = `product.html?product_uid=${encodeURIComponent(query)}`;
+                        window.location.href = `instance.html?product_uid=${encodeURIComponent(query)}`;
                     }
                 }, 
                 async loadPage () {

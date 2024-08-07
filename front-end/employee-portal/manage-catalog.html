@@ -12,10 +12,23 @@
     <link rel="stylesheet" href="../src/multiselect.css">
     <script src="../src/functions.js"></script>
     <title>Employee Portal</title>
+    <style>
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        th, td {
+          text-align: left;
+          padding: 8px;
+        }
+        
+        tr:nth-child(even) {background-color: #f2f2f2;}
+    </style>
 </head>
 <body>
     <div id="app">
-        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)">
+        <div v-if="isLoggedIn && ['A', 'C'].includes(user_role)">
             <div class="sidebar">
                 <div class="sidebar-content">
                     <div>
@@ -39,71 +52,34 @@
             </div>
 
             <div class="emp-portal-content">
-                <h2>Hi, {{first_name}} {{last_name}}! </h2> 
+                <h2>Manage Products & Drafts</h2> 
 
                 <div class="card">
                     <div class="heading">
-                        <h3>Assigned Products</h3>
-                        <select v-model="assigned_show" style="margin: 0;">
+                        <h3>Your Drafts</h3>
+                        <!-- <select v-model="assigned_show" style="margin: 0;">
                             <option value="active">Active ({{products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code)).length}}/{{products.length}})</option>
                             <option value="preview">Preview ({{Math.min(3, products.length)}}/{{products.length}})</option>
                             <option value="all">All ({{products.length}})</option>
-                        </select>
+                        </select> -->
                     </div>
-                </div>                
+                </div>     
                 
                 <br>
-                
-                <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'preview'">
-                    <a class="product-card" v-for="prod in products.slice(0, 3)" :href="'instance.html?product_uid='+prod.product_uid">
-                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
-                        <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
-                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
-                        <div class="product-description">{{prod.description}}</div>
-                    </a>
-                </div>
-                <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'active'">
-                    <a class="product-card" v-for="prod in products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code))" :href="'instance.html?product_uid='+prod.product_uid">
-                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
-                        <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
-                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
-                        <div class="product-description">{{prod.description}}</div>
-                    </a>
-                </div>
-                <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'all'">
-                    <a class="product-card" v-for="prod in products" :href="'instance.html?product_uid='+prod.product_uid">
-                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
-                        <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
-                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
-                        <div class="product-description">{{prod.description}}</div>
-                    </a>
-                </div>
 
-                <br>
-                <div class="card">
-                    <div class="heading">
-                        <h3>Product Applications</h3>
-                    </div>
-                </div>   
-                <br> 
-                <div class="product-grid" v-if="Object.keys(applications).length">
-                    <a class="product-card" v-for="prod in applications" :href="'instance.html?product_uid='+prod.product_uid">
+                <div class="product-grid" v-if="Object.keys(products).length">
+                    <a class="product-card" v-for="prod in products.slice(0, 3)" :href="'product.html?product_id='+prod.product_id">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
-                        <div class="product-description">{{prod.currency}}{{prod.amount.toFixed(2)}} <span class="highlight">{{prod.status_name}}</span></div>
+                        <div class="product-description">{{prod.category_name}} | {{prod.currency}} </div>
                         <div class="product-description">{{prod.description}}</div>
                     </a>
-                </div> 
-
+                </div>
 
             </div>
         </div>
 
-        <div v-else-if="isLoggedIn && !['A', 'C', 'E'].includes(user_role)" class="content">
+        <div v-else-if="isLoggedIn && !['A', 'C'].includes(user_role)" class="content">
             <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
         </div>
 
@@ -117,15 +93,11 @@
             data() {
                 return {
                     isLoggedIn: isLoggedIn(),
-                    usr_account_id: sessionStorage.getItem("account_id"),
-                    first_name: sessionStorage.getItem("first_name"),
-                    last_name: sessionStorage.getItem("last_name"),
                     user_role: sessionStorage.getItem("user_role"),
+                    user_account_id: sessionStorage.getItem("account_id"),
                     menu: [],
                     openIndex: null, 
-                    products: [], 
-                    assigned_show: "preview", 
-                    applications: []
+                    products: []
                 };
             },
             methods: {
@@ -140,18 +112,12 @@
                     } catch (error) {
                         console.error("Failed to load menu:", error);
                     }
-                }, 
+                },
                 toggleAccordion(index) {
                     this.openIndex = this.openIndex === index ? null : index;
-                },
-                showOption(opt) {
-                    opt.show = true;
-                },
-                hideOption(opt) {
-                    opt.show = false;
                 }, 
                 async loadPageContent() {
-                    const response = await fetch(`${API_BASE_URL}/portal/assigned-accounts`, {
+                    const response = await fetch(`${API_BASE_URL}/product/drafts/`, {
                         method: "GET", 
                         headers: {
                             "Content-Type": "application/json",
@@ -163,26 +129,8 @@
                         console.log(`An error occurred: ${data}`);
                     }
                     this.products = data; 
-
-                    const response1 = await fetch(`${API_BASE_URL}/product/instances/?status_code=APL`, {
-                        method: "GET", 
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                            }
-                    });
-                    const data1 = await response1.json();
-                    if(!response1.ok) {
-                        console.log(`An error occurred: ${data1}`);
-                        return ;
-                    }
-                    this.applications = data1; 
-                    console.log(this.applications)
-
-                    return;
-
                 }
-            }, 
+            },
             mounted() {
                 this.loadMenu();
                 redirectIfNotLoggedIn();

@@ -153,7 +153,39 @@ BEGIN
 
     CLOSE custom_column_cursor;
 END;
+//
 
+CREATE FUNCTION copy_product_custom_column_def(input_product_id INTEGER)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE inserted_count INT DEFAULT 0;
+
+    -- Insert the data into the product_custom_column_def table
+    INSERT INTO product_custom_column_def (product_id, column_name, customer_visible_yn, 
+                                           customer_populatable_yn, column_type, default_value, 
+                                           exercise_date_yn, available_before)
+    SELECT 
+        draft.product_id,
+        draft.column_name,
+        draft.customer_visible_yn,
+        draft.customer_populatable_yn,
+        draft.column_type,
+        draft.default_value,
+        draft.exercise_date_yn,
+        draft.available_before
+    FROM 
+        draft_product_custom_column_def draft
+    WHERE 
+        draft.product_id = input_product_id
+    ORDER BY 
+        draft.order_no;
+
+    -- Get the number of rows inserted
+    SET inserted_count = ROW_COUNT();
+
+    RETURN inserted_count;
+END 
 //
 
 
