@@ -14,16 +14,24 @@
     <title>Employee Portal</title>
     <style>
         table {
-          border-collapse: collapse;
-          width: 100%;
+            width: 100%;
+            border-collapse: collapse;
         }
-        
+
         th, td {
-          text-align: left;
-          padding: 8px;
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
         }
-        
-        tr:nth-child(even) {background-color: #f2f2f2;}
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr.dragging {
+            opacity: 0.5;
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -54,6 +62,35 @@
             <div class="emp-portal-content">
                 <h2>Manage Products & Drafts</h2> 
                 
+                <div class="card">
+                    <table id="draggableTable">
+                        <thead>
+                            <tr>
+                                <th>Column 1</th>
+                                <th>Column 2</th>
+                                <th>Column 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr draggable="true">
+                                <td>Row 1, Cell 1</td>
+                                <td>Row 1, Cell 2</td>
+                                <td>Row 1, Cell 3</td>
+                            </tr>
+                            <tr draggable="true">
+                                <td>Row 2, Cell 1</td>
+                                <td>Row 2, Cell 2</td>
+                                <td>Row 2, Cell 3</td>
+                            </tr>
+                            <tr draggable="true">
+                                <td>Row 3, Cell 1</td>
+                                <td>Row 3, Cell 2</td>
+                                <td>Row 3, Cell 3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </div>
 
@@ -98,6 +135,45 @@
                 redirectIfNotLoggedIn();
             }
         }).mount('#app');
+    </script>
+    <script>
+        const table = document.getElementById('draggableTable');
+        const rows = table.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            row.addEventListener('dragstart', handleDragStart);
+            row.addEventListener('dragover', handleDragOver);
+            row.addEventListener('drop', handleDrop);
+            row.addEventListener('dragend', handleDragEnd);
+        });
+
+        let draggedRow = null;
+
+        function handleDragStart(event) {
+            draggedRow = this;
+            this.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            const targetRow = event.target.closest('tr');
+            if (targetRow && targetRow !== draggedRow) {
+                const rect = targetRow.getBoundingClientRect();
+                const next = (event.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                table.querySelector('tbody').insertBefore(draggedRow, next && targetRow.nextSibling || targetRow);
+            }
+        }
+
+        function handleDrop(event) {
+            event.stopPropagation();
+        }
+
+        function handleDragEnd(event) {
+            this.classList.remove('dragging');
+            draggedRow = null;
+        }
     </script>
 </body>
 </html>

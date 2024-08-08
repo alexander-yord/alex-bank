@@ -629,8 +629,8 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
     if product.picture_name is not None:
         update_fields["picture_name"] = product.picture_name
     if product.draft_yn is not None:
-        if usr_account_role not in ['C', 'A']:
-            update_fields["draft_yn"] = 'Y' if product.draft_yn == 'Y' else 'N'
+        if usr_account_role in ['C', 'A']:
+            update_fields["draft_yn"] = 'N' if product.draft_yn == 'N' else 'Y'
     if product.draft_owner is not None:
         update_fields["draft_owner"] = product.draft_owner
     if product.terms_and_conditions is not None:

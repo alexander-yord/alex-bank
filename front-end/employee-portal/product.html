@@ -15,17 +15,38 @@
     <title>Employee Portal</title>
     <style>
         table {
-          border-collapse: collapse;
-          width: 100%;
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+            
         }
-        
-        th, td {
-          text-align: left;
-          padding: 8px;
-        }
-        
-        tr:nth-child(even) {background-color: #f2f2f2;}
 
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .button-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-text {
+            font-size: 20px;
+        }
+        .header-buttons {
+            display: flex;
+        }
+        .header-buttons button {
+            margin-left: 10px;
+            /* padding: 10px 15px;
+            font-size: 16px; */
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -54,93 +75,172 @@
             </div>
 
             <div class="emp-portal-content">
-                <h2>Manage Product {{page_is_for_product_id}} <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span> </h2> 
 
-                <div class="card">
-                    <h3 class="card-title">Product Properties</h3>
-                <div class="form-container">
-                    <div class="form-group">
-                        <label for="name">Name:</label>
-                        <input type="text" v-model="product.name" style="width: 100%;" id="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <input type="text" v-model="product.description" style="width: 100%;" id="description">
-                    </div>
-                    <div class="form-group">
-                        <label for="category">Category:</label>
-                        <div class="custom-select">
-                            <select v-model="product.category_id" id="category" @change="loadSubcategory">
-                                <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="subcategory">Subcategory:</label>
-                        <div class="custom-select">
-                            <select v-model="product.subcategory_id" id="subcategory">
-                                <option :value="null">None</option> 
-                                <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
-                                    {{ cat.displayName }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="term">Term (in months):</label>
-                        <input type="number" v-model="product.term" style="width: 100%;" id="term">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="subcategory">Currency:</label>
-                        <div class="custom-select">
-                            <select v-model="product.currency" id="subcategory">
-                                <option value="BGN">BGN</option> 
-                                <option value="EUR">EUR</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="percentage_label">Percentage Label:</label>
-                        <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label">
-                    </div>
-                    <div class="form-group">
-                        <label for="percentage">Percentage:</label>
-                        <input type="number" v-model="product.percentage" style="width: 100%;" id="percentage">
-                    </div>
-                    <div class="form-group">
-                        <label for="mon_amt_label">Monetary Amount Label:</label>
-                        <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label">
-                    </div>
-                    <div class="form-group">
-                        <label for="monetary_amount">Monetary Amount:</label>
-                        <input type="number" v-model="product.monetary_amount" style="width: 100%;" id="monetary_amount">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="available_from">Available From:</label>
-                        <input type="date" v-model="product.available_from" style="width: 100%;" id="available_from">
-                    </div>
-                    <div class="form-group">
-                        <label for="available_till">Available Till:</label>
-                        <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
-                    </div>
-                    
-                    <label>Terms and Conditions:</label> <br>
-                    <textarea id="htmeditor" style="border-radius: 5px !important;"></textarea> 
-                    
-                    <div class="form-group">
-                        <button @click="saveProductChanges">Save Changes</button>
-                    </div>
-
-                    <div class="form-group">
-                        <button @click="cancelProductChanges" class="secondary-button">Cancel Changes</button>
+                <div class="button-header">
+                    <h2>Manage Product <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span></h2>
+                    <div class="header-buttons">
+                        <button @click="publishProduct" style="width: 150px;">Publish Product</button>
+                        <button @click="deleteDraft" class="red-button" style="width: 150px;">Delete Product</button>
                     </div>
                 </div>
 
+                <div class="card">
+                    <h3 class="card-title">Product Properties</h3>
+                    <div class="form-container">
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <input type="text" v-model="product.name" style="width: 100%;" id="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description:</label>
+                            <input type="text" v-model="product.description" style="width: 100%;" id="description">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <div class="custom-select">
+                                <select v-model="product.category_id" id="category" @change="loadSubcategory">
+                                    <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="subcategory">Subcategory:</label>
+                            <div class="custom-select">
+                                <select v-model="product.subcategory_id" id="subcategory">
+                                    <option :value="null">None</option> 
+                                    <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
+                                        {{ cat.displayName }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="term">Term (in months):</label>
+                            <input type="number" v-model="product.term" style="width: 100%;" id="term">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subcategory">Currency:</label>
+                            <div class="custom-select">
+                                <select v-model="product.currency" id="subcategory">
+                                    <option value="BGN">BGN</option> 
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="percentage_label">Percentage Label:</label>
+                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label">
+                        </div>
+                        <div class="form-group">
+                            <label for="percentage">Percentage:</label>
+                            <input type="number" v-model="product.percentage" style="width: 100%;" id="percentage">
+                        </div>
+                        <div class="form-group">
+                            <label for="mon_amt_label">Monetary Amount Label:</label>
+                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label">
+                        </div>
+                        <div class="form-group">
+                            <label for="monetary_amount">Monetary Amount:</label>
+                            <input type="number" v-model="product.monetary_amount" style="width: 100%;" id="monetary_amount">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="available_from">Available From:</label>
+                            <input type="date" v-model="product.available_from" style="width: 100%;" id="available_from">
+                        </div>
+                        <div class="form-group">
+                            <label for="available_till">Available Till:</label>
+                            <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
+                        </div>
+                        
+                        <label>Terms and Conditions:</label> <br>
+                        <textarea id="htmeditor" style="border-radius: 5px !important;"></textarea> 
+                        
+                        <div class="form-group">
+                            <button @click="saveProductChanges">Save Changes</button>
+                        </div>
+
+                        <div class="form-group">
+                            <button @click="cancelProductChanges" class="secondary-button">Cancel Changes</button>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="card">
+                    <table id="draggableTable">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Column Name</th>
+                                <th>Column Type</th>
+                                <th>Default Value</th>
+                                <th>Customer Visible</th>
+                                <th>Customer Populatable</th>
+                                <th>Is Exercise Date</th>
+                                <th>Editable Up To</th>
+                                <th>&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(col, index) in product.custom_columns">
+                                <td>
+                                    <input type="number" style="margin: 0px; background: none; border: none; color: black; width: 60px;" v-model="col.order_no">
+                                </td>
+                                <td>
+                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.column_name">
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.column_type">
+                                        <option value="integer">Integer</option>
+                                        <option value="float">Float</option>
+                                        <option value="char">Character</option>
+                                        <option value="varchar">Varchar</option>
+                                        <option value="date">Date</option>
+                                        <option value="datetime">Datetime</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value">
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_visible_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_populatable_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.exercise_date_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td><select style="margin: 0px; background: none; border: none; color: black;" v-model="col.available_before">
+                                    <option :value="null">Always</option>
+                                </select></td>
+                                <td class="button-container">
+                                    <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="form-container" style="width: 100%;">
+                        <div class="form-group">
+                            <button @click="addRow" class="secondary-button">Add Row</button> 
+                        </div>
+                        <div class="form-group">
+                            <button @click="saveCustomColumns">Save Changes</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -266,6 +366,78 @@
                 cancelProductChanges() {
                     this.product = { ...this.init_product };
                     tinymce.get('htmeditor').setContent(this.product.terms_and_conditions || '');
+                }, 
+                async saveCustomColumns() {
+                    console.log(this.product.custom_columns);
+
+                    const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}/custom-columns`, {
+                        method: "PUT", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }, 
+                        body: JSON.stringify(this.product.custom_columns)
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                        return;
+                    }
+                    window.location.reload();
+                }, 
+                async publishProduct() {
+                    if (!confirm("Are you sure you want to publish this product?")) {
+                        return;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
+                        method: "PATCH", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }, 
+                        body: JSON.stringify({
+                            "draft_yn": "N"
+                        })
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                        return ;
+                    }
+                    window.location.reload();
+                }, 
+                async deleteDraft() {
+                    if (!confirm("Are you sure you want to delete this product?")) {
+                        return;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
+                        method: "DELETE", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                        return ;
+                    }
+                    window.location.href = "../employee-portal/manage-catalog.html";
+                }, 
+                addRow() {
+                    this.product.custom_columns.push({
+                        "order_no": Math.max(...this.product.custom_columns.map(col => col.order_no))+1,
+                        "column_name": null,
+                        "customer_visible_yn": 'N',
+                        "customer_populatable_yn": 'N',
+                        "column_type": "integer",
+                        "default_value": 'N',
+                        "exercise_date_yn": 'N',
+                        "available_before": null
+                    })
+                }, 
+                deleteRow(index) {
+                    this.product.custom_columns.splice(index, 1);
                 }
             },
             mounted() {
