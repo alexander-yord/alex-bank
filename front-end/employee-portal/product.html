@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="../src/employee-portal.css">
     <title>Alex Bank</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tiny.cloud/1/dv7w69fhgsvqh9rhsz7tbhwb7qw8p7i31t4ygq1bvp4a5fkt/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
     <meta name="theme-color" content="rgb(131, 152, 162)" />
     <link rel="stylesheet" href="../src/style.css">
@@ -128,23 +129,19 @@
                         <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
                     </div>
                     
-                    <label >Terms and Conditions:</label> <br>
-                    <textarea v-model="product.terms_and_conditions" id="htmeditor" style="border-radius: 5px !important;"></textarea> 
-                    <script src="https://htmeditor.com/js/htmeditor.min.js" htmeditor_textarea="htmeditor" full_screen="no" editor_height="480" run_local="no"> </script> 
+                    <label>Terms and Conditions:</label> <br>
+                    <textarea id="htmeditor" style="border-radius: 5px !important;"></textarea> 
+                    
+                    <div class="form-group">
+                        <button @click="saveProductChanges">Save Changes</button>
+                    </div>
 
                     <div class="form-group">
-                        <button>Save Changes</button>
-                    </div>
-                    <div class="form-group">
-                        <button>Convert Draft to Product</button>
+                        <button @click="cancelProductChanges" class="secondary-button">Cancel Changes</button>
                     </div>
                 </div>
-                
 
                 </div>
-                
-                
-                
             </div>
         </div>
 
@@ -168,6 +165,7 @@
                     product_categories: [], 
                     page_is_for_product_id: null, 
                     product: {}, 
+                    init_product: {},
                     product_categories: [], 
                     product_subcategories: []
                 };
@@ -199,13 +197,14 @@
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                            }
+                        }
                     });
                     const data = await response.json();
                     if(!response.ok) {
                         console.log(`An error occurred: ${data}`);
                     }
-                    this.product = data; 
+                    this.init_product = JSON.parse(JSON.stringify(data)); // Create a deep copy
+                    this.product = JSON.parse(JSON.stringify(data)); // Create a deep copy
                     console.log(this.product);
 
                     const response1 = await fetch(`${API_BASE_URL}/product/categories?only_catalog_yn=N`, {
@@ -230,7 +229,7 @@
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                            }
+                        }
                     });
                     const data = await response.json();
                     if(!response.ok) {
@@ -238,13 +237,59 @@
                     }
                     this.product_subcategories = data;
                     console.log(this.product_subcategories);
+                }, 
+                async saveProductChanges() {
+                    const changes = {};
+                    for (const key in this.product) {
+                        if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
+                            changes[key] = this.product[key];
+                        }
+                    }
+                    console.log(this.product.terms_and_conditions)
+                    console.log(changes);
+
+                    const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
+                        method: "PATCH", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }, 
+                        body: JSON.stringify(changes)
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                        return ;
+                    }
+                    window.location.reload();
+                },
+                cancelProductChanges() {
+                    this.product = { ...this.init_product };
+                    tinymce.get('htmeditor').setContent(this.product.terms_and_conditions || '');
                 }
             },
             mounted() {
                 this.loadMenu();
                 redirectIfNotLoggedIn();
                 this.loadPageContents();
-            }, 
+
+                tinymce.init({
+                    selector: '#htmeditor',
+                    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate mentions tinycomments tableofcontents footnotes autocorrect typography inlinecss markdown',
+                    toolbar: 'undo redo | blocks fontsize | bold italic underline strikethrough | link table | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+                    tinycomments_mode: 'embedded',
+                    tinycomments_author: 'Author name',
+                    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
+                    setup: (editor) => {
+                        editor.on('init', () => {
+                            editor.setContent(this.product.terms_and_conditions || '');
+                        });
+                        editor.on('change', () => {
+                            this.product.terms_and_conditions = editor.getContent();
+                        });
+                    }
+                });
+            },
             computed: {
                 productSubcategoriesWithCatalogStatus() {
                     return this.product_subcategories.map(cat => {
