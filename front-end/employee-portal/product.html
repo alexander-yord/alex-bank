@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="../src/employee-portal.css">
     <title>Alex Bank</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.tiny.cloud/1/dv7w69fhgsvqh9rhsz7tbhwb7qw8p7i31t4ygq1bvp4a5fkt/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
     <meta name="theme-color" content="rgb(131, 152, 162)" />
     <link rel="stylesheet" href="../src/style.css">
@@ -157,8 +156,11 @@
                             <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
                         </div>
                         
-                        <label>Terms and Conditions:</label> <br>
-                        <textarea id="htmeditor" style="border-radius: 5px !important;"></textarea> 
+                        <div class="form-group full-width">
+                            <label>Terms and Conditions:</label> <br>
+                            <textarea id="htmeditor" v-model="product.terms_and_conditions"></textarea> 
+                            <script src="https://htmeditor.com/js/htmeditor.min.js" htmeditor_textarea="htmeditor" full_screen="no" editor_height="480" run_local="no"> </script> 
+                        </div>
                         
                         <div class="form-group">
                             <button @click="saveProductChanges">Save Changes</button>
@@ -340,12 +342,19 @@
                 }, 
                 async saveProductChanges() {
                     const changes = {};
+
+                    // Get the terms and conditions from the textarea
+                    const iframe = document.getElementById('htmeditor_ifr');
+                    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+                    const termsAndConditions = iframeDocument.body.innerHTML;
+                    this.product.terms_and_conditions = termsAndConditions;
+
                     for (const key in this.product) {
                         if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
                             changes[key] = this.product[key];
                         }
                     }
-                    console.log(this.product.terms_and_conditions)
+                    console.log(this.product.terms_and_conditions);
                     console.log(changes);
 
                     const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
@@ -357,9 +366,9 @@
                         body: JSON.stringify(changes)
                     });
                     const data = await response.json();
-                    if(!response.ok) {
+                    if (!response.ok) {
                         console.log(`An error occurred: ${data}`);
-                        return ;
+                        return;
                     }
                     window.location.reload();
                 },
@@ -444,23 +453,6 @@
                 this.loadMenu();
                 redirectIfNotLoggedIn();
                 this.loadPageContents();
-
-                tinymce.init({
-                    selector: '#htmeditor',
-                    plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed linkchecker a11ychecker tinymcespellchecker permanentpen powerpaste advtable advcode editimage advtemplate mentions tinycomments tableofcontents footnotes autocorrect typography inlinecss markdown',
-                    toolbar: 'undo redo | blocks fontsize | bold italic underline strikethrough | link table | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
-                    tinycomments_mode: 'embedded',
-                    tinycomments_author: 'Author name',
-                    ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
-                    setup: (editor) => {
-                        editor.on('init', () => {
-                            editor.setContent(this.product.terms_and_conditions || '');
-                        });
-                        editor.on('change', () => {
-                            this.product.terms_and_conditions = editor.getContent();
-                        });
-                    }
-                });
             },
             computed: {
                 productSubcategoriesWithCatalogStatus() {
