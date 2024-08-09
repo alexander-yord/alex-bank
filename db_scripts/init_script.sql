@@ -188,6 +188,86 @@ BEGIN
 END 
 //
 
+CREATE FUNCTION clone_product_and_custom_columns(p_product_id INT, p_account_id INT)
+RETURNS INT
+BEGIN
+    DECLARE v_new_product_id INT;
+
+    -- Insert the new product into the products table
+    INSERT INTO products (
+        category_id,
+        subcategory_id,
+        name,
+        description,
+        terms_and_conditions,
+        currency,
+        term,
+        percentage,
+        monetary_amount,
+        percentage_label,
+        mon_amt_label,
+        available_from,
+        available_till,
+        picture_name,
+        draft_yn,
+        draft_owner
+    )
+    SELECT 
+        category_id,
+        subcategory_id,
+        name,
+        description,
+        terms_and_conditions,
+        currency,
+        term,
+        percentage,
+        monetary_amount,
+        percentage_label,
+        mon_amt_label,
+        available_from,
+        available_till,
+        picture_name,
+        'Y',                  -- Set draft_yn to 'Y' for the new product
+        p_account_id          -- Set the draft_owner to the passed account_id
+    FROM products
+    WHERE product_id = p_product_id;
+
+    -- Get the new product_id
+    SET v_new_product_id = LAST_INSERT_ID();
+
+    -- Insert the custom column definitions into the draft_product_custom_column_def table
+    INSERT INTO draft_product_custom_column_def (
+        product_id,
+        order_no,
+        column_name,
+        customer_visible_yn,
+        customer_populatable_yn,
+        column_type,
+        default_value,
+        exercise_date_yn,
+        available_before
+    )
+    SELECT
+        v_new_product_id,                -- New product_id
+        @order_no := @order_no + 1,      -- Incremented order_no using a user variable
+        column_name,
+        customer_visible_yn,
+        customer_populatable_yn,
+        column_type,
+        default_value,
+        exercise_date_yn,
+        available_before
+    FROM product_custom_column_def
+    CROSS JOIN (SELECT @order_no := 0) AS var_init   -- Initialize the order_no variable
+    WHERE product_id = p_product_id
+    ORDER BY pcc_id; -- Assuming you want to maintain the original order
+
+    -- Return the new product_id
+    RETURN v_new_product_id;
+END
+//
+
+
 
 
 

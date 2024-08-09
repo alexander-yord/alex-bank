@@ -190,6 +190,11 @@ class AmendProduct(BaseModel):
     draft_owner: Optional[int] = None
 
 
+class ProductAvailability(BaseModel):
+    available_from: Optional[str] = None
+    available_till: Optional[str] = None
+
+
 class ProductCategory(BaseModel):
     category_id: str
     category_name: str

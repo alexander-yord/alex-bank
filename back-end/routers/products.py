@@ -535,13 +535,17 @@ async def create_new_product_draft(product: s.NewProduct, token: str = Depends(s
         raise HTTPException(500, f"An error occurred: {err}")
 
 
-@router.put("/{product_id}")
+@router.patch("/{product_id}")
 async def modify_product(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['A']:  # after a product is no longer a draft, only admins can change it
         raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
 
     update_fields = {}
     if product.category_id is not None:
@@ -587,7 +591,29 @@ async def modify_product(product_id: int, product: s.AmendProduct, token: str = 
         db.cursor.execute(stmt, values)
 
         db.cnx.commit()
-        return {"status": f"Success! Draft product with ID {product_id} has been updated"}
+        return {"status": f"Success! Product {product_id} has been updated"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.put("/{product_id}/availability")
+async def modify_product(product_id: int, product: s.ProductAvailability, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+
+    try:
+        stmt = "UPDATE products SET available_from = %s, available_till = %s WHERE product_id = %s"
+        db.cursor.execute(stmt, (product.available_from, product.available_till, product_id))
+        db.cnx.commit()
+        return {"status": "Success!"}
     except Exception as err:
         db.cnx.rollback()
         raise HTTPException(500, f"An error occurred: {err}")
@@ -600,6 +626,12 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
         db.cnx, db.cursor = db.connect()
     if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
         raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+    if db.cursor.fetchone()[0] != 'Y':
+        raise HTTPException(403, f"Product {product_id} is not a draft.")
 
     update_fields = {}
     if product.category_id is not None:
