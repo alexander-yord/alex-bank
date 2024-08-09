@@ -83,7 +83,7 @@
                 <div class="button-header">
                     <h2>Manage Product <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span></h2>
                     <div class="header-buttons">
-                        <button @click="" class="secondary-button" style="width: 150px;">Duplicate Product</button>
+                        <button @click="duplicateProduct" class="secondary-button" style="width: 150px;">Duplicate Product</button>
                         <button @click="publishProduct" class="secondary-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Publish Product</button>
                         <button @click="deleteDraft" class="red-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Delete Product</button>
                     </div>
@@ -390,6 +390,23 @@
                     this.product_subcategories = data;
                     console.log(this.product_subcategories);
                 }, 
+                async duplicateProduct() {
+                    const response = await fetch(`${API_BASE_URL}/product/${this.page_is_for_product_id}/duplicate`, {
+                        method: "POST", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                        return ; 
+                    }
+                    new_product_id = data["product_id"];
+
+                    window.location.href = `product.html?product_id=${new_product_id}`;
+                },
                 async saveProductChanges() {
                     if (this.editing_privilege == "all" || this.editing_privilege == "properties") {
                         const changes = {};

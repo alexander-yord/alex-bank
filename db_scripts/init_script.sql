@@ -224,8 +224,8 @@ BEGIN
         monetary_amount,
         percentage_label,
         mon_amt_label,
-        available_from,
-        available_till,
+        NULL,
+        NULL,
         picture_name,
         'Y',                  -- Set draft_yn to 'Y' for the new product
         p_account_id          -- Set the draft_owner to the passed account_id

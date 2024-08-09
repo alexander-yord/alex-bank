@@ -619,6 +619,29 @@ async def modify_product(product_id: int, product: s.ProductAvailability, token:
         raise HTTPException(500, f"An error occurred: {err}")
 
 
+@router.post("/{product_id}/duplicate")
+async def duplicate_product(product_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C', 'E']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+
+    try:
+        db.cursor.execute("SELECT clone_product_and_custom_columns(%s, %s)", (product_id, usr_account_id))
+        product_id = db.cursor.fetchone()[0]
+        db.cnx.commit()
+        return {"status": f"Success! Product {product_id} created.",
+                "product_id": product_id}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
 @router.patch("/draft/{product_id}")
 async def modify_product_draft(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
