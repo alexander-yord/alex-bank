@@ -84,8 +84,8 @@
                     <h2>Manage Product <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span></h2>
                     <div class="header-buttons">
                         <button @click="" class="secondary-button" style="width: 150px;">Duplicate Product</button>
-                        <button @click="publishProduct" class="secondary-button" style="width: 150px;">Publish Product</button>
-                        <button @click="deleteDraft" class="red-button" style="width: 150px;">Delete Product</button>
+                        <button @click="publishProduct" class="secondary-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Publish Product</button>
+                        <button @click="deleteDraft" class="red-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Delete Product</button>
                     </div>
                 </div>
 
@@ -94,11 +94,11 @@
                     <div class="form-container">
                         <div class="form-group">
                             <label for="name">Name:</label>
-                            <input type="text" v-model="product.name" style="width: 100%;" id="name" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                            <input type="text" v-model="product.name" style="width: 100%;" id="name" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
                         </div>
                         <div class="form-group">
                             <label for="description">Description:</label>
-                            <input type="text" v-model="product.description" style="width: 100%;" id="description" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                            <input type="text" v-model="product.description" style="width: 100%;" id="description" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
                         </div>
                         <div class="form-group">
                             <label for="category">Category:</label>
@@ -138,7 +138,7 @@
 
                         <div class="form-group">
                             <label for="percentage_label">Percentage Label:</label>
-                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
                         </div>
                         <div class="form-group">
                             <label for="percentage">Percentage:</label>
@@ -146,7 +146,7 @@
                         </div>
                         <div class="form-group">
                             <label for="mon_amt_label">Monetary Amount Label:</label>
-                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
                         </div>
                         <div class="form-group">
                             <label for="monetary_amount">Monetary Amount:</label>
@@ -172,12 +172,12 @@
                             </details>
                         </div>
                         
-                        <div class="form-group">
+                        <div class="form-group" v-if="!['preview'].includes(editing_privilege)">
                             <button @click="saveProductChanges">Save Changes</button>
                         </div>
 
                         <div class="form-group">
-                            <button @click="cancelProductChanges" class="secondary-button">Cancel Changes</button>
+                            <button @click="cancelProductChanges" class="secondary-button" v-if="!['preview'].includes(editing_privilege)">Cancel Changes</button>
                         </div>
                     </div>
                 </div>
@@ -186,7 +186,7 @@
                     <table id="draggableTable">
                         <thead>
                             <tr>
-                                <th>No.</th>
+                                <th v-if="['all'].includes(editing_privilege)">No.</th>
                                 <th>Column Name</th>
                                 <th>Column Type</th>
                                 <th>Default Value</th>
@@ -194,12 +194,12 @@
                                 <th>Customer Populatable</th>
                                 <th>Is Exercise Date</th>
                                 <th>Editable Up To</th>
-                                <th>&nbsp;</th>
+                                <th v-if="['all'].includes(editing_privilege)">&nbsp;</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(col, index) in product.custom_columns">
-                                <td>
+                                <td v-if="['all'].includes(editing_privilege)">
                                     <input type="number" style="margin: 0px; background: none; border: none; color: black; width: 60px;" v-model="col.order_no">
                                 </td>
                                 <td>
@@ -239,13 +239,13 @@
                                 <td><select style="margin: 0px; background: none; border: none; color: black;" v-model="col.available_before">
                                     <option :value="null">Always</option>
                                 </select></td>
-                                <td class="button-container">
+                                <td class="button-container" v-if="['all'].includes(editing_privilege)">
                                     <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <div class="form-container" style="width: 100%;">
+                    <div class="form-container" style="width: 100%;" v-if="['all'].includes(editing_privilege)">
                         <div class="form-group">
                             <button @click="addRow" class="secondary-button">Add Row</button> 
                         </div>
@@ -334,9 +334,8 @@
 
                     draft_yn = this.product.draft_yn;
                     draft_owner = this.product.draft_owner;
-                    console.log(this.user_role)
                     if (draft_yn == 'Y' ) {
-                        if (draft_owner == this.user_account_id || this.user_role in ['A', 'C']) {
+                        if (draft_owner == this.user_account_id || ['A', 'C'].includes(this.user_role)) {
                             this.editing_privilege = "all";
                         }
                         else {
@@ -365,14 +364,11 @@
                             license_key: 'gpl',
                             setup: function (editor) {
                                 editor.on('init', function () {
-                                    // Insert your desired HTML content
                                     editor.setContent(data.terms_and_conditions);
                                 });
                             }
                         });
                     });
-
-                    
                 }, 
                 async loadSubcategory() {
                     if (this.product.category_id == null) {
@@ -395,32 +391,70 @@
                     console.log(this.product_subcategories);
                 }, 
                 async saveProductChanges() {
-                    const changes = {};
-                    var editor = tinymce.get('terms_and_conditions');
-                    var content = editor.getContent();
-                    this.product.terms_and_conditions = content;
+                    if (this.editing_privilege == "all" || this.editing_privilege == "properties") {
+                        const changes = {};
+                        var editor = tinymce.get('terms_and_conditions');
+                        var content = editor.getContent();
+                        this.product.terms_and_conditions = content;
 
-                    for (const key in this.product) {
-                        if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
-                            changes[key] = this.product[key];
+                        for (const key in this.product) {
+                            if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
+                                changes[key] = this.product[key];
+                            }
+                        }
+                        console.log(this.product.terms_and_conditions);
+                        console.log(changes);
+
+                        if (this.editing_privilege == "all") {
+                            const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
+                                method: "PATCH", 
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                                }, 
+                                body: JSON.stringify(changes)
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                console.log(`An error occurred: ${data}`);
+                                return;
+                            }
+                        }
+                        else {
+                            const response = await fetch(`${API_BASE_URL}/product/${this.page_is_for_product_id}`, {
+                                method: "PATCH", 
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                                }, 
+                                body: JSON.stringify(changes)
+                            });
+                            const data = await response.json();
+                            if (!response.ok) {
+                                console.log(`An error occurred: ${data}`);
+                                return;
+                            }
                         }
                     }
-                    console.log(this.product.terms_and_conditions);
-                    console.log(changes);
-
-                    const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
-                        method: "PATCH", 
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                        }, 
-                        body: JSON.stringify(changes)
-                    });
-                    const data = await response.json();
-                    if (!response.ok) {
-                        console.log(`An error occurred: ${data}`);
-                        return;
+                    else if (this.editing_privilege == "availability") {
+                        const response = await fetch(`${API_BASE_URL}/product/${this.page_is_for_product_id}/availability`, {
+                            method: "PUT", 
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            }, 
+                            body: JSON.stringify({
+                                "available_from": this.product.available_from,
+                                "available_till": this.product.available_till
+                            })
+                        });
+                        const data = await response.json();
+                        if (!response.ok) {
+                            console.log(`An error occurred: ${data}`);
+                            return;
+                        }
                     }
+                    
                     window.location.reload();
                 },
                 cancelProductChanges() {
