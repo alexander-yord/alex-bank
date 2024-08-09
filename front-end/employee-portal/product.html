@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../src/style.css">
     <link rel="stylesheet" href="../src/multiselect.css">
     <script src="../src/functions.js"></script>
+    <script src="node_modules/tinymce/tinymce.min.js"></script>
     <title>Employee Portal</title>
     <style>
         table {
@@ -46,6 +47,10 @@
             font-size: 16px; */
             cursor: pointer;
         }
+
+        select:disabled {
+            background-color: transparent;
+        }
     </style>
 </head>
 <body>
@@ -73,12 +78,13 @@
                 </div>
             </div>
 
-            <div class="emp-portal-content">
+            <div class="emp-portal-content" v-if="editing_privilege != null">
 
                 <div class="button-header">
                     <h2>Manage Product <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span></h2>
                     <div class="header-buttons">
-                        <button @click="publishProduct" style="width: 150px;">Publish Product</button>
+                        <button @click="" class="secondary-button" style="width: 150px;">Duplicate Product</button>
+                        <button @click="publishProduct" class="secondary-button" style="width: 150px;">Publish Product</button>
                         <button @click="deleteDraft" class="red-button" style="width: 150px;">Delete Product</button>
                     </div>
                 </div>
@@ -88,16 +94,16 @@
                     <div class="form-container">
                         <div class="form-group">
                             <label for="name">Name:</label>
-                            <input type="text" v-model="product.name" style="width: 100%;" id="name">
+                            <input type="text" v-model="product.name" style="width: 100%;" id="name" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="description">Description:</label>
-                            <input type="text" v-model="product.description" style="width: 100%;" id="description">
+                            <input type="text" v-model="product.description" style="width: 100%;" id="description" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="category">Category:</label>
                             <div class="custom-select">
-                                <select v-model="product.category_id" id="category" @change="loadSubcategory">
+                                <select v-model="product.category_id" id="category" @change="loadSubcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
                                 </select>
                             </div>
@@ -105,7 +111,7 @@
                         <div class="form-group">
                             <label for="subcategory">Subcategory:</label>
                             <div class="custom-select">
-                                <select v-model="product.subcategory_id" id="subcategory">
+                                <select v-model="product.subcategory_id" id="subcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option :value="null">None</option> 
                                     <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
                                         {{ cat.displayName }}
@@ -116,13 +122,13 @@
 
                         <div class="form-group">
                             <label for="term">Term (in months):</label>
-                            <input type="number" v-model="product.term" style="width: 100%;" id="term">
+                            <input type="number" v-model="product.term" style="width: 100%;" id="term" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
 
                         <div class="form-group">
                             <label for="subcategory">Currency:</label>
                             <div class="custom-select">
-                                <select v-model="product.currency" id="subcategory">
+                                <select v-model="product.currency" id="subcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option value="BGN">BGN</option> 
                                     <option value="EUR">EUR</option>
                                     <option value="USD">USD</option>
@@ -132,34 +138,38 @@
 
                         <div class="form-group">
                             <label for="percentage_label">Percentage Label:</label>
-                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label">
+                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="percentage">Percentage:</label>
-                            <input type="number" v-model="product.percentage" style="width: 100%;" id="percentage">
+                            <input type="number" v-model="product.percentage" style="width: 100%;" id="percentage" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="mon_amt_label">Monetary Amount Label:</label>
-                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label">
+                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="monetary_amount">Monetary Amount:</label>
-                            <input type="number" v-model="product.monetary_amount" style="width: 100%;" id="monetary_amount">
+                            <input type="number" v-model="product.monetary_amount" style="width: 100%;" id="monetary_amount" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
-                        
                         <div class="form-group">
                             <label for="available_from">Available From:</label>
-                            <input type="date" v-model="product.available_from" style="width: 100%;" id="available_from">
+                            <input type="date" v-model="product.available_from" style="width: 100%;" id="available_from" :disabled="['preview'].includes(editing_privilege)">
                         </div>
                         <div class="form-group">
                             <label for="available_till">Available Till:</label>
-                            <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
+                            <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till" :disabled="['preview'].includes(editing_privilege)">
                         </div>
                         
-                        <div class="form-group full-width">
+                        <div class="form-group full-width" v-if="!['preview', 'availability'].includes(editing_privilege)">
                             <label>Terms and Conditions:</label> <br>
-                            <textarea id="htmeditor" v-model="product.terms_and_conditions"></textarea> 
-                            <script src="https://htmeditor.com/js/htmeditor.min.js" htmeditor_textarea="htmeditor" full_screen="no" editor_height="480" run_local="no"> </script> 
+                            <textarea id="terms_and_conditions" style="max-width: none;"></textarea>
+                        </div>
+                        <div class="form-group full-width" v-else>
+                            <details>
+                                <summary>Terms and Conditions</summary>
+                                <span v-html="product.terms_and_conditions"></span>
+                            </details>
                         </div>
                         
                         <div class="form-group">
@@ -262,6 +272,7 @@
                 return {
                     isLoggedIn: isLoggedIn(),
                     user_role: sessionStorage.getItem("user_role"),
+                    user_account_id: sessionStorage.getItem("account_id"),
                     menu: [],
                     openIndex: null, 
                     product_categories: [], 
@@ -269,7 +280,8 @@
                     product: {}, 
                     init_product: {},
                     product_categories: [], 
-                    product_subcategories: []
+                    product_subcategories: [], 
+                    editing_privilege: null
                 };
             },
             methods: {
@@ -319,6 +331,48 @@
                     this.product_categories = data1; 
 
                     this.loadSubcategory();
+
+                    draft_yn = this.product.draft_yn;
+                    draft_owner = this.product.draft_owner;
+                    console.log(this.user_role)
+                    if (draft_yn == 'Y' ) {
+                        if (draft_owner == this.user_account_id || this.user_role in ['A', 'C']) {
+                            this.editing_privilege = "all";
+                        }
+                        else {
+                            this.editing_privilege = "preview";
+                        }
+                    }
+                    else {
+                        if (this.user_role == 'A') {
+                            this.editing_privilege = "properties";
+                        }
+                        else if (this.user_role == 'C') {
+                            this.editing_privilege = "availability";
+                        }
+                        else {
+                            this.editing_privilege = "preview";
+                        }
+                    }
+                    console.log(this.editing_privilege);
+
+                    new Promise((resolve) => {
+                        setTimeout(resolve, 1000);
+                    }).then(() => {
+                        tinymce.init({
+                            selector: '#terms_and_conditions', 
+                            height: 300,
+                            license_key: 'gpl',
+                            setup: function (editor) {
+                                editor.on('init', function () {
+                                    // Insert your desired HTML content
+                                    editor.setContent(data.terms_and_conditions);
+                                });
+                            }
+                        });
+                    });
+
+                    
                 }, 
                 async loadSubcategory() {
                     if (this.product.category_id == null) {
@@ -342,12 +396,9 @@
                 }, 
                 async saveProductChanges() {
                     const changes = {};
-
-                    // Get the terms and conditions from the textarea
-                    const iframe = document.getElementById('htmeditor_ifr');
-                    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-                    const termsAndConditions = iframeDocument.body.innerHTML;
-                    this.product.terms_and_conditions = termsAndConditions;
+                    var editor = tinymce.get('terms_and_conditions');
+                    var content = editor.getContent();
+                    this.product.terms_and_conditions = content;
 
                     for (const key in this.product) {
                         if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
@@ -374,7 +425,7 @@
                 },
                 cancelProductChanges() {
                     this.product = { ...this.init_product };
-                    tinymce.get('htmeditor').setContent(this.product.terms_and_conditions || '');
+                    tinymce.get('terms_and_conditions').setContent(this.product.terms_and_conditions || '');
                 }, 
                 async saveCustomColumns() {
                     console.log(this.product.custom_columns);
