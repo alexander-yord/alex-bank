@@ -265,11 +265,7 @@ BEGIN
     -- Return the new product_id
     RETURN v_new_product_id;
 END
+
 //
-
-
-
-
-
 
 
