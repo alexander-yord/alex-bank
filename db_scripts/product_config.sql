@@ -523,7 +523,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Put (Strike: (1.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
+('DER', 4, 'Bermudan Trump Put (Strike: 1.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -573,7 +573,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Put (Strike: (1.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
+('DER', 4, 'Bermudan Trump Put (Strike: 1.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>

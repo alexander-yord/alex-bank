@@ -56,22 +56,70 @@
 
                 <div class="card">
                     <div class="heading">
-                        <h3>Your Drafts</h3>
-                        <!-- <select v-model="assigned_show" style="margin: 0;">
-                            <option value="active">Active ({{products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code)).length}}/{{products.length}})</option>
-                            <option value="preview">Preview ({{Math.min(3, products.length)}}/{{products.length}})</option>
-                            <option value="all">All ({{products.length}})</option>
-                        </select> -->
+                        <h3>Drafts</h3>
+                        <select v-model="drafts_show" style="margin: 0;">
+                            <option value="preview">My Drafts Preview </option>
+                            <option value="my">My Drafts </option>
+                            <option value="all" v-if="user_role == 'A' || user_role == 'C'">All Drafts </option>
+                        </select> 
                     </div>
                 </div>     
                 
                 <br>
 
-                <div class="product-grid" v-if="Object.keys(products).length">
-                    <a class="product-card" v-for="prod in products.slice(0, 3)" :href="'product.html?product_id='+prod.product_id">
+                <div class="product-grid" v-if="drafts_show=='preview'">
+                    <a class="product-card" v-for="prod in products.filter(obj => obj.draft_owner == user_account_id).slice(0, 3)" :href="'product.html?product_id='+prod.product_id">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
-                        <div class="product-description">{{prod.category_name}} | {{prod.currency}} </div>
+                        <div class="product-description"><span class="highlight">{{prod.category_name}}</span> | {{prod.available_from}} - {{prod.available_till}} </div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+                <div class="product-grid" v-else-if="drafts_show=='my'">
+                    <a class="product-card" v-for="prod in products.filter(obj => obj.draft_owner == user_account_id)" :href="'product.html?product_id='+prod.product_id">
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description"><span class="highlight">{{prod.category_name}}</span> | {{prod.available_from}} - {{prod.available_till}} </div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+                <div class="product-grid" v-if="drafts_show=='all'">
+                    <a class="product-card" v-for="prod in products" :href="'product.html?product_id='+prod.product_id">
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description"><span class="highlight">{{prod.category_name}}</span> | {{prod.available_from}} - {{prod.available_till}} </div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+
+                <br>
+
+                <div class="card">
+                    <div class="heading">
+                        <h3>Products</h3>
+                        <select v-model="products_show" style="margin: 0;">
+                            <option value="current">Current </option>
+                            <option value="all">All Products </option>
+                        </select> 
+                    </div>
+                </div>   
+
+                <br>
+
+                <div class="product-grid" v-if="products_show=='all'">
+                    <a class="product-card" v-for="prod in all_products" :href="'product.html?product_id='+prod.product_id">
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description"><span class="highlight">{{prod.category_name}}</span> | {{prod.available_from}} - {{prod.available_till}} </div>
+                        <div class="product-description">{{prod.description}}</div>
+                    </a>
+                </div>
+
+                <div class="product-grid" v-if="products_show=='current'">
+                    <a class="product-card" v-for="prod in current_products" :href="'product.html?product_id='+prod.product_id">
+                        <img :src="'../img/products/'+prod.picture_name+'.png'"> 
+                        <div class="product-title">{{prod.name}}</div>
+                        <div class="product-description"><span class="highlight">{{prod.category_name}}</span> | {{prod.available_from}} - {{prod.available_till}} </div>
                         <div class="product-description">{{prod.description}}</div>
                     </a>
                 </div>
@@ -97,7 +145,11 @@
                     user_account_id: sessionStorage.getItem("account_id"),
                     menu: [],
                     openIndex: null, 
-                    products: []
+                    products: [], // drafts 
+                    drafts_show: "preview", 
+                    products_show: "current", 
+                    current_products: [], 
+                    all_products: []
                 };
             },
             methods: {
@@ -117,18 +169,92 @@
                     this.openIndex = this.openIndex === index ? null : index;
                 }, 
                 async loadPageContent() {
-                    const response = await fetch(`${API_BASE_URL}/product/drafts/`, {
+                    if (this.user_role == 'A' || this.user_role == 'C') {
+                        const response = await fetch(`${API_BASE_URL}/product/drafts/?view_all_yn=Y`, {
+                            method: "GET", 
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            }
+                        });
+                        const data = await response.json();
+                        if(!response.ok) {
+                            console.log(`An error occurred: ${data}`);
+                        }
+                        for (let i = 0; i < data.length; i++) {
+                            if (data[i].available_from === null) {
+                                data[i].available_from = "Unspecified";
+                            }
+                            if (data[i].available_till === null) {
+                                data[i].available_till = "Unspecified";
+                            }
+                        }
+                        this.products = data; 
+                    }
+                    else {
+                        const response = await fetch(`${API_BASE_URL}/product/drafts/`, {
+                            method: "GET", 
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            }
+                        });
+                        const data = await response.json();
+                        if(!response.ok) {
+                            console.log(`An error occurred: ${data}`);
+                        }
+                        for (let i = 0; i < data.length; i++) {
+                            if (data[i].available_from === null) {
+                                data[i].available_from = "Unspecified";
+                            }
+                            if (data[i].available_till === null) {
+                                data[i].available_till = "Unspecified";
+                            }
+                        }
+                        this.products = data; 
+                    }
+
+                    const response1 = await fetch(`${API_BASE_URL}/product/products`, {
                         method: "GET", 
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                            }
+                        }
                     });
-                    const data = await response.json();
-                    if(!response.ok) {
-                        console.log(`An error occurred: ${data}`);
+                    const data1 = await response1.json();
+                    if(!response1.ok) {
+                        console.log(`An error occurred: ${data1}`);
                     }
-                    this.products = data; 
+                    for (let i = 0; i < data1.length; i++) {
+                        if (data1[i].available_from === null) {
+                            data1[i].available_from = "Unspecified";
+                        }
+                        if (data1[i].available_till === null) {
+                            data1[i].available_till = "Unspecified";
+                        }
+                    }
+                    this.current_products = data1; 
+
+                    const response2 = await fetch(`${API_BASE_URL}/product/products?only_active_yn=N`, {
+                        method: "GET", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    const data2 = await response2.json();
+                    if(!response2.ok) {
+                        console.log(`An error occurred: ${data2}`);
+                    }
+                    for (let i = 0; i < data2.length; i++) {
+                        if (data2[i].available_from === null) {
+                            data2[i].available_from = "Unspecified";
+                        }
+                        if (data2[i].available_till === null) {
+                            data2[i].available_till = "Unspecified";
+                        }
+                    }
+                    this.all_products = data2; 
                 }
             },
             mounted() {

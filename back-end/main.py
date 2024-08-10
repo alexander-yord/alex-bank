@@ -21,7 +21,7 @@ try:
     api_version = get_latest_release(repo_owner, repo_name)
 except Exception as e:
     print(f"Error: {e}")
-    api_version = "v1.0"  # Fallback version if fetching fails
+    api_version = "v1.2.0"  # Fallback version if fetching fails
 
 # DB connection and cursor
 cnx = db.cnx
@@ -47,7 +47,7 @@ Note: Unauthorized access attempts or misuse of the API may result in account su
 
 For support and queries, please contact our technical support team.
               """,
-              version="1.1.0"
+              version=api_version
               )
 
 app.include_router(authorization.router)
