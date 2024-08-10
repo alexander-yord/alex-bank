@@ -683,11 +683,12 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
         update_fields["available_till"] = product.available_till
     if product.picture_name is not None:
         update_fields["picture_name"] = product.picture_name
+    if product.draft_owner is not None:
+        update_fields["draft_owner"] = product.draft_owner
     if product.draft_yn is not None:
         if usr_account_role in ['C', 'A']:
             update_fields["draft_yn"] = 'N' if product.draft_yn == 'N' else 'Y'
-    if product.draft_owner is not None:
-        update_fields["draft_owner"] = product.draft_owner
+            update_fields["draft_owner"] = None
     if product.terms_and_conditions is not None:
         update_fields["terms_and_conditions"] = product.terms_and_conditions
 
@@ -702,7 +703,7 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
         values.append(product_id)
         db.cursor.execute(stmt, values)
 
-        if update_fields.get("draft_yn") == 'Y':
+        if update_fields.get("draft_yn") == 'N':
             db.cursor.execute("SELECT copy_product_custom_column_def(%s)", (product_id,))
 
         db.cnx.commit()
