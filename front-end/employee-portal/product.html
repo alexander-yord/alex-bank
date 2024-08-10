@@ -55,7 +55,7 @@
 </head>
 <body>
     <div id="app">
-        <div v-if="isLoggedIn && ['A', 'C'].includes(user_role)">
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)">
             <div class="sidebar">
                 <div class="sidebar-content">
                     <div>
@@ -64,13 +64,18 @@
                     <div class="accordion" v-if="menu.length != 0">
                         <div v-for="(group, index) in menu" class="accordion-group" :data-group="group.dataGroup">
                             <div v-if="group.privileges.includes(user_role)">
-                                <div class="accordion-header" @click="toggleAccordion(index)"><span><img :src="group.icon"></span> <span class="accordion-body-title">{{group.displayName}}</span></div>
+                                <div class="accordion-header" @click="toggleAccordion(index)">
+                                    <span><img :src="group.icon"></span>
+                                    <span class="accordion-body-title">{{group.displayName}}</span>
+                                </div>
                                 <div class="accordion-body" :class="{ show: openIndex === index }">
-                                    <p v-for="child in group.children"><a :href="child.url">{{child.displayName}}</a></p>
+                                    <p v-for="child in group.children.filter(child => !child.privileges || child.privileges.includes(user_role))">
+                                        <a :href="child.url">{{child.displayName}}</a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>    
                     <div class="sidebar-footer">
                         <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
                         <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
@@ -257,7 +262,7 @@
             </div>
         </div>
 
-        <div v-else-if="isLoggedIn && !['A', 'C'].includes(user_role)" class="content">
+        <div v-else-if="isLoggedIn && !['A', 'C', 'E'].includes(user_role)" class="content">
             <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
         </div>
 
