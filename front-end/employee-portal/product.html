@@ -34,6 +34,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky; 
+            top: 0; 
+            background-color: white; 
+            z-index: 1000; 
+            width: calc(100% + 20px);
+            margin-left: -20px; 
+            padding-left: 20px;
         }
         .header-text {
             font-size: 20px;
@@ -43,8 +50,6 @@
         }
         .header-buttons button {
             margin-left: 10px;
-            /* padding: 10px 15px;
-            font-size: 16px; */
             cursor: pointer;
         }
 
@@ -87,7 +92,7 @@
 
                 <div class="button-header">
                     <h2>Manage Product <span v-if="product.draft_yn == 'Y'" class="highlight">Draft</span></h2>
-                    <div class="header-buttons">
+                    <div class="header-buttons" style="margin-right: 20px;">
                         <button @click="duplicateProduct" class="secondary-button" style="width: 150px;">Duplicate Product</button>
                         <button @click="publishProduct" class="secondary-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Publish Product</button>
                         <button @click="deleteDraft" class="red-button" style="width: 150px;" v-if="['all'].includes(editing_privilege)">Delete Product</button>
@@ -243,6 +248,7 @@
                                 </td>
                                 <td><select style="margin: 0px; background: none; border: none; color: black;" v-model="col.available_before">
                                     <option :value="null">Always</option>
+                                    <option v-for="stat in statuses" :value="stat.status_code">{{stat.status_name}} </option>
                                 </select></td>
                                 <td class="button-container" v-if="['all'].includes(editing_privilege)">
                                     <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
@@ -286,7 +292,8 @@
                     init_product: {},
                     product_categories: [], 
                     product_subcategories: [], 
-                    editing_privilege: null
+                    editing_privilege: null, 
+                    statuses: []
                 };
             },
             methods: {
@@ -335,6 +342,15 @@
                     }
                     this.product_categories = data1; 
 
+                    const response2 = await fetch(`${API_BASE_URL}/front-end/dd-options`, {
+                        method: "GET"
+                    });
+                    const data2 = await response2.json();
+                    if(!response2.ok) {
+                        console.log(`An error occurred: ${data2}`);
+                    }
+                    this.statuses = data2["statuses"];
+
                     this.loadSubcategory();
 
                     draft_yn = this.product.draft_yn;
@@ -367,6 +383,8 @@
                             selector: '#terms_and_conditions', 
                             height: 300,
                             license_key: 'gpl',
+                            plugins: 'lists link',
+                            toolbar: 'undo redo | blocks | bold italic link | alignleft aligncenter alignright alignjustify | numlist bullist | indent outdent | wordcount',
                             setup: function (editor) {
                                 editor.on('init', function () {
                                     editor.setContent(data.terms_and_conditions);

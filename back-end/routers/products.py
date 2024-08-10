@@ -335,7 +335,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
                p.available_from, p.available_till, nvl(p.picture_name, p.category_id), 
                p.draft_yn, p.draft_owner
         FROM products p
-        JOIN product_categories pc ON pc.category_id = p.category_id
+        LEFT JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
         """
 
@@ -528,8 +528,10 @@ async def create_new_product_draft(product: s.NewProduct, token: str = Depends(s
             db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
             custom_column_count = db.cursor.rowcount
         db.cnx.commit()
+        db.cnx.close()
         return {"status": f"Success! Draft product created with ID: {product_id}, "
-                          f"and {custom_column_count} custom columns"}
+                          f"and {custom_column_count} custom columns",
+                "product_id": product_id}
     except Exception as err:
         db.cnx.rollback()
         raise HTTPException(500, f"An error occurred: {err}")
