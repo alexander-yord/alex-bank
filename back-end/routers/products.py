@@ -346,8 +346,12 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
 
         product = db.cursor.fetchone()
 
-        if product[15] == 'Y':
+        try:
             usr_account_id, usr_account_role = h.verify_token(token)
+        except Exception:
+            usr_account_id, usr_account_role = None, None
+            
+        if product[15] == 'Y':  # if a draft
             # I.e., it's not the user's draft and the user is not a C-Suit/Admin
             if product[16] != usr_account_id and usr_account_role not in ['C', 'A']:
                 raise HTTPException(401, "User does not have privileges")
@@ -355,9 +359,14 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
                    "default_value, exercise_date_yn, available_before FROM draft_product_custom_column_def " \
                    "WHERE product_id = %s"
         else:
-            stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
-                   "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
-                   "WHERE product_id = %s"
+            if usr_account_role in ['A', 'C', 'E']:
+                stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                       "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
+                       "WHERE product_id = %s"
+            else:
+                stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                       "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
+                       "WHERE product_id = %s AND customer_visible_yn = 'Y'"
         db.cursor.execute(stmt, (product_id,))
 
         if db.cursor.rowcount == 0:
