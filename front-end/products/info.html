@@ -10,6 +10,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="../src/style.css">
   <script src="../src/functions.js"></script>
+  <style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    table, th, td {
+        border: none;
+        background-color: transparent;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+  </style>
 </head>
 
 <body>
@@ -40,8 +56,24 @@
         <div class="product-details">
             <h1 style="margin-top: 0px !important;">{{product_info.name}}</h1>
             <h3>{{product_info.description}}</h3>
-            <div><span v-if="product_info.term !== null">Term: {{product_info.term}} month(s) </span> <span v-if="product_info.term !== null && product_info.percentage !== null">|</span> <span v-if="product_info.percentage !== null">{{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}% </span></div> <br>
-            <div><span v-if="product_info.monetary_amount !== null">{{product_info.mon_amt_label}}: {{product_info.currency}}{{product_info.monetary_amount.toFixed(2)}} </span></div> 
+            <table>
+              <tr v-if="product_info.term !== null">
+                <td style="text-align: right;"><b>Term/Period:</b></td>
+                <td>{{product_info.term}} month(s)</td>
+              </tr>
+              <tr v-if="product_info.percentage !== null">
+                <td style="text-align: right;"><b>{{product_info.percentage_label}}:</b></td>
+                <td>{{(100*product_info.percentage).toFixed(2)}}%</td>
+              </tr>
+              <tr v-if="product_info.monetary_amount !== null">
+                <td style="text-align: right;"><b>{{product_info.mon_amt_label}}:</b></td>
+                <td>{{product_info.currency}}{{product_info.monetary_amount.toFixed(2)}}</td>
+              </tr>
+              <tr v-for="col in filterCustomColumns(product_info)">
+                <td style="text-align: right;"><b>{{col.column_name}}:</b></td>
+                <td>{{col.default_value}}</td>
+              </tr>
+            </table>
             <button v-if="!show_appl_form" id="show-appl-button" @click="showApplication()">Apply for {{product_info.category_name}}</button>
             
             <form v-if="show_appl_form" id="appl-form" class="form-container full-width">
@@ -129,6 +161,7 @@
             const data = await response.json();
 
             this.product_info = data;
+            console.log(this.product_info);
             this.appl_amount = data.monetary_amount;
 
             this.$nextTick(() => {
@@ -150,6 +183,13 @@
         }
         this.show_appl_form = true; 
         return ;
+      }, 
+      filterCustomColumns(product_info) {
+        if (!product_info || !product_info.custom_columns) {
+            return [];
+        }
+
+        return product_info.custom_columns.filter(col => col.default_value !== null && col.default_value !== '' && col.customer_visible_yn == 'Y');
       }, 
       async submitApplication() {
         try {
