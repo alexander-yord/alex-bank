@@ -101,8 +101,8 @@
                         <div class="column second-column">
                             <div class="card">
                                 <h3 class="card-title">Product Information</h3>
-                                <div>Term: {{product_info.term}} month(s) | {{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}%</div> <br>
-                                <div>Currency: {{product_info.currency}} | {{product_info.mon_amt_label}}: {{product_info.monetary_amount.toFixed(2)}}</div> 
+                                <div><span v-if="product_info.term !== null">Term: {{product_info.term}} month(s) </span> <span v-if="product_info.term !== null && product_info.percentage !== null">|</span> <span v-if="product_info.percentage !== null">{{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}% </span></div> <br>
+                                <div><span v-if="product_info.monetary_amount !== null">{{product_info.mon_amt_label}}: {{product_info.currency}}{{product_info.monetary_amount.toFixed(2)}} </span></div> 
                             </div> <br>
                             <div class="card">
                                 <h3 class="card-title">Available Product Actions</h3>
