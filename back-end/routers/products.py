@@ -525,7 +525,7 @@ async def create_new_product_draft(product: s.NewProduct, token: str = Depends(s
                     'Y' if column.customer_visible_yn == 'Y' else 'N',
                     'Y' if column.customer_populatable_yn == 'Y' else 'N',
                     column.column_type,
-                    column.default_value,
+                    column.default_value if column.default_value else None,
                     column.exercise_date_yn,
                     column.available_before
                 ))
@@ -786,7 +786,7 @@ async def modify_a_draft_products_custom_columns(product_id: int, columns: List[
                 'Y' if column.customer_visible_yn == 'Y' else 'N',
                 'Y' if column.customer_populatable_yn == 'Y' else 'N',
                 column.column_type,
-                column.default_value,
+                column.default_value if column.default_value else None,
                 column.exercise_date_yn,
                 column.available_before
             ))
