@@ -439,7 +439,7 @@
 
                         for (const key in this.product) {
                             if (key !== 'custom_columns' && this.product[key] !== this.init_product[key]) {
-                                changes[key] = this.product[key];
+                                changes[key] = this.product[key] ? this.product[key] : "__null__";
                             }
                         }
                         console.log(this.product.terms_and_conditions);

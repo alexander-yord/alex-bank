@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List, Literal
+from pydantic import BaseModel, Field
+from typing import Optional, List, Literal, Union
 from fastapi import Query
 from fastapi.security import OAuth2PasswordBearer
 
@@ -172,22 +172,21 @@ class NewProduct(BaseModel):
 
 
 class AmendProduct(BaseModel):
-    category_id: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-    terms_and_conditions: Optional[str] = None
-    currency: Optional[str] = None
-    term: Optional[int] = None
-    percentage: Optional[float] = None
-    monetary_amount: Optional[float] = None
-    percentage_label: Optional[str] = None
-    mon_amt_label: Optional[str] = None
-    available_from: Optional[str] = None
-    available_till: Optional[str] = None
-    picture_name: Optional[str] = None
-    subcategory_id: Optional[int] = None
-    draft_yn: Optional[str] = None
-    draft_owner: Optional[int] = None
+    category_id: Optional[Union[int, str]] = Field(None)
+    subcategory_id: Optional[Union[int, str]] = Field(None)
+    name: Optional[Union[str, str]] = Field(None)
+    description: Optional[Union[str, str]] = Field(None)
+    currency: Optional[Union[str, str]] = Field(None)
+    term: Optional[Union[int, str]] = Field(None)
+    percentage: Optional[Union[float, str]] = Field(None)
+    monetary_amount: Optional[Union[float, str]] = Field(None)
+    percentage_label: Optional[Union[str, str]] = Field(None)
+    mon_amt_label: Optional[Union[str, str]] = Field(None)
+    available_from: Optional[Union[str, str]] = Field(None)
+    available_till: Optional[Union[str, str]] = Field(None)
+    picture_name: Optional[Union[str, str]] = Field(None)
+    draft_owner: Optional[Union[str, str]] = Field(None)
+    terms_and_conditions: Optional[Union[str, str]] = Field(None)
 
 
 class ProductAvailability(BaseModel):
