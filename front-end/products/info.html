@@ -58,19 +58,19 @@
             <h3>{{product_info.description}}</h3>
             <table>
               <tr v-if="product_info.term !== null">
-                <td style="text-align: right;"><b>Term/Period:</b></td>
+                <td style="text-align: right; width: 200px;"><b>Term/Period:</b></td>
                 <td>{{product_info.term}} month(s)</td>
               </tr>
               <tr v-if="product_info.percentage !== null">
-                <td style="text-align: right;"><b>{{product_info.percentage_label}}:</b></td>
+                <td style="text-align: right; width: 200px;"><b>{{product_info.percentage_label}}:</b></td>
                 <td>{{(100*product_info.percentage).toFixed(2)}}%</td>
               </tr>
               <tr v-if="product_info.monetary_amount !== null">
-                <td style="text-align: right;"><b>{{product_info.mon_amt_label}}:</b></td>
+                <td style="text-align: right; width: 200px;"><b>{{product_info.mon_amt_label}}:</b></td>
                 <td>{{product_info.currency}}{{product_info.monetary_amount.toFixed(2)}}</td>
               </tr>
               <tr v-for="col in filterCustomColumns(product_info)">
-                <td style="text-align: right;"><b>{{col.column_name}}:</b></td>
+                <td style="text-align: right; width: 200px;"><b>{{col.column_name}}:</b></td>
                 <td>{{col.default_value}}</td>
               </tr>
             </table>
