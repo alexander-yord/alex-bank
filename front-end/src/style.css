@@ -40,6 +40,29 @@ button:hover {
     background-color: var(--color-border-light);
 }
 
+.secondary-button {
+    background: none; 
+    color: var(--color-bg-dark); 
+    border: 1px solid var(--color-bg-dark);
+}
+
+.secondary-button:hover {
+    background-color: var(--color-border-light);
+    color: var(--color-text-light);
+    border: 1px solid transparent;
+}
+
+.red-button {
+    background-color: transparent;
+    color: var(--color-accent-red);
+    border: 1px solid var(--color-accent-red);
+}
+
+.red-button:hover {
+    background-color: var(--color-accent-red);
+    color: var(--color-text-light);
+}
+
 /* Styling for inputs */
 input[type="text"],
 input[type="date"],

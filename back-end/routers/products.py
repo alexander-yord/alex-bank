@@ -1,5 +1,6 @@
 from fastapi.responses import FileResponse, StreamingResponse
 from typing import Annotated, Optional, List, Union
+import random, string
 from dependencies import database as db, helpers as h, schemas as s, mail as m, contracts as c
 from fastapi import APIRouter, HTTPException, Header, UploadFile, File, Query, Body, Depends
 
@@ -10,11 +11,14 @@ router = APIRouter(
 
 
 @router.get("/categories", response_model=List[s.ProductCategory])
-async def get_product_categories():
+async def get_product_categories(only_catalog_yn: Optional[str] = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    stmt = "SELECT category_id, category_name, description FROM product_categories"
+    if only_catalog_yn == 'N':
+        stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories"
+    else:
+        stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories WHERE catalog_yn = 'Y'"
     db.cursor.execute(stmt)
     if db.cursor.rowcount == 0:
         raise HTTPException(500, "No categories found")
@@ -26,24 +30,98 @@ async def get_product_categories():
         category_list.append(s.ProductCategory(
             category_id=row[0],
             category_name=row[1],
-            category_description=row[2]
+            category_description=row[2],
+            catalog_yn=row[3]
         ))
     return category_list
 
 
+@router.post("/category", response_model=s.ProductCategory)
+async def create_new_category(category_info: s.ProductCategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    code = category_info.category_id[:3]
+    while True:
+        db.cursor.execute("SELECT count(*) from product_categories WHERE category_id = %s", (code,))
+        if db.cursor.fetchone()[0] == 0:
+            break
+        code = code[0] + ''.join(random.choices(string.ascii_uppercase + string.digits, k=2))
+
+    stmt = "INSERT INTO product_categories (category_id, category_name, description, catalog_yn) " \
+           "VALUES (%s, %s, %s, %s)"
+    try:
+        db.cursor.execute(stmt, (code, category_info.category_name, category_info.category_description,
+                                 category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"))
+        db.cnx.commit()
+    except Exception as err:
+        raise HTTPException(500, err)
+    return s.ProductCategory(
+        category_id=code,
+        category_name=category_info.category_name,
+        category_description=category_info.category_description,
+        catalog_yn=category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"
+    )
+
+
+@router.patch("/category/{category_id}")
+async def update_category(category_id: str, category_info: s.AmendProductCategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s",
+                      (category_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product category {category_id} not found.")
+
+    # Prepare the update statement dynamically based on provided fields
+    update_fields = []
+    update_values = []
+
+    if category_info.category_name is not None:
+        update_fields.append("category_name = %s")
+        update_values.append(category_info.category_name)
+
+    if category_info.category_description is not None:
+        update_fields.append("description = %s")
+        update_values.append(category_info.category_description)
+
+    if category_info.catalog_yn is not None:
+        update_fields.append("catalog_yn = %s")
+        update_values.append('Y' if category_info.catalog_yn == 'Y' else 'N')
+
+    if update_fields:
+        update_values.append(category_id)
+        stmt = f"UPDATE product_categories SET {', '.join(update_fields)} WHERE category_id = %s"
+        db.cursor.execute(stmt, tuple(update_values))
+        db.cnx.commit()
+
+    return {"status": "Success!"}
+
+
 @router.get("/subcategories", response_model=List[s.ProductSubcategories])
-async def get_product_subcategories(category_id: Optional[str] = None):
+async def get_product_subcategories(category_id: Optional[str] = None, only_catalog_yn: Optional[str] = 'Y'):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
-    print (category_id)
-    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description FROM product_subcategories " \
-           "WHERE 1=1"
+    stmt = "SELECT DISTINCT ps.subcategory_id, ps.category_id, ps.subcategory_name, ps.subcategory_description, " \
+           "ps.catalog_yn, count(product_id) OVER (PARTITION BY ps.subcategory_id) as row_cnt " \
+           "FROM product_subcategories ps LEFT JOIN products p ON p.subcategory_id = ps.subcategory_id " \
+           "WHERE 1=1 "
+    params = []
     if category_id is not None:
-        stmt += " AND category_id = %s"
-        db.cursor.execute(stmt, (category_id,))
-    else:
-        db.cursor.execute(stmt)
+        stmt += " AND ps.category_id = %s"
+        params.append(category_id)
+    if only_catalog_yn != "N":
+        stmt += " AND ps.catalog_yn = 'Y'"
+
+    db.cursor.execute(stmt, tuple(params))
 
     if db.cursor.rowcount == 0:
         return []
@@ -52,13 +130,132 @@ async def get_product_subcategories(category_id: Optional[str] = None):
         subcategory_id=row[0],
         category_id=row[1],
         subcategory_name=row[2],
-        subcategory_description=row[3]
+        subcategory_description=row[3],
+        catalog_yn=row[4],
+        product_count=row[5]
     ) for row in rows]
+
+
+@router.post("/subcategory", response_model=s.ProductSubcategories)
+async def create_new_subcategory(subcategory_info: s.NewProductSubcategory, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s", (subcategory_info.category_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+
+    stmt = "INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description, catalog_yn) " \
+           "VALUES (%s, %s, %s, %s)"
+    db.cursor.execute(stmt, (subcategory_info.category_id, subcategory_info.subcategory_name,
+                             subcategory_info.subcategory_description, "Y" if subcategory_info.catalog_yn == 'Y' else 'N'))
+    db.cnx.commit()
+    db.cursor.execute("SELECT LAST_INSERT_ID()")
+    subcategory_id = db.cursor.fetchone()[0]
+
+    return s.ProductSubcategories(
+        subcategory_id=subcategory_id,
+        category_id=subcategory_info.category_id,
+        subcategory_name=subcategory_info.subcategory_name,
+        subcategory_description=subcategory_info.subcategory_description,
+        catalog_yn="Y" if subcategory_info.catalog_yn == 'Y' else 'N'
+    )
+
+
+@router.patch("/subcategory/{subcategory_id}", response_model=s.ProductSubcategories)
+async def modify_subcategory(subcategory_id: int, subcategory_info: s.AmendProductSubcategory,
+                             token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT subcategory_id FROM product_subcategories WHERE subcategory_id = %s",
+                      (subcategory_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product subcategory {subcategory_id} not found.")
+
+    # Prepare the update statement dynamically based on provided fields
+    update_fields = []
+    update_values = []
+
+    if subcategory_info.category_id is not None:
+        # Validate the new category_id
+        db.cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s",
+                          (subcategory_info.category_id,))
+        if db.cursor.rowcount == 0:
+            raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+        update_fields.append("category_id = %s")
+        update_values.append(subcategory_info.category_id)
+
+    if subcategory_info.subcategory_name is not None:
+        update_fields.append("subcategory_name = %s")
+        update_values.append(subcategory_info.subcategory_name)
+
+    if subcategory_info.subcategory_description is not None:
+        update_fields.append("subcategory_description = %s")
+        update_values.append(subcategory_info.subcategory_description)
+
+    if subcategory_info.catalog_yn is not None:
+        update_fields.append("catalog_yn = %s")
+        update_values.append('Y' if subcategory_info.catalog_yn == 'Y' else 'N')
+
+    if update_fields:
+        update_values.append(subcategory_id)
+        stmt = f"UPDATE product_subcategories SET {', '.join(update_fields)} WHERE subcategory_id = %s"
+        db.cursor.execute(stmt, tuple(update_values))
+        db.cnx.commit()
+
+    # Return the updated subcategory
+    stmt = "SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn " \
+           "FROM product_subcategories WHERE subcategory_id = %s"
+    db.cursor.execute(stmt, (subcategory_id,))
+    row = db.cursor.fetchone()
+    return s.ProductSubcategories(
+        subcategory_id=row[0],
+        category_id=row[1],
+        subcategory_name=row[2],
+        subcategory_description=row[3],
+        catalog_yn=row[4]
+    )
+
+
+@router.delete("/subcategory/{subcategory_id}")
+async def delete_subcategory(subcategory_id: int, token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT subcategory_id FROM product_subcategories WHERE subcategory_id = %s",
+                      (subcategory_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product subcategory {subcategory_id} not found.")
+
+    db.cursor.execute("SELECT count(*) FROM products WHERE subcategory_id = %s", (subcategory_id,))
+    if db.cursor.fetchone()[0] != 0:
+        raise HTTPException(400, "There are products in this subcategory; therefore, you cannot delete it.")
+
+    try:
+        db.cursor.execute("DELETE FROM product_subcategories WHERE subcategory_id = %s", (subcategory_id,))
+        db.cnx.commit()
+        db.cnx.close()
+        return {"status": f"Successfully deleted {subcategory_id}"}
+    except Exception as err:
+        db.cnx.rollback()
+        db.cnx.close()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.get("/products", response_model=List[s.Product])
 async def list_products(category_id: Optional[str] = None, subcategory_id: Optional[str] = None,
-                        only_active_yn: str = 'Y'):
+                        only_active_yn: str = 'Y', include_drafts_yn: str = 'N',
+                        token: str | None = Depends(s.optional_oauth2_scheme)):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -66,7 +263,8 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id,
+               p.draft_yn, p.draft_owner
         FROM products p
         JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE 1=1
@@ -74,6 +272,12 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
 
         if only_active_yn == 'Y':
             sql += " AND p.available_from <= NOW() AND nvl(p.available_till, NOW()) >= NOW()"
+        if include_drafts_yn == 'Y':
+            usr_account_id, usr_account_role = h.verify_token(token)
+            if usr_account_role not in ['C', 'A']:
+                raise HTTPException(401, "User does not have privileges")
+        else:
+            sql += " AND p.draft_yn = 'N'"
 
         params = []
         if category_id is not None:
@@ -103,10 +307,12 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
                 monetary_amount=prod[9],
                 percentage_label=prod[10],
                 mon_amt_label=prod[11],
-                available_from=str(prod[12].strftime('%Y-%m-%d')),
+                available_from=str(prod[12].strftime('%Y-%m-%d')) if prod[12] is not None else None,
                 available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
                 picture_name=prod[14],
-                subcategory_id=prod[15]
+                subcategory_id=prod[15],
+                draft_yn=prod[16],
+                draft_owner=prod[17]
             )
             product_list.append(product)
 
@@ -118,7 +324,7 @@ async def list_products(category_id: Optional[str] = None, subcategory_id: Optio
 
 
 @router.get("/{product_id}", response_model=s.Product)
-async def info_about_product(product_id: int):
+async def info_about_product(product_id: int, token: str | None = Depends(s.optional_oauth2_scheme)):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -126,17 +332,58 @@ async def info_about_product(product_id: int):
         sql = """
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
-               p.available_from, p.available_till, nvl(p.picture_name, p.category_id)
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), 
+               p.draft_yn, p.draft_owner
         FROM products p
-        JOIN product_categories pc ON pc.category_id = p.category_id
+        LEFT JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
         """
 
         db.cursor.execute(sql, (product_id,))
+
+        if db.cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Product not found")
+
         product = db.cursor.fetchone()
 
-        if product is None:
-            raise HTTPException(status_code=404, detail="Product not found")
+        try:
+            usr_account_id, usr_account_role = h.verify_token(token)
+        except Exception:
+            usr_account_id, usr_account_role = None, None
+
+        if product[15] == 'Y':  # if a draft
+            # I.e., it's not the user's draft and the user is not a C-Suit/Admin
+            if product[16] != usr_account_id and usr_account_role not in ['C', 'A']:
+                raise HTTPException(401, "User does not have privileges")
+            stmt = "SELECT order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                   "default_value, exercise_date_yn, available_before FROM draft_product_custom_column_def " \
+                   "WHERE product_id = %s"
+        else:
+            if usr_account_role in ['A', 'C', 'E']:
+                stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                       "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
+                       "WHERE product_id = %s"
+            else:
+                stmt = "SELECT pcc_id, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                       "default_value, exercise_date_yn, available_before FROM product_custom_column_def " \
+                       "WHERE product_id = %s AND customer_visible_yn = 'Y'"
+        db.cursor.execute(stmt, (product_id,))
+
+        if db.cursor.rowcount == 0:
+            custom_columns = []
+        else:
+            rows = db.cursor.fetchall()
+            custom_columns = [s.ProductCustomColumnDefinition(
+                pcc_id=row[0] if product[15] == 'N' else None,
+                order_no=row[0] if product[15] == 'Y' else None,
+                column_name=row[1],
+                customer_visible_yn=row[2],
+                customer_populatable_yn=row[3],
+                column_type=row[4],
+                default_value=row[5],
+                exercise_date_yn=str(row[6]) if row[6] is not None else None,
+                available_before=row[7]
+            ) for row in rows]
 
         product_data = s.Product(
             product_id=product[0],
@@ -151,9 +398,12 @@ async def info_about_product(product_id: int):
             monetary_amount=product[9],
             percentage_label=product[10],
             mon_amt_label=product[11],
-            available_from=str(product[12].strftime('%Y-%m-%d')),
+            available_from=str(product[12].strftime('%Y-%m-%d')) if product[12] is not None else None,
             available_till=str(product[13].strftime('%Y-%m-%d')) if product[13] is not None else None,
-            picture_name=product[14]
+            picture_name=product[14],
+            draft_yn=product[15],
+            draft_owner=product[16],
+            custom_columns=custom_columns
         )
 
         return product_data
@@ -163,9 +413,395 @@ async def info_about_product(product_id: int):
         raise HTTPException(status_code=500, detail=str(err))
 
 
-@router.get("/{product_id}/instances")
-async def get_product_instancess():
-    pass
+@router.get("/drafts/", response_model=List[s.Product])
+async def list_products(view_all_yn: Optional[str] = 'N', token: str = Depends(s.oauth2_scheme)):
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can see their own drafts
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        sql = """
+        SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
+               p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
+               p.available_from, p.available_till, nvl(p.picture_name, p.category_id), p.subcategory_id,
+               p.draft_yn, p.draft_owner
+        FROM products p
+        JOIN product_categories pc ON pc.category_id = p.category_id
+        WHERE p.draft_yn = 'Y' 
+        """
+
+        if view_all_yn == 'Y':
+            if usr_account_role not in ['C', 'A']:  # only Admins / C-Suite  people can see all drafts
+                raise HTTPException(401, "User does not have privileges")
+        else:
+            sql += f" AND p.draft_owner = {usr_account_id}"
+
+        db.cursor.execute(sql)
+        if db.cursor.rowcount == 0:
+            return []
+        products = db.cursor.fetchall()
+
+        product_list = []
+        for prod in products:
+            product = s.Product(
+                product_id=prod[0],
+                category_id=prod[1],
+                category_name=prod[2],
+                name=prod[3],
+                description=prod[4],
+                terms_and_conditions=prod[5],
+                currency=prod[6],
+                term=prod[7],
+                percentage=prod[8],
+                monetary_amount=prod[9],
+                percentage_label=prod[10],
+                mon_amt_label=prod[11],
+                available_from=str(prod[12].strftime('%Y-%m-%d')) if prod[12] is not None else None,
+                available_till=str(prod[13].strftime('%Y-%m-%d')) if prod[13] is not None else None,
+                picture_name=prod[14],
+                subcategory_id=prod[15],
+                draft_yn=prod[16],
+                draft_owner=prod[17]
+            )
+            product_list.append(product)
+
+        return product_list
+
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=500, detail=str(err))
+
+
+@router.post("/draft")
+async def create_new_product_draft(product: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
+    """
+    Notes:
+    - the API allows regular employees to create product drafts, but the product's `available_from` and `available till`
+    will be null, so that they cannot be shown in the product catalog. This is done, so that regular employees can
+    create custom products, but not actual products.
+    - regardless of the `draft_yn` provided, it will always be set to 'Y'. The API does not allow creating directly a
+    product, without reviewing the draft at least once.
+    """
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        stmt = "INSERT INTO products (category_id, subcategory_id, name, description, currency, term, percentage, " \
+               "monetary_amount, percentage_label, mon_amt_label, available_from, available_till, draft_yn, draft_owner, " \
+               "terms_and_conditions, picture_name) VALUES " \
+               "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        db.cursor.execute(stmt, (product.category_id, product.subcategory_id, product.name, product.description,
+                                 product.currency, product.term, product.percentage, product.monetary_amount,
+                                 product.percentage_label, product.mon_amt_label,
+                                 product.available_from if usr_account_role in ['C', 'A'] else None,
+                                 product.available_till if usr_account_role in ['C', 'A'] else None,
+                                 'Y', usr_account_id, product.terms_and_conditions, product.picture_name))
+
+        db.cursor.execute("SELECT LAST_INSERT_ID()")
+        product_id = db.cursor.fetchone()[0]
+
+        custom_column_count = 0
+        if product.custom_columns:
+            ordered_columns = sorted(product.custom_columns, key=lambda column: column.order_no or 100)
+
+            for index, column in enumerate(ordered_columns):
+                column.order_no = index
+
+            sql_insert = "INSERT INTO draft_product_custom_column_def " \
+                         "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, " \
+                         "column_type, default_value, exercise_date_yn, available_before) VALUES "
+            values = []
+
+            for column in ordered_columns:
+                values.append((
+                    product_id,
+                    column.order_no,
+                    column.column_name,
+                    'Y' if column.customer_visible_yn == 'Y' else 'N',
+                    'Y' if column.customer_populatable_yn == 'Y' else 'N',
+                    column.column_type,
+                    column.default_value if column.default_value else None,
+                    column.exercise_date_yn,
+                    column.available_before
+                ))
+
+            placeholders = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(values))
+
+            sql_query = sql_insert + placeholders
+
+            db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
+            custom_column_count = db.cursor.rowcount
+        db.cnx.commit()
+        db.cnx.close()
+        return {"status": f"Success! Draft product created with ID: {product_id}, "
+                          f"and {custom_column_count} custom columns",
+                "product_id": product_id}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.patch("/{product_id}")
+async def modify_product(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
+    """
+    Notes:
+
+    Fields that should be set to `null` should be passed with the value `__null__`.
+    Omitted fields or fields with the value `None` will not be updated.
+    """
+
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+
+    update_fields = {}
+
+    def check_field(field_name, value):
+        if value == "__null__":
+            update_fields[field_name] = None
+        elif value is not None:
+            update_fields[field_name] = value
+
+    check_field("category_id", product.category_id)
+    check_field("subcategory_id", product.subcategory_id)
+    check_field("name", product.name)
+    check_field("description", product.description)
+    check_field("currency", product.currency)
+    check_field("term", product.term)
+    check_field("percentage", product.percentage)
+    check_field("monetary_amount", product.monetary_amount)
+    check_field("percentage_label", product.percentage_label)
+    check_field("mon_amt_label", product.mon_amt_label)
+    check_field("available_from", product.available_from)
+    check_field("available_till", product.available_till)
+    check_field("picture_name", product.picture_name)
+    check_field("draft_owner", product.draft_owner)
+    check_field("terms_and_conditions", product.terms_and_conditions)
+
+    if not update_fields:
+        raise HTTPException(400, "No fields to update")
+
+    set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+    values = list(update_fields.values())
+
+    try:
+        stmt = f"UPDATE products SET {set_clause} WHERE product_id = %s"
+        values.append(product_id)
+        db.cursor.execute(stmt, values)
+
+        db.cnx.commit()
+        return {"status": f"Success! Product {product_id} has been updated"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.put("/{product_id}/availability")
+async def modify_product(product_id: int, product: s.ProductAvailability, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+
+    try:
+        stmt = "UPDATE products SET available_from = %s, available_till = %s WHERE product_id = %s"
+        db.cursor.execute(stmt, (product.available_from, product.available_till, product_id))
+        db.cnx.commit()
+        return {"status": "Success!"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.post("/{product_id}/duplicate")
+async def duplicate_product(product_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['A', 'C', 'E']:  # after a product is no longer a draft, only admins can change it
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+
+    try:
+        db.cursor.execute("SELECT clone_product_and_custom_columns(%s, %s)", (product_id, usr_account_id))
+        product_id = db.cursor.fetchone()[0]
+        db.cnx.commit()
+        return {"status": f"Success! Product {product_id} created.",
+                "product_id": product_id}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.patch("/draft/{product_id}")
+async def modify_product_draft(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} not found.")
+    if db.cursor.fetchone()[0] != 'Y':
+        raise HTTPException(403, f"Product {product_id} is not a draft.")
+
+    update_fields = {}
+    if product.category_id is not None:
+        update_fields["category_id"] = product.category_id
+    if product.subcategory_id is not None:
+        update_fields["subcategory_id"] = product.subcategory_id
+    if product.name is not None:
+        update_fields["name"] = product.name
+    if product.description is not None:
+        update_fields["description"] = product.description
+    if product.currency is not None:
+        update_fields["currency"] = product.currency
+    if product.term is not None:
+        update_fields["term"] = product.term
+    if product.percentage is not None:
+        update_fields["percentage"] = product.percentage
+    if product.monetary_amount is not None:
+        update_fields["monetary_amount"] = product.monetary_amount
+    if product.percentage_label is not None:
+        update_fields["percentage_label"] = product.percentage_label
+    if product.mon_amt_label is not None:
+        update_fields["mon_amt_label"] = product.mon_amt_label
+    if product.available_from is not None:
+        update_fields["available_from"] = product.available_from
+    if product.available_till is not None:
+        update_fields["available_till"] = product.available_till
+    if product.picture_name is not None:
+        update_fields["picture_name"] = product.picture_name
+    if product.draft_owner is not None:
+        update_fields["draft_owner"] = product.draft_owner
+    if product.draft_yn is not None:
+        if usr_account_role in ['C', 'A']:
+            update_fields["draft_yn"] = 'N' if product.draft_yn == 'N' else 'Y'
+            update_fields["draft_owner"] = None
+    if product.terms_and_conditions is not None:
+        update_fields["terms_and_conditions"] = product.terms_and_conditions
+
+    if not update_fields:
+        raise HTTPException(400, "No fields to update")
+
+    set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+    values = list(update_fields.values())
+
+    try:
+        stmt = f"UPDATE products SET {set_clause} WHERE product_id = %s"
+        values.append(product_id)
+        db.cursor.execute(stmt, values)
+
+        if update_fields.get("draft_yn") == 'N':
+            db.cursor.execute("SELECT copy_product_custom_column_def(%s)", (product_id,))
+
+        db.cnx.commit()
+        return {"status": f"Success! Draft product with ID {product_id} has been updated"}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.delete("/draft/{product_id}")
+async def delete_product_draft(product_id: int, token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:
+        raise HTTPException(401, "User does not have privileges")
+
+    db.cursor.execute("SELECT draft_yn FROM products WHERE product_id = %s", (product_id,))
+
+    if db.cursor.rowcount == 0 or db.cursor.fetchone()[0] == 'N':
+        raise HTTPException(404, f"Product {product_id} either does not exist or is not a draft.")
+
+    try:
+        db.cursor.execute("DELETE FROM draft_product_custom_column_def WHERE product_id = %s", (product_id,))
+        db.cursor.execute("DELETE FROM products WHERE product_id = %s", (product_id,))
+        db.cnx.commit()
+        return {"status": f"Success! Product {product_id} has successfully been deleted."}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
+
+
+@router.put("/draft/{product_id}/custom-columns")
+async def modify_a_draft_products_custom_columns(product_id: int, columns: List[s.NewProductCustomColumnDefinition],
+                                                 token: str = Depends(s.oauth2_scheme)):
+    usr_account_id, usr_account_role = h.verify_token(token)
+    if not db.cnx.is_connected():
+        db.cnx, db.cursor = db.connect()
+    if usr_account_role not in ['C', 'A', 'E']:  # regular employees can create products as well
+        raise HTTPException(401, "User does not have privileges")
+    db.cursor.execute("SELECT draft_owner FROM products WHERE product_id = %s", (product_id,))
+    if db.cursor.rowcount == 0:
+        raise HTTPException(404, f"Product {product_id} does not exist.")
+    draft_owner = db.cursor.fetchone()[0]
+    # I.e., it's not the user's draft and the user is not a C-Suit/Admin
+    if draft_owner != usr_account_id and usr_account_role not in ['C', 'A']:
+        raise HTTPException(401, "User does not have privileges")
+
+    try:
+        db.cursor.execute("DELETE FROM draft_product_custom_column_def WHERE product_id = %s", (product_id,))
+
+        if not columns:
+            db.cnx.commit()
+            return {"status": "Success!"}
+        ordered_columns = sorted(columns, key=lambda column: column.order_no or 100)
+
+        for index, column in enumerate(ordered_columns):
+            column.order_no = index
+
+        sql_insert = "INSERT INTO draft_product_custom_column_def " \
+                     "(product_id, order_no, column_name, customer_visible_yn, customer_populatable_yn, column_type, " \
+                     "default_value, exercise_date_yn, available_before) VALUES "
+        values = []
+
+        for column in ordered_columns:
+            values.append((
+                product_id,
+                column.order_no,
+                column.column_name,
+                'Y' if column.customer_visible_yn == 'Y' else 'N',
+                'Y' if column.customer_populatable_yn == 'Y' else 'N',
+                column.column_type,
+                column.default_value if column.default_value else None,
+                column.exercise_date_yn,
+                column.available_before
+            ))
+
+        placeholders = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(values))
+
+        sql_query = sql_insert + placeholders
+
+        db.cursor.execute(sql_query, [item for sublist in values for item in sublist])
+        custom_column_count = db.cursor.rowcount
+        db.cnx.commit()
+        return {"status": f"Success! {custom_column_count} custom columns have been added for {product_id}."}
+    except Exception as err:
+        db.cnx.rollback()
+        raise HTTPException(500, f"An error occurred: {err}")
 
 
 @router.get("/instances/", response_model=List[s.ProductCard])

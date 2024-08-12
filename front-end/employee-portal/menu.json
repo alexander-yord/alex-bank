@@ -50,19 +50,24 @@
         "dataGroup": "group4",
         "children": [
             {
-                "displayName": "Manage Product",
-                "url": "something.html"
+                "displayName": "Manage Product Categories & Subcategories", 
+                "url": "manage-categories.html",
+                "privileges": ["A", "C"]
+            },
+            {
+                "displayName": "Manage Products & Drafts",
+                "url": "manage-catalog.html"
             },
             {
                 "displayName": "New Product",
-                "url": "something.html"
+                "url": "new-product.html"
             }
         ]
     },
     {
         "displayName": "Employees",
         "icon": "../assets/building-user-solid.svg",
-        "privileges": ["A", "C", "E"],
+        "privileges": ["A", "C"],
         "dataGroup": "group5",
         "children": [
             {

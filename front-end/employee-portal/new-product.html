@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../src/employee-portal.css">
+    <title>Alex Bank</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+    <meta name="theme-color" content="rgb(131, 152, 162)" />
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/multiselect.css">
+    <script src="../src/functions.js"></script>
+    <script src="node_modules/tinymce/tinymce.min.js"></script>
+    <title>Employee Portal</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+            
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .button-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; 
+            top: 0; 
+            background-color: white; 
+            z-index: 1000; 
+            width: calc(100% + 20px);
+            margin-left: -20px; 
+            padding-left: 20px;
+        }
+        .header-text {
+            font-size: 20px;
+        }
+        .header-buttons {
+            display: flex;
+        }
+        .header-buttons button {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        select:disabled {
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div v-if="isLoggedIn && ['A', 'C', 'E'].includes(user_role)">
+            <div class="sidebar">
+                <div class="sidebar-content">
+                    <div>
+                        <h2><a style="color: #000 !important; text-decoration: none; cursor: pointer;" href="index.html"><span><img height="20px" src="../img/alex_bank.png"> </span>Employee Portal</a></h2>
+                    </div>
+                    <div class="accordion" v-if="menu.length != 0">
+                        <div v-for="(group, index) in menu" class="accordion-group" :data-group="group.dataGroup">
+                            <div v-if="group.privileges.includes(user_role)">
+                                <div class="accordion-header" @click="toggleAccordion(index)">
+                                    <span><img :src="group.icon"></span>
+                                    <span class="accordion-body-title">{{group.displayName}}</span>
+                                </div>
+                                <div class="accordion-body" :class="{ show: openIndex === index }">
+                                    <p v-for="child in group.children.filter(child => !child.privileges || child.privileges.includes(user_role))">
+                                        <a :href="child.url">{{child.displayName}}</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                    <div class="sidebar-footer">
+                        <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
+                        <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="emp-portal-content">
+
+                <div class="button-header" style="margin-right: 20px;">
+                    <h2>Create Product</h2>
+                    <div class="header-buttons">
+                        <button @click="createProduct" class="secondary-button" style="width: 150px;">Save Draft</button>
+                        <button @click="cancelProduct" class="red-button" style="width: 150px; margin-right: 20px;">Cancel </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">Product Properties</h3>
+                    <div class="form-container">
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <input type="text" v-model="product.name" style="width: 100%;" id="name" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description:</label>
+                            <input type="text" v-model="product.description" style="width: 100%;" id="description" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <div class="custom-select">
+                                <select v-model="product.category_id" id="category" @change="loadSubcategory">
+                                    <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="subcategory">Subcategory:</label>
+                            <div class="custom-select">
+                                <select v-model="product.subcategory_id" id="subcategory">
+                                    <option :value="null">None</option> 
+                                    <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
+                                        {{ cat.displayName }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="term">Term (in months):</label>
+                            <input type="number" v-model="product.term" style="width: 100%;" id="term">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subcategory">Currency:</label>
+                            <div class="custom-select">
+                                <select v-model="product.currency" id="subcategory">
+                                    <option value="BGN">BGN</option> 
+                                    <option value="EUR">EUR</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="percentage_label">Percentage Label:</label>
+                            <input type="text" v-model="product.percentage_label" style="width: 100%;" id="percentage_label" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="percentage">Percentage:</label>
+                            <input type="number" v-model="product.percentage" style="width: 100%;" id="percentage">
+                        </div>
+                        <div class="form-group">
+                            <label for="mon_amt_label">Monetary Amount Label:</label>
+                            <input type="text" v-model="product.mon_amt_label" style="width: 100%;" id="mon_amt_label" maxlength="255">
+                        </div>
+                        <div class="form-group">
+                            <label for="monetary_amount">Monetary Amount:</label>
+                            <input type="number" v-model="product.monetary_amount" style="width: 100%;" id="monetary_amount">
+                        </div>
+                        <div class="form-group" v-if="['A', 'C'].includes(user_role)">
+                            <label for="available_from">Available From:</label>
+                            <input type="date" v-model="product.available_from" style="width: 100%;" id="available_from">
+                        </div>
+                        <div class="form-group" v-if="['A', 'C'].includes(user_role)">
+                            <label for="available_till">Available Till:</label>
+                            <input type="date" v-model="product.available_till" style="width: 100%;" id="available_till">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label>Terms and Conditions:</label> <br>
+                            <textarea id="terms_and_conditions" style="max-width: none;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="card">
+                    <table id="draggableTable">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Column Name</th>
+                                <th>Column Type</th>
+                                <th>Default Value</th>
+                                <th>Customer Visible</th>
+                                <th>Customer Populatable</th>
+                                <th>Is Exercise Date</th>
+                                <th>Editable Up To</th>
+                                <th>&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(col, index) in product.custom_columns">
+                                <td>
+                                    <input type="number" style="margin: 0px; background: none; border: none; color: black; width: 60px;" v-model="col.order_no">
+                                </td>
+                                <td>
+                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.column_name">
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.column_type">
+                                        <option value="integer">Integer</option>
+                                        <option value="float">Float</option>
+                                        <option value="char">Character</option>
+                                        <option value="varchar">Varchar</option>
+                                        <option value="date">Date</option>
+                                        <option value="datetime">Datetime</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value">
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_visible_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_populatable_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.exercise_date_yn">
+                                        <option value="Y">&#x2713;</option>
+                                        <option value="N">X</option>
+                                    </select>
+                                </td>
+                                <td><select style="margin: 0px; background: none; border: none; color: black;" v-model="col.available_before">
+                                    <option :value="null">Always</option>
+                                </select></td>
+                                <td class="button-container">
+                                    <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="form-container" style="width: 100%;">
+                        <div class="form-group">
+                            <button @click="addRow" class="secondary-button">Add Row</button> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-else-if="isLoggedIn && !['A', 'C', 'E'].includes(user_role)" class="content">
+            <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
+        </div>
+
+        <div v-else class="content">
+            <h2 style="color: red; text-align: center;">You are not logged in!</h2>
+        </div>
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    user_role: sessionStorage.getItem("user_role"),
+                    user_account_id: sessionStorage.getItem("account_id"),
+                    menu: [],
+                    openIndex: null, 
+                    product_categories: [], 
+                    page_is_for_product_id: null, 
+                    product: {
+                        "category_id": null,
+                        "name": null,
+                        "description": null,
+                        "terms_and_conditions": null,
+                        "currency": null,
+                        "term": null,
+                        "percentage": null,
+                        "monetary_amount": null,
+                        "percentage_label": null,
+                        "mon_amt_label": null,
+                        "available_from": null,
+                        "available_till": null,
+                        "picture_name": null,
+                        "subcategory_id": null,
+                        "custom_columns": []
+                    }, 
+                    product_categories: [], 
+                    product_subcategories: [], 
+                    editing_privilege: null, 
+                    statuses: []
+                };
+            },
+            methods: {
+                async loadMenu () {
+                    try {
+                        const response = await fetch("menu.json");
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const menu = await response.json();
+                        this.menu = menu;
+                    } catch (error) {
+                        console.error("Failed to load menu:", error);
+                    }
+                },
+                toggleAccordion(index) {
+                    this.openIndex = this.openIndex === index ? null : index;
+                },
+                async loadPageContents () {
+                    const response1 = await fetch(`${API_BASE_URL}/product/categories?only_catalog_yn=N`, {
+                        method: "GET"
+                    });
+                    const data1 = await response1.json();
+                    if(!response1.ok) {
+                        console.log(`An error occurred: ${data1}`);
+                    }
+                    this.product_categories = data1; 
+
+                    const response2 = await fetch(`${API_BASE_URL}/front-end/dd-options`, {
+                        method: "GET"
+                    });
+                    const data2 = await response2.json();
+                    if(!response2.ok) {
+                        console.log(`An error occurred: ${data2}`);
+                    }
+                    this.statuses = data2["statuses"];
+
+                    new Promise((resolve) => {
+                        setTimeout(resolve, 1000);
+                    }).then(() => {
+                        tinymce.init({
+                            selector: '#terms_and_conditions', 
+                            height: 300,
+                            license_key: 'gpl', 
+                            plugins: 'lists link',
+                            toolbar: 'undo redo | blocks | bold italic link | alignleft aligncenter alignright alignjustify | numlist bullist | indent outdent | wordcount'
+                        });
+                    });
+                }, 
+                async loadSubcategory() {
+                    if (this.product.category_id == null) {
+                        this.product_subcategories = []; 
+                        console.log(this.product_subcategories);
+                        return;
+                    }
+                    const response = await fetch(`${API_BASE_URL}/product/subcategories?category_id=${this.product.category_id}&only_catalog_yn=N`, {
+                        method: "GET", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                    }
+                    this.product_subcategories = data;
+                    console.log(this.product_subcategories);
+                }, 
+                async createProduct() {
+                    var editor = tinymce.get('terms_and_conditions');
+                    var content = editor.getContent();
+                    this.product.terms_and_conditions = content;
+
+                    // Check if custom_columns exists and is an array
+                    if (Array.isArray(this.product.custom_columns)) {
+                        // Find the maximum order_no value in the array
+                        const maxOrderNo = Math.max(...this.product.custom_columns.map(col => col.order_no), 0);
+
+                        // Iterate over each custom column and adjust order_no if necessary
+                        this.product.custom_columns.forEach(col => {
+                            if (col.order_no === -Infinity) {
+                                col.order_no = Math.max(0, maxOrderNo + 1);
+                            }
+                        });
+                    }
+                    console.log(this.product);
+                    const response = await fetch(`${API_BASE_URL}/product/draft`, {
+                        method: "POST", 
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                        }, 
+                        body: JSON.stringify(this.product)
+                    });
+                    const data = await response.json();
+                    if(!response.ok) {
+                        console.log(`An error occurred: ${data}`);
+                    }
+                    
+                    window.location.href = "product.html?product_id="+data["product_id"];
+                },
+                cancelProduct() {
+                    if (!confirm("Are you sure you want to cancel this product? Your changes will not be saved.")) {
+                        return ;
+                    }
+                    window.location.href = "index.html"
+                },
+                addRow() {
+                    this.product.custom_columns.push({
+                        "order_no": Math.max(...this.product.custom_columns.map(col => col.order_no))+1,
+                        "column_name": null,
+                        "customer_visible_yn": 'N',
+                        "customer_populatable_yn": 'N',
+                        "column_type": "integer",
+                        "default_value": null,
+                        "exercise_date_yn": 'N',
+                        "available_before": null
+                    })
+                }, 
+                deleteRow(index) {
+                    this.product.custom_columns.splice(index, 1);
+                }
+            },
+            mounted() {
+                this.loadMenu();
+                redirectIfNotLoggedIn();
+                this.loadPageContents();
+            },
+            computed: {
+                productSubcategoriesWithCatalogStatus() {
+                    return this.product_subcategories.map(cat => {
+                        return {
+                            ...cat,
+                            displayName: cat.catalog_yn === 'N' ? `${cat.subcategory_name} (Not in Catalog)` : cat.subcategory_name
+                        };
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

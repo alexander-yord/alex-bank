@@ -417,7 +417,7 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
 
 
 @router.post("/{account_id}/product/{product_id}")
-async def product_sale(account_id: int, product_id: int, data: s.NewProduct, token: str = Depends(s.oauth2_scheme)):
+async def product_sale(account_id: int, product_id: int, data: s.NewProductInstance, token: str = Depends(s.oauth2_scheme)):
     usr_account_id, usr_account_role = h.verify_token(token)
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()

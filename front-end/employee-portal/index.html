@@ -24,13 +24,18 @@
                     <div class="accordion" v-if="menu.length != 0">
                         <div v-for="(group, index) in menu" class="accordion-group" :data-group="group.dataGroup">
                             <div v-if="group.privileges.includes(user_role)">
-                                <div class="accordion-header" @click="toggleAccordion(index)"><span><img :src="group.icon"></span> <span class="accordion-body-title">{{group.displayName}}</span></div>
+                                <div class="accordion-header" @click="toggleAccordion(index)">
+                                    <span><img :src="group.icon"></span>
+                                    <span class="accordion-body-title">{{group.displayName}}</span>
+                                </div>
                                 <div class="accordion-body" :class="{ show: openIndex === index }">
-                                    <p v-for="child in group.children"><a :href="child.url">{{child.displayName}}</a></p>
+                                    <p v-for="child in group.children.filter(child => !child.privileges || child.privileges.includes(user_role))">
+                                        <a :href="child.url">{{child.displayName}}</a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>    
                     <div class="sidebar-footer">
                         <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
                         <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
@@ -55,7 +60,7 @@
                 <br>
                 
                 <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'preview'">
-                    <a class="product-card" v-for="prod in products.slice(0, 3)" :href="'product.html?product_uid='+prod.product_uid">
+                    <a class="product-card" v-for="prod in products.slice(0, 3)" :href="'instance.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
@@ -64,7 +69,7 @@
                     </a>
                 </div>
                 <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'active'">
-                    <a class="product-card" v-for="prod in products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code))" :href="'product.html?product_uid='+prod.product_uid">
+                    <a class="product-card" v-for="prod in products.filter(prod => !['CNL', 'CMP', 'WOF', 'DEN'].includes(prod.status_code))" :href="'instance.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
@@ -73,7 +78,7 @@
                     </a>
                 </div>
                 <div class="product-grid" v-if="Object.keys(products).length && assigned_show == 'all'">
-                    <a class="product-card" v-for="prod in products" :href="'product.html?product_uid='+prod.product_uid">
+                    <a class="product-card" v-for="prod in products" :href="'instance.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>
@@ -90,7 +95,7 @@
                 </div>   
                 <br> 
                 <div class="product-grid" v-if="Object.keys(applications).length">
-                    <a class="product-card" v-for="prod in applications" :href="'product.html?product_uid='+prod.product_uid">
+                    <a class="product-card" v-for="prod in applications" :href="'instance.html?product_uid='+prod.product_uid">
                         <img :src="'../img/products/'+prod.picture_name+'.png'"> 
                         <div class="product-title">{{prod.name}}</div>
                         <div class="product-description">Product UID: {{prod.product_uid}} | {{prod.first_name}} {{prod.last_name}} </div>

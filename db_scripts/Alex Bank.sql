@@ -58,20 +58,37 @@ CREATE TABLE `products` (
   `mon_amt_label` varchar(255),
   `available_from` datetime,
   `available_till` datetime,
-  `picture_name` varchar(255)
+  `picture_name` varchar(255),
+  `draft_yn` char(1),
+  `draft_owner` integer
 );
 
 CREATE TABLE `product_categories` (
   `category_id` varchar(3) PRIMARY KEY,
-  `category_name` varchar(255),
-  `description` varchar(255)
+  `category_name` varchar(255) NOT NULL,
+  `description` varchar(255) NOT NULL,
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
 );
 
 CREATE TABLE `product_subcategories` (
   `subcategory_id` integer PRIMARY KEY AUTO_INCREMENT,
-  `category_id` varchar(3),
-  `subcategory_name` varchar(255),
-  `subcategory_description` varchar(255)
+  `category_id` varchar(3) NOT NULL,
+  `subcategory_name` varchar(255) NOT NULL,
+  `subcategory_description` varchar(255) NOT NULL,
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
+);
+
+CREATE TABLE `draft_product_custom_column_def` (
+  `product_id` integer NOT NULL,
+  `order_no` integer,
+  `column_name` varchar(255),
+  `customer_visible_yn` char(1),
+  `customer_populatable_yn` char(1),
+  `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
+  `default_value` varchar(255),
+  `exercise_date_yn` char(1),
+  `available_before` varchar(3),
+  PRIMARY KEY (`product_id`, `order_no`)
 );
 
 CREATE TABLE `product_custom_column_def` (
@@ -82,7 +99,8 @@ CREATE TABLE `product_custom_column_def` (
   `customer_populatable_yn` char(1),
   `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
   `default_value` varchar(255),
-  `exercise_date_yn` char(1)
+  `exercise_date_yn` char(1),
+  `available_before` varchar(3)
 );
 
 CREATE TABLE `product_custom_column_values` (
@@ -109,6 +127,7 @@ CREATE TABLE `applications` (
   `approved_yn` char(1),
   `approved_by` integer,
   `approval_dt` timestamp,
+  `lead_notes` text,
   `lead_status` varchar(3),
   `lead_probability` float,
   `visible_yn` char(1)
@@ -131,7 +150,7 @@ CREATE TABLE `product_instances` (
   `latest_update_user_id` integer,
   `latest_note` text,
   `latest_note_public_yn` char(1),
-  `notifications_yn` char(1) DEFAULT 'Y'
+  `notifications_yn` char(1) DEFAULT 'P'
 );
 
 CREATE TABLE `lead_statuses` (
@@ -149,7 +168,17 @@ CREATE TABLE `product_statuses` (
   `status_description` varchar(255)
 );
 
+CREATE TABLE `lead_status_updates` (
+  `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
+  `application_id` integer,
+  `was_status` varchar(3),
+  `is_code` varchar(3),
+  `update_dt` timestamp DEFAULT (now()),
+  `update_user` int
+);
+
 CREATE TABLE `product_status_updates` (
+  `prime_uid` integer PRIMARY KEY AUTO_INCREMENT,
   `product_uid` integer,
   `was_status` varchar(3),
   `is_code` varchar(3),
@@ -269,3 +298,19 @@ ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`pcc_id`) REFERENCES
 ALTER TABLE `product_custom_column_values` ADD FOREIGN KEY (`product_uid`) REFERENCES `product_instances` (`product_uid`);
 
 ALTER TABLE `applications` ADD FOREIGN KEY (`lead_status`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `product_custom_column_def` ADD FOREIGN KEY (`available_before`) REFERENCES `product_statuses` (`code`);
+
+ALTER TABLE `products` ADD FOREIGN KEY (`draft_owner`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`application_id`) REFERENCES `applications` (`application_id`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`was_status`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`is_code`) REFERENCES `lead_statuses` (`code`);
+
+ALTER TABLE `lead_status_updates` ADD FOREIGN KEY (`update_user`) REFERENCES `accounts` (`account_id`);
+
+ALTER TABLE `draft_product_custom_column_def` ADD FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`);
+
+ALTER TABLE `draft_product_custom_column_def` ADD FOREIGN KEY (`available_before`) REFERENCES `product_statuses` (`code`);

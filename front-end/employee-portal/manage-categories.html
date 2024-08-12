@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../src/employee-portal.css">
+    <title>Alex Bank</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="icon" type="image/x-icon" href="../img/favicon.ico" />
+    <meta name="theme-color" content="rgb(131, 152, 162)" />
+    <link rel="stylesheet" href="../src/style.css">
+    <link rel="stylesheet" href="../src/multiselect.css">
+    <script src="../src/functions.js"></script>
+    <title>Employee Portal</title>
+    <style>
+        table {
+          border-collapse: collapse;
+          width: 100%;
+        }
+        
+        th, td {
+          text-align: left;
+          padding: 8px;
+        }
+        
+        tr:nth-child(even) {background-color: #f2f2f2;}
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div v-if="isLoggedIn && ['A', 'C'].includes(user_role)">
+            <div class="sidebar">
+                <div class="sidebar-content">
+                    <div>
+                        <h2><a style="color: #000 !important; text-decoration: none; cursor: pointer;" href="index.html"><span><img height="20px" src="../img/alex_bank.png"> </span>Employee Portal</a></h2>
+                    </div>
+                    <div class="accordion" v-if="menu.length != 0">
+                        <div v-for="(group, index) in menu" class="accordion-group" :data-group="group.dataGroup">
+                            <div v-if="group.privileges.includes(user_role)">
+                                <div class="accordion-header" @click="toggleAccordion(index)">
+                                    <span><img :src="group.icon"></span>
+                                    <span class="accordion-body-title">{{group.displayName}}</span>
+                                </div>
+                                <div class="accordion-body" :class="{ show: openIndex === index }">
+                                    <p v-for="child in group.children.filter(child => !child.privileges || child.privileges.includes(user_role))">
+                                        <a :href="child.url">{{child.displayName}}</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                    <div class="sidebar-footer">
+                        <p><a href="../myaccount/index.html"><span><img src="../assets/circle-user-solid.svg"></span> <span class="sidebar-footer-title">My Account</span></a></p>
+                        <p><a href="../index.html"><span><img height="17px" src="../assets/arrow-left-solid.svg"></span> <span class="sidebar-footer-title">Alex Bank Home</span></a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="emp-portal-content">
+                
+                <h2>Product Cateogories and Subcategories</h2>
+
+                <div class="card">
+                    <h2 style="margin: 0px;">Product Categories</h2>  
+
+                    <table>
+                        <tr>
+                            <td>ID</td>
+                            <td>Category Name</td>
+                            <td>Category Description</td>
+                            <td>In Catalog</td>
+                            <td>Actions</td>
+                        </tr>
+                        <tr v-for="cat in product_categories">
+                            <td>{{cat.category_id}} </td>
+                            <td>
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="cat.category_name" :disabled="editing_category_id != cat.category_id">
+                            </td>
+                            <td> 
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="cat.category_description" :disabled="editing_category_id != cat.category_id">
+                            </td>
+                            <td>
+                                <select style="margin: 0px; background: none; border: none; color: black; padding: 0;" v-model="cat.catalog_yn" :disabled="editing_category_id != cat.category_id">
+                                    <option value="Y">Yes</option>
+                                    <option value="N">No</option>
+                                </select>
+                            </td>
+                            <td class="button-container">
+                                <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="update_category()"><img src="../assets/check-solid.svg" width="15px"></button>
+                                <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="edit_category(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
+                                <button v-if="editing_category_id != cat.category_id" class="icon-button" @click="edit_category(cat.category_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
+                            </td>
+                        </tr>
+                    </table>
+                    <p>* Please make a change request for creating new categories. Requires development work.</p>
+                </div>
+                <br>
+
+                
+                <div class="card">
+                    <h2 style="margin: 0px;">Product Subcategories</h2>
+                    <table>
+                        <tr>
+                            <td>ID</td>
+                            <td>Category</td>
+                            <td>Subcategory Name</td>
+                            <td width="50%">Subcategory Description</td>
+                            <td>In Catalog</td>
+                            <td>Actions</td>
+                        </tr>
+                        <tr v-for="subcat in product_subcategories">
+                            <td>{{subcat.subcategory_id}} </td>
+                            <td>
+                                <select v-model="subcat.category_id" style="margin: 0px; background: none; border: none; color: black; padding: 0;" :disabled="editing_subcategory_id != subcat.subcategory_id">
+                                    <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="subcat.subcategory_name" :disabled="editing_subcategory_id != subcat.subcategory_id">
+                            </td>
+                            <td>
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="subcat.subcategory_description" :disabled="editing_subcategory_id != subcat.subcategory_id">
+                            </td>
+                            <td>
+                                <select style="margin: 0px; background: none; border: none; color: black; padding: 0;" v-model="subcat.catalog_yn" :disabled="editing_subcategory_id != subcat.subcategory_id">
+                                    <option value="Y">Yes</option>
+                                    <option value="N">No</option>
+                                </select>
+                            </td>
+                            <td class="button-container">
+                                <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="update_subcategory()"><img src="../assets/check-solid.svg" width="15px"></button>
+                                <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="edit_subcategory(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
+                                <button v-if="editing_subcategory_id != subcat.subcategory_id" class="icon-button" @click="edit_subcategory(subcat.subcategory_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
+                                <button v-if="editing_subcategory_id != subcat.subcategory_id && subcat.product_count == 0" class="icon-button" @click="delete_subcategory(subcat.subcategory_id)"><img src="../assets/trash-solid.svg" width="15px"></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>
+                                <select v-model="new_subcategory.category_id" style="margin: 0px; background: none; border: none; color: black; padding: 0;">
+                                    <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="new_subcategory.subcategory_name" placeholder="Enter new subcategory...">
+                            </td>
+                            <td>
+                                <input type="text" style="margin: 0px; background: none; border: none; color: black; max-width: none; padding: 0;" v-model="new_subcategory.subcategory_description">
+                            </td>
+                            <td>
+                                <select style="margin: 0px; background: none; border: none; color: black; padding: 0;" v-model="new_subcategory.catalog_yn">
+                                    <option value="Y">Yes</option>
+                                    <option value="N">No</option>
+                                </select>
+                            </td>
+                            <td class="button-container">
+                                <button v-if="new_subcategory.category_id !== null && new_subcategory.subcategory_name !== null && new_subcategory.subcategory_description !== null && new_subcategory.catalog_yn !== null" class="icon-button" @click="create_subcategory"><img src="../assets/check-solid.svg" width="15px"></button>
+                                <button v-if="new_subcategory.category_id !== null || new_subcategory.subcategory_name !== null || new_subcategory.subcategory_description !== null || new_subcategory.catalog_yn !== null" class="icon-button" @click="new_subcategory.category_id = null; new_subcategory.subcategory_name = null; new_subcategory.subcategory_description = null; new_subcategory.catalog_yn = null;"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div v-else-if="isLoggedIn && !['A', 'C'].includes(user_role)" class="content">
+            <h2 style="color: red; text-align: center;">You do not have access to this page!</h2>
+        </div>
+
+        <div v-else class="content">
+            <h2 style="color: red; text-align: center;">You are not logged in!</h2>
+        </div>
+    </div>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: isLoggedIn(),
+                    usr_account_id: sessionStorage.getItem("account_id"),
+                    first_name: sessionStorage.getItem("first_name"),
+                    last_name: sessionStorage.getItem("last_name"),
+                    user_role: sessionStorage.getItem("user_role"),
+                    menu: [],
+                    openIndex: null, 
+                    product_categories: [], 
+                    editing_category_id: null,
+                    original_category: null, // Track the original state of the category
+                    product_subcategories: [], 
+                    editing_subcategory_id: null, 
+                    original_subcategory: null, 
+                    new_subcategory: {
+                        category_id: null, 
+                        subcategory_name: null, 
+                        subcategory_description: null, 
+                        catalog_yn: null
+                    }
+                };
+            },
+            methods: {
+                async loadMenu () {
+                    try {
+                        const response = await fetch("menu.json");
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const menu = await response.json();
+                        this.menu = menu;
+                    } catch (error) {
+                        console.error("Failed to load menu:", error);
+                    }
+                }, 
+                toggleAccordion(index) {
+                    this.openIndex = this.openIndex === index ? null : index;
+                },
+                showOption(opt) {
+                    opt.show = true;
+                },
+                hideOption(opt) {
+                    opt.show = false;
+                }, 
+                async loadPageContent() {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/product/categories?only_catalog_yn=N`, {
+                            method: "GET"
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Categories: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        this.product_categories = data;
+                        console.log(this.product_categories);
+
+                        const response1 = await fetch(`${API_BASE_URL}/product/subcategories?only_catalog_yn=N`, {
+                            method: "GET"
+                        });
+                        if (!response1.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data1 = await response1.json();
+                        this.product_subcategories = data1;
+                    } catch (error) {
+                        console.error('Error fetching categories:', error);
+                    }
+                },
+                edit_category(category_id) {
+                    const category = this.product_categories.find(cat => cat.category_id === category_id);
+                    if (category) {
+                        this.original_category = { ...category }; // Save a copy of the original category
+                    }
+                    this.editing_category_id = category_id;
+                }, 
+                edit_subcategory(subcategory_id) {
+                    const subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === subcategory_id);
+                    if (subcategory) {
+                        this.original_subcategory = { ...subcategory }; // Save a copy of the original category
+                    }
+                    this.editing_subcategory_id = subcategory_id;
+                }, 
+                async update_category() {
+                    if (!confirm("Are you sure you want to edit this category?")) {
+                        return;
+                    }
+                    if (!this.editing_category_id) return;
+    
+                    const category = this.product_categories.find(cat => cat.category_id === this.editing_category_id);
+                    if (!category) return;
+    
+                    const updates = {};
+                    for (const key in category) {
+                        if (category[key] !== this.original_category[key]) {
+                            updates[key] = category[key];
+                        }
+                    }
+    
+                    try {
+                        console.log(updates);
+                        const response = await fetch(`${API_BASE_URL}/product/category/${this.editing_category_id}`, {
+                            method: "PATCH",
+                            headers: {
+                                'Content-Type': 'application/json',
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            },
+                            body: JSON.stringify(updates)
+                        });
+    
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+    
+                        const data = await response.json();
+                        console.log('Update successful:', data);
+    
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Error updating category:', error);
+                    }
+                }, 
+                async update_subcategory() {
+                    if (!confirm("Are you sure you want to edit this subcategory?")) {
+                        return;
+                    }
+                    if (!this.editing_subcategory_id) return;
+
+                    const subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === this.editing_subcategory_id);
+                    if (!subcategory) return;
+
+                    const updates = {};
+                    for (const key in subcategory) {
+                        if (subcategory[key] !== this.original_subcategory[key]) {
+                            updates[key] = subcategory[key];
+                        }
+                    }
+
+                    try {
+                        console.log(updates);
+                        const response = await fetch(`${API_BASE_URL}/product/subcategory/${this.editing_subcategory_id}`, {
+                            method: "PATCH",
+                            headers: {
+                                'Content-Type': 'application/json',
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            },
+                            body: JSON.stringify(updates)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log('Update successful:', data);
+
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Error updating subcategory:', error);
+                    }
+                }, 
+                async create_subcategory() {
+                    if (!confirm("Are you sure you want to create this subcategory?")) {
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/product/subcategory`, {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            },
+                            body: JSON.stringify(this.new_subcategory)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        console.log('Update successful:', data);
+
+                        window.location.reload();
+
+                    } catch (err) {
+                        console.error('Error creating subcategory:', error);
+                    }
+                }, 
+                async delete_subcategory(subcategory_id) {
+                    if (!confirm("Are you sure you want to delete this subcategory?")) {
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/product/subcategory/${subcategory_id}`, {
+                            method: "DELETE",
+                            headers: {
+                                'Content-Type': 'application/json',
+                                "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        console.log('Update successful:', data);
+
+                        window.location.reload();
+
+                    } catch (err) {
+                        console.error('Error creating subcategory:', error);
+                    }
+                }
+            }, 
+            mounted() {
+                this.loadMenu();
+                redirectIfNotLoggedIn();
+                this.loadPageContent();
+            }
+        }).mount('#app');
+    </script>
+    
+</body>
+</html>

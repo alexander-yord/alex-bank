@@ -1,24 +1,24 @@
 -- product categories
-insert into `product_categories` (`category_id`, `category_name`, `description`)
+insert into `product_categories` (`category_id`, `category_name`, `description`, `catalog_yn`)
 values 
-	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.'), 
-    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.'), 
-    ('DER', 'Exotic Derivative', 'Instruments whose price depends on the performance of some underlying asset or condition.');
+	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.', 'Y'), 
+    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.', 'N'), 
+    ('DER', 'Exotic Derivative', 'Instruments whose price depends on the performance of some underlying asset or condition.', 'Y');
  
 -- product subcategories
-INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description) VALUES
-('DER', 'Futures Contract', 'A financial contract which compels the exchange of the underlying on the exercise date.'),
-('DER', 'European Option', 'A financial derivative that can only be exercised at expiration.'),
-('DER', 'American Option', 'A financial derivative that can be exercised at any time before or on its expiration date.'),
-('DER', 'Bermudan Option', 'A financial derivative that can be exercised at specific dates before expiration.'),
-('DER', 'Asian Option', 'A financial derivative whose payoff depends on the average price of the underlying asset over a set period.'),
-('DER', 'Basket Option', 'A financial derivative based on the value of a weighted portfolio of multiple underlying assets.'),
-('DER', 'Range Option', 'A financial derivative that provides a payoff if the underlying asset\'s price stays within a predetermined range during a specified period.');
+INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description, catalog_yn) VALUES
+('DER', 'Futures Contract', 'A financial contract which compels the exchange of the underlying on the exercise date.', 'N'),
+('DER', 'European Option', 'A financial derivative that can only be exercised at expiration.', 'Y'),
+('DER', 'American Option', 'A financial derivative that can be exercised at any time before or on its expiration date.', 'N'),
+('DER', 'Bermudan Option', 'A financial derivative that can be exercised at specific dates before expiration.', 'Y'),
+('DER', 'Asian Option', 'A financial derivative whose payoff depends on the average price of the underlying asset over a set period.', 'N'),
+('DER', 'Basket Option', 'A financial derivative based on the value of a weighted portfolio of multiple underlying assets.', 'N'),
+('DER', 'Range Option', 'A financial derivative that provides a payoff if the underlying asset\'s price stays within a predetermined range during a specified period.', 'N');
 
 
 -- products Small and Medium Short-Term BGN Loans
 insert into `products` (`category_id`, `name`, `description`, `terms_and_conditions`, 
-`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`)
+`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`, `draft_yn`)
 values 
 	('LON', 'Small 1-Month Loan',  'Loan of less than BGN 100 with term of 1 month', '<ol>
     <li>Introduction
@@ -67,7 +67,7 @@ values
         </ul>
     </li>
 </ol>
-<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 1, 0.0000, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 1, 0.0000, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL, 'N'), 
 	('LON', 'Small 3-Month Loan',  'Loan of less than BGN 100 with term of 3 month', '<ol>
    <li>
       Introduction         
@@ -118,7 +118,7 @@ values
       </ul>
    </li>
 </ol>
-<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 3, 0.0100, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 3, 0.0100, 100.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL, 'N'), 
     ('LON', 'Medium 1-Month Loan', 'Loan of less than BGN 500 with term of 1 month', '<ol>
    <li>
       Introduction         
@@ -169,7 +169,7 @@ values
       </ul>
    </li>
 </ol>
-<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 1, 0.0100, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL), 
+<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 1, 0.0100, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL, 'N'), 
     ('LON', 'Medium 3-Month Loan', 'Loan of less than BGN 500 with term of 3 month', '<ol>
    <li>
       Introduction         
@@ -220,14 +220,14 @@ values
       </ul>
    </li>
 </ol>
-<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 3, 0.0200, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL);
+<p>By accepting the Loan, the Borrower acknowledges that they have read, understood, and agreed to these Terms and Conditions.</p>', 'BGN', 3, 0.0200, 500.0, 'Interest rate', 'Maximum amount', '2024-05-25', NULL, 'N');
 
 
 -- Products Election Polling Derivatives 
 insert into products (`category_id`, `subcategory_id`, `name`, `description`, 
-`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`, `picture_name`, `terms_and_conditions`)
+`currency`, `term`, `percentage`, `monetary_amount`, `percentage_label`, `mon_amt_label`, `available_from`, `available_till`, `draft_yn`, `terms_and_conditions`)
 values 
-('DER', 2, 'European Trump Call (Strike: 3.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 2, 'European Trump Call (Strike: 3.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -276,7 +276,7 @@ values
     </li>
 </ol>
 "),
-('DER', 2, 'European Trump Call (Strike: 3.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 2, 'European Trump Call (Strike: 3.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -325,7 +325,7 @@ values
     </li>
 </ol>
 "),
-('DER', 2, 'European Trump Put (Strike: 1.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 2, 'European Trump Put (Strike: 1.5%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -374,7 +374,7 @@ values
     </li>
 </ol>
 "),
-('DER', 2, 'European Trump Put (Strike: 1.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 2, 'European Trump Put (Strike: 1.0%)', 'The poll lead is observed on the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -423,7 +423,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Call (Strike: 3.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 4, 'Bermudan Trump Call (Strike: 3.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.03, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -473,7 +473,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Call (Strike: 3.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 4, 'Bermudan Trump Call (Strike: 3.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is higher than the strike', 'BGN', 1, 0.035, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -523,7 +523,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Put (Strike: (1.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 4, 'Bermudan Trump Put (Strike: 1.5%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.015, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
@@ -573,7 +573,7 @@ values
     </li>
 </ol>
 "),
-('DER', 4, 'Bermudan Trump Put (Strike: (1.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'elections', "
+('DER', 4, 'Bermudan Trump Put (Strike: 1.0%)', 'The poll lead is observed on three days and the strike date, and the Call is exercised if the underlying is lower than the strike', 'BGN', 1, 0.01, 100, 'Strike', 'Notional Amount', '2024-07-15', '2024-10-06', 'N', "
 <ol>
     <li>Application:
         <ul>
