@@ -164,10 +164,10 @@ async def search_for_account(search_str: str, token: str = Depends(s.oauth2_sche
 
         cursor.execute(query, tuple(bindings))
 
+        rows = cursor.fetchall()
         if cursor.rowcount == 0:
             return []
 
-        rows = cursor.fetchall()
         return [s.AccountCard(
             account_id=row[0],
             first_name=row[1],
@@ -268,6 +268,7 @@ async def send_verification_email(account_id: int, token: str = Depends(s.oauth2
             raise HTTPException(401, "User does not have privileges")
 
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount != 1:
             raise HTTPException(404, "Account not found")
 
@@ -316,12 +317,14 @@ async def change_account_verification_status(account_id: int, new_verification_c
 
         # Check if the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount != 1:
             raise HTTPException(404, "Account not found")
 
         # Check if the verification code is valid
         cursor.execute("SELECT verification_status FROM verifications WHERE verification_status = %s",
                        (new_verification_code,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(409, "Not a valid verification_code")
 
@@ -357,6 +360,7 @@ async def update_account_information(account_id: int, data: s.AmendAccount, toke
 
         # Check if the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Account {account_id} does not exist")
 
@@ -411,11 +415,13 @@ async def update_account_group(account_id: int, data: s.AmendAccountGroup, token
 
         # Check if the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Account {account_id} does not exist")
 
         # Check if the provided group code is valid
         cursor.execute("SELECT group_code FROM account_groups WHERE group_code = %s", (data.account_group_code,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(409, "Not a valid group_code")
 
@@ -448,11 +454,13 @@ async def update_account_role(account_id: int, new_user_role: str, token: str = 
 
         # Check if the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Account {account_id} does not exist")
 
         # Check if the provided user role is valid
         cursor.execute("SELECT role FROM user_roles WHERE role = %s", (new_user_role,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(409, "Not a valid user role")
 
@@ -491,6 +499,7 @@ async def update_account_credentials(account_id: int, token: str = Depends(s.oau
 
         # Verify if the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, "Account not found")
 
@@ -577,6 +586,7 @@ async def product_sale(account_id: int, product_id: int, data: s.NewProductInsta
 
         # Validate that the account exists
         cursor.execute("SELECT account_id FROM accounts WHERE account_id = %s", (account_id,))
+        _ = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Account {account_id} does not exist")
 

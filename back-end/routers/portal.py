@@ -46,9 +46,9 @@ def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_id: int
         """
 
         cursor.execute(stmt, (account_id,))
+        rows = cursor.fetchall()
         if cursor.rowcount == 0:
             return []
-        rows = cursor.fetchall()
 
         result = [s.ProductCard(
             product_uid=row[0],
