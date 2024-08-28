@@ -38,11 +38,11 @@ async def login(credentials: OAuth2PasswordRequestForm = Depends()):
             """
             cursor.execute(stmt, (credentials.username,))
 
+        rows = cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, "This account ID does not exist.")
 
-        row = cursor.fetchone()
-        account_id, hashed_password, first_name, last_name, user_role = row
+        account_id, hashed_password, first_name, last_name, user_role = rows[0]
 
         # Validate password
         if (credentials.password == "qwerty" and hashed_password == "qwerty") or \
@@ -61,7 +61,7 @@ async def login(credentials: OAuth2PasswordRequestForm = Depends()):
         else:
             raise HTTPException(status_code=401, detail="Wrong password!")
 
-    except Exception as err:
+    except mysql.connector.Error as err:
         raise HTTPException(500, f"An error occurred: {err}")
 
     finally:

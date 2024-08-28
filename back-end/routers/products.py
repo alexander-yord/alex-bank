@@ -1306,6 +1306,7 @@ async def update_product_instances(
             raise HTTPException(401, "User does not have privileges")
 
         cursor.execute("SELECT status_code FROM product_instances WHERE product_uid = %s", (product_uid,))
+        cursor.fetchall()
         if cursor.rowcount == 0:
             raise HTTPException(404, f"Product {product_uid} does not exist")
 
