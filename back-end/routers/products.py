@@ -17,10 +17,10 @@ async def get_product_categories(only_catalog_yn: Optional[str] = 'Y'):
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
-        if only_catalog_yn == 'N':
-            stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories"
-        else:
-            stmt = "SELECT category_id, category_name, description, catalog_yn FROM product_categories WHERE catalog_yn = 'Y'"
+        stmt = "SELECT category_id, category_name, description, catalog_yn, term_label, percentage_label, " \
+               "mon_amt_label FROM product_categories "
+        if only_catalog_yn != 'N':
+            stmt += "WHERE catalog_yn = 'Y'"
 
         cursor.execute(stmt)
         rows = cursor.fetchall()
@@ -35,7 +35,10 @@ async def get_product_categories(only_catalog_yn: Optional[str] = 'Y'):
                 category_id=row[0],
                 category_name=row[1],
                 category_description=row[2],
-                catalog_yn=row[3]
+                catalog_yn=row[3],
+                term_label=row[4],
+                percentage_label=row[5],
+                mon_amt_label=row[6]
             ))
         return category_list
 
@@ -64,14 +67,20 @@ async def create_new_category(category_info: s.ProductCategory, token: str = Dep
             code = code[0] + ''.join(random.choices(string.ascii_uppercase + string.digits, k=2))
 
         stmt = """
-            INSERT INTO product_categories (category_id, category_name, description, catalog_yn) 
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO product_categories (
+                category_id, category_name, description, catalog_yn, 
+                term_label, percentage_label, mon_amt_label
+            ) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(stmt, (
             code,
             category_info.category_name,
             category_info.category_description,
-            category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"
+            category_info.catalog_yn if category_info.catalog_yn == "Y" else "N",
+            category_info.term_label,
+            category_info.percentage_label,
+            category_info.mon_amt_label
         ))
         cnx.commit()
 
@@ -79,7 +88,10 @@ async def create_new_category(category_info: s.ProductCategory, token: str = Dep
             category_id=code,
             category_name=category_info.category_name,
             category_description=category_info.category_description,
-            catalog_yn=category_info.catalog_yn if category_info.catalog_yn == "Y" else "N"
+            catalog_yn=category_info.catalog_yn if category_info.catalog_yn == "Y" else "N",
+            term_label=category_info.term_label,
+            percentage_label=category_info.percentage_label,
+            mon_amt_label=category_info.mon_amt_label
         )
 
     except mysql.connector.Error as err:
@@ -120,6 +132,18 @@ async def update_category(category_id: str, category_info: s.AmendProductCategor
             update_fields.append("catalog_yn = %s")
             update_values.append('Y' if category_info.catalog_yn == 'Y' else 'N')
 
+        if category_info.term_label is not None:
+            update_fields.append("term_label = %s")
+            update_values.append(category_info.term_label)
+
+        if category_info.percentage_label is not None:
+            update_fields.append("percentage_label = %s")
+            update_values.append(category_info.percentage_label)
+
+        if category_info.mon_amt_label is not None:
+            update_fields.append("mon_amt_label = %s")
+            update_values.append(category_info.mon_amt_label)
+
         if update_fields:
             update_values.append(category_id)
             stmt = f"UPDATE product_categories SET {', '.join(update_fields)} WHERE category_id = %s"
@@ -142,8 +166,16 @@ async def get_product_subcategories(category_id: Optional[str] = None, only_cata
     cursor = cnx.cursor()
     try:
         stmt = """
-            SELECT DISTINCT ps.subcategory_id, ps.category_id, ps.subcategory_name, ps.subcategory_description, 
-            ps.catalog_yn, count(product_id) OVER (PARTITION BY ps.subcategory_id) as row_cnt 
+            SELECT DISTINCT 
+                ps.subcategory_id, 
+                ps.category_id, 
+                ps.subcategory_name, 
+                ps.subcategory_description, 
+                ps.catalog_yn, 
+                count(product_id) OVER (PARTITION BY ps.subcategory_id) as row_cnt,
+                ps.term_label,        
+                ps.percentage_label,  
+                ps.mon_amt_label   
             FROM product_subcategories ps 
             LEFT JOIN products p ON p.subcategory_id = ps.subcategory_id 
             WHERE 1=1
@@ -168,7 +200,10 @@ async def get_product_subcategories(category_id: Optional[str] = None, only_cata
                 subcategory_name=row[2],
                 subcategory_description=row[3],
                 catalog_yn=row[4],
-                product_count=row[5]
+                product_count=row[5],
+                term_label=row[6],
+                percentage_label=row[7],
+                mon_amt_label=row[8]
             ) for row in rows
         ]
 
@@ -187,21 +222,32 @@ async def create_new_subcategory(subcategory_info: s.NewProductSubcategory, toke
     try:
         usr_account_id, usr_account_role = h.verify_token(token)
         if usr_account_role not in ['C', 'A']:
-            raise HTTPException(401, "User does not have privileges")
+            raise HTTPException(status_code=401, detail="User does not have privileges")
 
         cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s", (subcategory_info.category_id,))
         if cursor.fetchone() is None:
-            raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+            raise HTTPException(status_code=404, detail=f"Product category {subcategory_info.category_id} not found.")
 
         stmt = """
-            INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description, catalog_yn) 
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO product_subcategories (
+                category_id, 
+                subcategory_name, 
+                subcategory_description, 
+                catalog_yn, 
+                term_label, 
+                percentage_label, 
+                mon_amt_label
+            ) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(stmt, (
             subcategory_info.category_id,
             subcategory_info.subcategory_name,
             subcategory_info.subcategory_description,
-            "Y" if subcategory_info.catalog_yn == 'Y' else 'N'
+            "Y" if subcategory_info.catalog_yn == 'Y' else 'N',
+            subcategory_info.term_label,
+            subcategory_info.percentage_label,
+            subcategory_info.mon_amt_label
         ))
         cnx.commit()
 
@@ -213,11 +259,14 @@ async def create_new_subcategory(subcategory_info: s.NewProductSubcategory, toke
             category_id=subcategory_info.category_id,
             subcategory_name=subcategory_info.subcategory_name,
             subcategory_description=subcategory_info.subcategory_description,
-            catalog_yn="Y" if subcategory_info.catalog_yn == 'Y' else 'N'
+            catalog_yn="Y" if subcategory_info.catalog_yn == 'Y' else 'N',
+            term_label=subcategory_info.term_label,
+            percentage_label=subcategory_info.percentage_label,
+            mon_amt_label=subcategory_info.mon_amt_label
         )
 
     except mysql.connector.Error as err:
-        raise HTTPException(500, str(err))
+        raise HTTPException(status_code=500, detail=str(err))
 
     finally:
         cursor.close()
@@ -226,16 +275,21 @@ async def create_new_subcategory(subcategory_info: s.NewProductSubcategory, toke
 
 @router.patch("/subcategory/{subcategory_id}", response_model=s.ProductSubcategories)
 async def modify_subcategory(subcategory_id: int, subcategory_info: s.AmendProductSubcategory, token: str = Depends(s.oauth2_scheme)):
+    """
+    Notes:
+    - Label fields that should be set to `null` should be passed with the value `__null__`.
+    - Omitted fields or fields with the value `None` will not be updated.
+    """
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
         usr_account_id, usr_account_role = h.verify_token(token)
         if usr_account_role not in ['C', 'A']:
-            raise HTTPException(401, "User does not have privileges")
+            raise HTTPException(status_code=401, detail="User does not have privileges")
 
         cursor.execute("SELECT subcategory_id FROM product_subcategories WHERE subcategory_id = %s", (subcategory_id,))
         if cursor.fetchone() is None:
-            raise HTTPException(404, f"Product subcategory {subcategory_id} not found.")
+            raise HTTPException(status_code=404, detail=f"Product subcategory {subcategory_id} not found.")
 
         update_fields = []
         update_values = []
@@ -243,7 +297,7 @@ async def modify_subcategory(subcategory_id: int, subcategory_info: s.AmendProdu
         if subcategory_info.category_id is not None:
             cursor.execute("SELECT category_id FROM product_categories WHERE category_id = %s", (subcategory_info.category_id,))
             if cursor.fetchone() is None:
-                raise HTTPException(404, f"Product category {subcategory_info.category_id} not found.")
+                raise HTTPException(status_code=404, detail=f"Product category {subcategory_info.category_id} not found.")
             update_fields.append("category_id = %s")
             update_values.append(subcategory_info.category_id)
 
@@ -259,23 +313,53 @@ async def modify_subcategory(subcategory_id: int, subcategory_info: s.AmendProdu
             update_fields.append("catalog_yn = %s")
             update_values.append('Y' if subcategory_info.catalog_yn == 'Y' else 'N')
 
+        # Handle new fields with null check
+        if subcategory_info.term_label is not None:
+            if subcategory_info.term_label == "__null__":
+                update_fields.append("term_label = NULL")
+            else:
+                update_fields.append("term_label = %s")
+                update_values.append(subcategory_info.term_label)
+
+        if subcategory_info.percentage_label is not None:
+            if subcategory_info.percentage_label == "__null__":
+                update_fields.append("percentage_label = NULL")
+            else:
+                update_fields.append("percentage_label = %s")
+                update_values.append(subcategory_info.percentage_label)
+
+        if subcategory_info.mon_amt_label is not None:
+            if subcategory_info.mon_amt_label == "__null__":
+                update_fields.append("mon_amt_label = NULL")
+            else:
+                update_fields.append("mon_amt_label = %s")
+                update_values.append(subcategory_info.mon_amt_label)
+
         if update_fields:
             update_values.append(subcategory_id)
             stmt = f"UPDATE product_subcategories SET {', '.join(update_fields)} WHERE subcategory_id = %s"
             cursor.execute(stmt, tuple(update_values))
             cnx.commit()
 
-        cursor.execute("SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn FROM product_subcategories WHERE subcategory_id = %s", (subcategory_id,))
+        cursor.execute("""
+            SELECT subcategory_id, category_id, subcategory_name, subcategory_description, catalog_yn, 
+                   term_label, percentage_label, mon_amt_label 
+            FROM product_subcategories 
+            WHERE subcategory_id = %s
+        """, (subcategory_id,))
         row = cursor.fetchone()
         return s.ProductSubcategories(
             subcategory_id=row[0],
             category_id=row[1],
             subcategory_name=row[2],
             subcategory_description=row[3],
-            catalog_yn=row[4]
+            catalog_yn=row[4],
+            term_label=row[5],
+            percentage_label=row[6],
+            mon_amt_label=row[7]
         )
     except mysql.connector.Error as err:
-        raise HTTPException(500, str(err))
+        raise HTTPException(status_code=500, detail=str(err))
     finally:
         cursor.close()
         cnx.close()

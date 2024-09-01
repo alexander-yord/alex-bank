@@ -54,6 +54,7 @@ CREATE TABLE `products` (
   `term` integer COMMENT '(in months)',
   `percentage` float,
   `monetary_amount` float,
+  `term_label` varchar(255),
   `percentage_label` varchar(255),
   `mon_amt_label` varchar(255),
   `available_from` datetime,
@@ -67,7 +68,10 @@ CREATE TABLE `product_categories` (
   `category_id` varchar(3) PRIMARY KEY,
   `category_name` varchar(255) NOT NULL,
   `description` varchar(255) NOT NULL,
-  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N',
+  `term_label` varchar(255) NOT NULL DEFAULT 'Term (months)',
+  `percentage_label` varchar(255) NOT NULL DEFAULT 'Yield',
+  `mon_amt_label` varchar(255) NOT NULL DEFAULT 'Price'
 );
 
 CREATE TABLE `product_subcategories` (
@@ -75,7 +79,10 @@ CREATE TABLE `product_subcategories` (
   `category_id` varchar(3) NOT NULL,
   `subcategory_name` varchar(255) NOT NULL,
   `subcategory_description` varchar(255) NOT NULL,
-  `catalog_yn` char(1) NOT NULL DEFAULT 'N'
+  `catalog_yn` char(1) NOT NULL DEFAULT 'N',
+  `term_label` varchar(255),
+  `percentage_label` varchar(255),
+  `mon_amt_label` varchar(255)
 );
 
 CREATE TABLE `draft_product_custom_column_def` (

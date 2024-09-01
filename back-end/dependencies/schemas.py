@@ -199,12 +199,18 @@ class ProductCategory(BaseModel):
     category_name: str
     category_description: str
     catalog_yn: str
+    term_label: str
+    percentage_label: str
+    mon_amt_label: str
 
 
 class AmendProductCategory(BaseModel):
     category_name: Optional[str] = None
     category_description: Optional[str] = None
     catalog_yn: Optional[str] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class ProductSubcategories(BaseModel):
@@ -214,6 +220,9 @@ class ProductSubcategories(BaseModel):
     subcategory_description: str
     catalog_yn: str
     product_count: Optional[int] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class AmendProductSubcategory(BaseModel):
@@ -221,6 +230,9 @@ class AmendProductSubcategory(BaseModel):
     subcategory_name: Optional[str] = None
     subcategory_description: Optional[str] = None
     catalog_yn: Optional[str] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class NewProductSubcategory(BaseModel):
@@ -228,6 +240,9 @@ class NewProductSubcategory(BaseModel):
     subcategory_name: str
     subcategory_description: str
     catalog_yn: str
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class NewProductInstance(BaseModel):

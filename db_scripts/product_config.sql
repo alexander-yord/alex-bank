@@ -1,9 +1,9 @@
 -- product categories
-insert into `product_categories` (`category_id`, `category_name`, `description`, `catalog_yn`)
+insert into `product_categories` (`category_id`, `category_name`, `description`, `catalog_yn`, `term_label`, `percentage_label`, `mon_amt_label`)
 values 
-	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.', 'Y'), 
-    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.', 'N'), 
-    ('DER', 'Exotic Derivative', 'Instruments whose price depends on the performance of some underlying asset or condition.', 'Y');
+	('LON', 'Loan', 'Loans are agreements in which Alex Bank lends money out to the loan applicant in exchange for an interest.', 'Y', 'Term/Period', 'Interest Rate', 'Principal Amount'), 
+    ('PEQ', 'Private Equity Offerring', 'Private Equity Offerings involve the sale of private equity, facilitated by Alex Bank.', 'N', 'Term/Period', 'Commission', 'Initial Price'), 
+    ('DER', 'Exotic Derivative', 'Instruments whose price depends on the performance of some underlying asset or condition.', 'Y', 'Term/Period', 'Commission', 'Notional Amount');
  
 -- product subcategories
 INSERT INTO product_subcategories (category_id, subcategory_name, subcategory_description, catalog_yn) VALUES
