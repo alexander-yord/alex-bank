@@ -113,7 +113,7 @@
                         <div class="form-group">
                             <label for="category">Category:</label>
                             <div class="custom-select">
-                                <select v-model="product.category_id" id="category" @change="loadSubcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                                <select v-model="product.category_id" id="category" @change="categoryChangeLabels" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
                                 </select>
                             </div>
@@ -121,18 +121,13 @@
                         <div class="form-group">
                             <label for="subcategory">Subcategory:</label>
                             <div class="custom-select">
-                                <select v-model="product.subcategory_id" id="subcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                                <select v-model="product.subcategory_id" id="subcategory" @change="subcategoryChangeLabels" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option :value="null">None</option> 
                                     <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
                                         {{ cat.displayName }}
                                     </option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="term">Term (in months):</label>
-                            <input type="number" v-model="product.term" style="width: 100%;" id="term" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
 
                         <div class="form-group">
@@ -144,6 +139,20 @@
                                     <option value="USD">USD</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="max-width: 300px; margin-top: 23px;">Note that if the values below (not the labels) are left blank, they will not be displayed on product pages.</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Term Label:</label>
+                            <input type="text" v-model="product.term_label" style="width: 100%;" id="percentage_label" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="term">Term (in months):</label>
+                            <input type="number" v-model="product.term" style="width: 100%;" id="term" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
 
                         <div class="form-group">
@@ -393,6 +402,33 @@
                         });
                     });
                 }, 
+                async categoryChangeLabels () {
+                    // this function is invoked on changes to the category
+                    this.product.subcategory_id = null;
+                    if (confirm("Do you want the new category's labels to override your existing ones?\nPress \"Ok\" for yes\nPress \"Cancel\" for no")) {
+                        const new_category = this.product_categories.find(cat => cat.category_id === this.product.category_id);
+                        this.product.term_label = new_category.term_label;
+                        this.product.mon_amt_label = new_category.mon_amt_label;
+                        this.product.percentage_label = new_category.percentage_label;
+                        
+                    }
+                    await this.loadSubcategory();
+                },
+                async subcategoryChangeLabels () {
+                    // this function is invoked on changes to the subcategory
+                    if (confirm("Do you want the new subcategory's labels to override your existing ones?\nPress \"Ok\" for yes\nPress \"Cancel\" for no")) {
+                        const new_subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === this.product.subcategory_id);
+                        if (new_subcategory.term_label !== null) {
+                            this.product.term_label = new_subcategory.term_label;
+                        }
+                        if (new_subcategory.mon_amt_label !== null) {
+                            this.product.mon_amt_label = new_subcategory.mon_amt_label;
+                        }
+                        if (new_subcategory.percentage_label !== null) {
+                            this.product.percentage_label = new_subcategory.percentage_label;
+                        }
+                    }
+                },
                 async loadSubcategory() {
                     if (this.product.category_id == null) {
                         this.product_subcategories = []; 

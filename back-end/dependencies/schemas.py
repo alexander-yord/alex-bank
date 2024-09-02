@@ -188,6 +188,7 @@ class AmendProduct(BaseModel):
     available_from: Optional[Union[str, str]] = Field(None)
     available_till: Optional[Union[str, str]] = Field(None)
     picture_name: Optional[Union[str, str]] = Field(None)
+    draft_yn: Optional[Union[str, str]] = Field(None)
     draft_owner: Optional[Union[str, str]] = Field(None)
     terms_and_conditions: Optional[Union[str, str]] = Field(None)
 

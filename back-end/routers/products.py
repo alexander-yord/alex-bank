@@ -746,6 +746,7 @@ async def modify_product(product_id: int, product: s.AmendProduct, token: str = 
         check_field("term", product.term)
         check_field("percentage", product.percentage)
         check_field("monetary_amount", product.monetary_amount)
+        check_field("term_label", product.term_label)
         check_field("percentage_label", product.percentage_label)
         check_field("mon_amt_label", product.mon_amt_label)
         check_field("available_from", product.available_from)
@@ -828,6 +829,11 @@ async def duplicate_product(product_id: int, token: str = Depends(s.oauth2_schem
 
 @router.patch("/draft/{product_id}")
 async def modify_product_draft(product_id: int, product: s.AmendProduct, token: str = Depends(s.oauth2_scheme)):
+    """
+    Notes:
+    - Fields that should be set to `null` should be passed with the value `__null__`.
+    - Omitted fields or fields with the value `None` will not be updated.
+    """
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
@@ -843,40 +849,37 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
             raise HTTPException(403, f"Product {product_id} is not a draft.")
 
         update_fields = {}
-        if product.category_id is not None:
-            update_fields["category_id"] = product.category_id
-        if product.subcategory_id is not None:
-            update_fields["subcategory_id"] = product.subcategory_id
-        if product.name is not None:
-            update_fields["name"] = product.name
-        if product.description is not None:
-            update_fields["description"] = product.description
-        if product.currency is not None:
-            update_fields["currency"] = product.currency
-        if product.term is not None:
-            update_fields["term"] = product.term
-        if product.percentage is not None:
-            update_fields["percentage"] = product.percentage
-        if product.monetary_amount is not None:
-            update_fields["monetary_amount"] = product.monetary_amount
-        if product.percentage_label is not None:
-            update_fields["percentage_label"] = product.percentage_label
-        if product.mon_amt_label is not None:
-            update_fields["mon_amt_label"] = product.mon_amt_label
-        if product.available_from is not None:
-            update_fields["available_from"] = product.available_from
-        if product.available_till is not None:
-            update_fields["available_till"] = product.available_till
-        if product.picture_name is not None:
-            update_fields["picture_name"] = product.picture_name
-        if product.draft_owner is not None:
-            update_fields["draft_owner"] = product.draft_owner
+
+        def check_field(field_name, value):
+            if value == "__null__":
+                update_fields[field_name] = None
+            elif value is not None:
+                update_fields[field_name] = value
+
+        check_field("category_id", product.category_id)
+        check_field("subcategory_id", product.subcategory_id)
+        check_field("name", product.name)
+        check_field("description", product.description)
+        check_field("currency", product.currency)
+        check_field("term", product.term)
+        check_field("percentage", product.percentage)
+        check_field("monetary_amount", product.monetary_amount)
+        check_field("term_label", product.term_label)
+        check_field("percentage_label", product.percentage_label)
+        check_field("mon_amt_label", product.mon_amt_label)
+        check_field("available_from", product.available_from)
+        check_field("available_till", product.available_till)
+        check_field("picture_name", product.picture_name)
+        check_field("draft_owner", product.draft_owner)
+        check_field("terms_and_conditions", product.terms_and_conditions)
+
         if product.draft_yn is not None:
             if usr_account_role in ['C', 'A']:
-                update_fields["draft_yn"] = 'N' if product.draft_yn == 'N' else 'Y'
-                update_fields["draft_owner"] = None
-        if product.terms_and_conditions is not None:
-            update_fields["terms_and_conditions"] = product.terms_and_conditions
+                if product.draft_yn == 'N':
+                    update_fields["draft_yn"] = 'N'
+                    update_fields["draft_owner"] = None
+                else:
+                    update_fields["draft_yn"] = 'Y'
 
         if not update_fields:
             raise HTTPException(400, "No fields to update")
