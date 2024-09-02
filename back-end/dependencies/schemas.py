@@ -140,6 +140,7 @@ class Product(BaseModel):
     term: Optional[int] = None
     percentage: Optional[float] = None
     monetary_amount: Optional[float] = None
+    term_label: Optional[str] = None
     percentage_label: Optional[str] = None
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
@@ -160,6 +161,7 @@ class NewProduct(BaseModel):
     term: Optional[int] = None
     percentage: Optional[float] = None
     monetary_amount: Optional[float] = None
+    term_label: Optional[str] = None
     percentage_label: Optional[str] = None
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
@@ -180,6 +182,7 @@ class AmendProduct(BaseModel):
     term: Optional[Union[int, str]] = Field(None)
     percentage: Optional[Union[float, str]] = Field(None)
     monetary_amount: Optional[Union[float, str]] = Field(None)
+    term_label: Optional[Union[str, str]] = Field(None)
     percentage_label: Optional[Union[str, str]] = Field(None)
     mon_amt_label: Optional[Union[str, str]] = Field(None)
     available_from: Optional[Union[str, str]] = Field(None)

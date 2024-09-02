@@ -480,7 +480,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
         SELECT p.product_id, p.category_id, pc.category_name, p.name, p.description, p.terms_and_conditions, 
                p.currency, p.term, p.percentage, p.monetary_amount, p.percentage_label, p.mon_amt_label, 
                p.available_from, p.available_till, COALESCE(p.picture_name, p.category_id), 
-               p.draft_yn, p.draft_owner
+               p.draft_yn, p.draft_owner, p.term_label
         FROM products p
         LEFT JOIN product_categories pc ON pc.category_id = p.category_id
         WHERE p.product_id = %s
@@ -550,6 +550,7 @@ async def info_about_product(product_id: int, token: str | None = Depends(s.opti
             term=product[7],
             percentage=product[8],
             monetary_amount=product[9],
+            term_label=product[17],
             percentage_label=product[10],
             mon_amt_label=product[11],
             available_from=str(product[12].strftime('%Y-%m-%d')) if product[12] is not None else None,

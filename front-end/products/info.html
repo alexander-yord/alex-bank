@@ -58,7 +58,7 @@
             <h3>{{product_info.description}}</h3>
             <table>
               <tr v-if="product_info.term !== null">
-                <td style="text-align: right; width: 200px;"><b>Term/Period:</b></td>
+                <td style="text-align: right; width: 200px;"><b>{{product_info.term_label}}:</b></td>
                 <td>{{product_info.term}} month(s)</td>
               </tr>
               <tr v-if="product_info.percentage !== null">
