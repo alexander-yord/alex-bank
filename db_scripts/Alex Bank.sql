@@ -105,7 +105,7 @@ CREATE TABLE `product_custom_column_def` (
   `customer_visible_yn` char(1),
   `customer_populatable_yn` char(1),
   `column_type` ENUM ('integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime'),
-  `default_value` varchar(255),
+  `default_value` text,
   `exercise_date_yn` char(1),
   `available_before` varchar(3)
 );

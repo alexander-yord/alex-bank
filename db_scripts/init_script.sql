@@ -204,6 +204,7 @@ BEGIN
         term,
         percentage,
         monetary_amount,
+        term_label,
         percentage_label,
         mon_amt_label,
         available_from,
@@ -222,6 +223,7 @@ BEGIN
         term,
         percentage,
         monetary_amount,
+        term_label,
         percentage_label,
         mon_amt_label,
         NULL,
@@ -265,7 +267,54 @@ BEGIN
     -- Return the new product_id
     RETURN v_new_product_id;
 END
-
 //
 
+CREATE FUNCTION validate_custom_column(value VARCHAR(255), datatype VARCHAR(20))
+RETURNS TINYINT(1)
+BEGIN
+    DECLARE isValid TINYINT(1) DEFAULT 0;
 
+    CASE datatype
+        WHEN 'integer' THEN
+            -- Check if the value is a valid signed integer
+            SET isValid = value REGEXP '^-?[0-9]+$';
+
+        WHEN 'float' THEN
+            -- Check if the value is a valid float
+            SET isValid = value REGEXP '^-?[0-9]+(\.[0-9]+)?$';
+
+        WHEN 'date' THEN
+            -- Check if the value matches the YYYY-MM-DD format before attempting to convert
+            IF value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+                SET isValid = (STR_TO_DATE(value, '%Y-%m-%d') IS NOT NULL);
+            ELSE
+                SET isValid = 0;
+            END IF;
+
+        WHEN 'datetime' THEN
+            -- Check if the value matches the YYYY-MM-DD HH:MM:SS format before attempting to convert
+            IF value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$' THEN
+                SET isValid = (STR_TO_DATE(value, '%Y-%m-%d %H:%i:%s') IS NOT NULL);
+            ELSE
+                SET isValid = 0;
+            END IF;
+            
+		WHEN 'char' THEN
+            -- Check if the value is within the valid length for a single character (1)
+            SET isValid = CHAR_LENGTH(value) <= 1;
+
+        WHEN 'varchar' THEN
+            -- Check if the value is within the valid length for VARCHAR (255)
+            SET isValid = CHAR_LENGTH(value) <= 255;
+
+        WHEN 'text' THEN
+            -- TEXT has no specific length constraint, always return TRUE
+            SET isValid = 1;
+
+        ELSE
+            -- If the datatype is not recognized, return FALSE
+            SET isValid = 0;
+    END CASE;
+
+    RETURN isValid;
+END //
