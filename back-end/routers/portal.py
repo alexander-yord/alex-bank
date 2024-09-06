@@ -12,7 +12,7 @@ router = APIRouter(
 
 
 @router.get("/assigned-accounts")
-def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_id: int = None):
+async def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_id: int = None):
     usr_account_id, usr_account_role = h.verify_token(token)
     if account_id is None:
         account_id = usr_account_id
@@ -69,6 +69,29 @@ def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_id: int
         ) for row in rows]
 
         return result
+    except mysql.connector.Error as err:
+        raise HTTPException(500, f"An error occurred: {err}")
+    finally:
+        cursor.close()
+        cnx.close()
+
+
+@router.post("/validate-custom-columns")
+async def verify_custom_columns(input_data: s.CustomColumnValidation):
+    cnx = get_db_connection()
+    cursor = cnx.cursor()
+
+    try:
+        stmt = """select validate_custom_column(%s, %s)"""
+        cursor.execute(stmt, (input_data.value, input_data.datatype))
+        rows = cursor.fetchall()
+        if cursor.rowcount == 0:
+            return s.CustomColumnValidationResult(validation=False)
+        if rows[0][0]:
+            return s.CustomColumnValidationResult(validation=True)
+        else:
+            return s.CustomColumnValidationResult(validation=False)
+
     except mysql.connector.Error as err:
         raise HTTPException(500, f"An error occurred: {err}")
     finally:

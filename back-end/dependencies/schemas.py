@@ -365,3 +365,11 @@ class ProductCard(BaseModel):
     picture_name: Optional[str] = None
 
 
+class CustomColumnValidation(BaseModel):
+    value: str
+    datatype: Literal['integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime']
+
+
+class CustomColumnValidationResult(BaseModel):
+    validation: bool
+
