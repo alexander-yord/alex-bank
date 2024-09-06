@@ -88,6 +88,54 @@
                 </div>
             </div>
 
+            <div class="popup" id="customColumnPopup">
+                <div class="popup-content">
+                    <h3 style="margin: 0px;">Edit Custom Column <span class="close" @click="edit_custom_column(null)">&times;</span></h3>
+                    <br>
+                    <form @submit.prevent="" >
+                        <label>Column Name:</label>
+                        <input type="text" v-model="temp_custom_column_object.column_name" maxlength="255">
+                        <label>Column Type:</label>
+                        <select v-model="temp_custom_column_object.column_type" @change="validateCustomColumnDefaultValue(editing_custom_column_index, temp_custom_column_object.default_value, temp_custom_column_object.column_type)">
+                            <option value="integer">Integer</option>
+                            <option value="float">Float</option>
+                            <option value="char">Character</option>
+                            <option value="varchar">Varchar</option>
+                            <option value="text">Text</option>
+                            <option value="date">Date</option>
+                            <option value="datetime">Datetime</option>
+                        </select>
+                        <label>Default Type:</label>
+                        <textarea v-if="temp_custom_column_object.column_type=='text'" v-model="temp_custom_column_object.default_value"></textarea>
+                        <div v-else class="verification-container">
+                            <input type="text" v-model="temp_custom_column_object.default_value" @input="validateCustomColumnDefaultValue(editing_custom_column_index, temp_custom_column_object.default_value, temp_custom_column_object.column_type)">
+                            <span class="verification-check" id="custom-column-validation-check">✔</span>
+                            <span class="verification-x" id="custom-column-validation-x">✖</span>
+                        </div>
+                        <label>Customer Visible:</label>
+                        <select v-model="temp_custom_column_object.customer_visible_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Customer Populatable:</label>
+                        <select v-model="temp_custom_column_object.customer_populatable_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Exercise Date:</label>
+                        <select v-model="temp_custom_column_object.exercise_date_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Available Before:</label>
+                        <select v-model="temp_custom_column_object.available_before">
+                            <option :value="null">Always</option>
+                            <option v-for="stat in statuses" :value="stat.status_code">{{stat.status_name}} </option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
             <div class="emp-portal-content" v-if="editing_privilege != null">
 
                 <div class="button-header">
@@ -239,7 +287,7 @@
                                         <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value" @input="validateCustomColumnDefaultValue(index, col.default_value, col.column_type)">
                                         <span class="verification-check" :id="index+'-check'">✔</span>
                                         <span class="verification-x" :id="index+'-x'">✖</span>
-                                      </div>
+                                    </div>
                                     
                                 </td>
                                 <td>
@@ -265,6 +313,7 @@
                                     <option v-for="stat in statuses" :value="stat.status_code">{{stat.status_name}} </option>
                                 </select></td>
                                 <td class="button-container" v-if="['all'].includes(editing_privilege)">
+                                    <button class="icon-button" @click="edit_custom_column(index)"><img src="../assets/magnifying-glass-solid.svg" width="15px"></button>
                                     <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
                                 </td>
                             </tr>
@@ -307,7 +356,9 @@
                     product_categories: [], 
                     product_subcategories: [], 
                     editing_privilege: null, 
-                    statuses: []
+                    statuses: [], 
+                    editing_custom_column_index: 0, 
+                    temp_custom_column_object: {}
                 };
             },
             methods: {
@@ -601,7 +652,7 @@
                 }, 
                 addRow() {
                     this.product.custom_columns.push({
-                        "order_no": Math.max(...this.product.custom_columns.map(col => col.order_no))+1,
+                        "order_no": Math.max(0, ...this.product.custom_columns.map(col => col.order_no).filter(n => Number.isFinite(n))) + 1,
                         "column_name": null,
                         "customer_visible_yn": 'N',
                         "customer_populatable_yn": 'N',
@@ -660,17 +711,34 @@
                     }
 
                     // Get the elements for validation feedback
-                    const Check = document.getElementById(index + '-check');
-                    const X = document.getElementById(index + '-x');
+                    const Check = document.getElementById('custom-column-validation-check');
+                    const X = document.getElementById('custom-column-validation-x');
 
                     // Display the validation result
-                    if (isValid) {
+                    if (value == "" || value == null) {
+                        Check.style.display = "none";
+                        X.style.display = "none";
+                    } else if (isValid) {
                         Check.style.display = "inline";
                         X.style.display = "none";
                     } else {
                         Check.style.display = "none";
                         X.style.display = "inline";
                     }
+                }, 
+                edit_custom_column(index) {
+                    console.log(this.product.custom_columns);
+
+                    const popup = document.getElementById("customColumnPopup");
+                    if (index !== null) {
+                        console.log(this.product.custom_columns[index]);
+                        this.temp_custom_column_object = this.product.custom_columns[index];
+                        popup.style.display = "flex";
+                    }
+                    else {
+                        popup.style.display = "none"; 
+                    }
+                    this.validateCustomColumnDefaultValue(index, this.temp_custom_column_object.default_value, this.temp_custom_column_object.column_type);
                 }
             },
             mounted() {
