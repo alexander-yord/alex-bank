@@ -235,7 +235,12 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value">
+                                    <div class="verification-container">
+                                        <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value" @input="validateCustomColumnDefaultValue(index, col.default_value, col.column_type)">
+                                        <span class="verification-check" :id="index+'-check'">✔</span>
+                                        <span class="verification-x" :id="index+'-x'">✖</span>
+                                      </div>
+                                    
                                 </td>
                                 <td>
                                     <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_visible_yn">
@@ -608,6 +613,64 @@
                 }, 
                 deleteRow(index) {
                     this.product.custom_columns.splice(index, 1);
+                }, 
+                validateCustomColumnDefaultValue(index, value, datatype){
+                    console.log(index);
+                    console.log(value);
+                    console.log(datatype);
+
+                    let isValid = false;
+
+                    // Validation logic based on datatype
+                    switch(datatype) {
+                        case 'integer':
+                            isValid = /^-?[0-9]+$/.test(value);
+                            break;
+                        case 'float':
+                            isValid = /^-?[0-9]+(\.[0-9]+)?$/.test(value);
+                            break;
+                        case 'date':
+                            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) {
+                                const date = new Date(value);
+                                isValid = !isNaN(date.getTime());
+                            } else {
+                                isValid = false;
+                            }
+                            break;
+                        case 'datetime':
+                            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(value)) {
+                                const datetime = new Date(value);
+                                isValid = !isNaN(datetime.getTime());
+                            } else {
+                                isValid = false;
+                            }
+                            break;
+                        case 'char':
+                            isValid = value.length <= 1;
+                            break;
+                        case 'varchar':
+                            isValid = value.length <= 255;
+                            break;
+                        case 'text':
+                            isValid = true; // No length constraint for text
+                            break;
+                        default:
+                            isValid = false;
+                            break;
+                    }
+
+                    // Get the elements for validation feedback
+                    const Check = document.getElementById(index + '-check');
+                    const X = document.getElementById(index + '-x');
+
+                    // Display the validation result
+                    if (isValid) {
+                        Check.style.display = "inline";
+                        X.style.display = "none";
+                    } else {
+                        Check.style.display = "none";
+                        X.style.display = "inline";
+                    }
                 }
             },
             mounted() {
