@@ -870,6 +870,7 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
         check_field("available_from", product.available_from)
         check_field("available_till", product.available_till)
         check_field("picture_name", product.picture_name)
+        check_field("draft_yn", product.draft_owner)
         check_field("draft_owner", product.draft_owner)
         check_field("terms_and_conditions", product.terms_and_conditions)
 
@@ -893,6 +894,7 @@ async def modify_product_draft(product_id: int, product: s.AmendProduct, token: 
 
         if update_fields.get("draft_yn") == 'N':
             cursor.execute("SELECT copy_product_custom_column_def(%s)", (product_id,))
+            cursor.nextset()
 
         cnx.commit()
         return {"status": f"Success! Draft product with ID {product_id} has been updated"}

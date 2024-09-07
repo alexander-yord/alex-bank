@@ -615,6 +615,20 @@
                     if (!confirm("Are you sure you want to publish this product?")) {
                         return;
                     }
+
+                    let invalidColumns = "";
+                    for (let i = 0; i < this.product.custom_columns.length; i++) {
+                        let col = this.product.custom_columns[i];
+                        if (!this.validateCustomColumnDefaultValue("bool", col.default_value, col.column_type)) {
+                            invalidColumns += "\n" + col.column_name;
+                        }
+                    }
+                    if (invalidColumns.length !== 0) {
+                        console.log("Activated")
+                        alert("Please correct the default values of the following custom columns:" + invalidColumns);
+                        return;
+                    }
+
                     const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
                         method: "PATCH", 
                         headers: {
@@ -666,10 +680,7 @@
                     this.product.custom_columns.splice(index, 1);
                 }, 
                 validateCustomColumnDefaultValue(index, value, datatype){
-                    console.log(index);
-                    console.log(value);
-                    console.log(datatype);
-
+                    
                     let isValid = false;
 
                     // Validation logic based on datatype
@@ -708,6 +719,10 @@
                         default:
                             isValid = false;
                             break;
+                    }
+
+                    if (index == "bool") {
+                        return isValid;
                     }
 
                     // Get the elements for validation feedback
