@@ -76,7 +76,7 @@ async def get_assigned_accounts(token: str = Depends(s.oauth2_scheme), account_i
         cnx.close()
 
 
-@router.post("/validate-custom-columns")
+@router.post("/validate-custom-columns", response_model=s.CustomColumnValidationResult)
 async def verify_custom_columns(input_data: s.CustomColumnValidation):
     cnx = get_db_connection()
     cursor = cnx.cursor()
