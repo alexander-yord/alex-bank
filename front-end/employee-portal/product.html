@@ -88,6 +88,54 @@
                 </div>
             </div>
 
+            <div class="popup" id="customColumnPopup">
+                <div class="popup-content">
+                    <h3 style="margin: 0px;">Edit Custom Column <span class="close" @click="edit_custom_column(null)">&times;</span></h3>
+                    <br>
+                    <form @submit.prevent="" >
+                        <label>Column Name:</label>
+                        <input type="text" v-model="temp_custom_column_object.column_name" maxlength="255">
+                        <label>Column Type:</label>
+                        <select v-model="temp_custom_column_object.column_type" @change="validateCustomColumnDefaultValue(editing_custom_column_index, temp_custom_column_object.default_value, temp_custom_column_object.column_type)">
+                            <option value="integer">Integer</option>
+                            <option value="float">Float</option>
+                            <option value="char">Character</option>
+                            <option value="varchar">Varchar</option>
+                            <option value="text">Text</option>
+                            <option value="date">Date</option>
+                            <option value="datetime">Datetime</option>
+                        </select>
+                        <label>Default Type:</label>
+                        <textarea v-if="temp_custom_column_object.column_type=='text'" v-model="temp_custom_column_object.default_value"></textarea>
+                        <div v-else class="verification-container">
+                            <input type="text" v-model="temp_custom_column_object.default_value" @input="validateCustomColumnDefaultValue(editing_custom_column_index, temp_custom_column_object.default_value, temp_custom_column_object.column_type)">
+                            <span class="verification-check" id="custom-column-validation-check">✔</span>
+                            <span class="verification-x" id="custom-column-validation-x">✖</span>
+                        </div>
+                        <label>Customer Visible:</label>
+                        <select v-model="temp_custom_column_object.customer_visible_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Customer Populatable:</label>
+                        <select v-model="temp_custom_column_object.customer_populatable_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Exercise Date:</label>
+                        <select v-model="temp_custom_column_object.exercise_date_yn">
+                            <option value="Y">&#x2713;</option>
+                            <option value="N">X</option>
+                        </select>
+                        <label>Available Before:</label>
+                        <select v-model="temp_custom_column_object.available_before">
+                            <option :value="null">Always</option>
+                            <option v-for="stat in statuses" :value="stat.status_code">{{stat.status_name}} </option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
             <div class="emp-portal-content" v-if="editing_privilege != null">
 
                 <div class="button-header">
@@ -113,7 +161,7 @@
                         <div class="form-group">
                             <label for="category">Category:</label>
                             <div class="custom-select">
-                                <select v-model="product.category_id" id="category" @change="loadSubcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                                <select v-model="product.category_id" id="category" @change="categoryChangeLabels" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
                                 </select>
                             </div>
@@ -121,18 +169,13 @@
                         <div class="form-group">
                             <label for="subcategory">Subcategory:</label>
                             <div class="custom-select">
-                                <select v-model="product.subcategory_id" id="subcategory" :disabled="['preview', 'availability'].includes(editing_privilege)">
+                                <select v-model="product.subcategory_id" id="subcategory" @change="subcategoryChangeLabels" :disabled="['preview', 'availability'].includes(editing_privilege)">
                                     <option :value="null">None</option> 
                                     <option v-for="cat in productSubcategoriesWithCatalogStatus" :key="cat.subcategory_id" :value="cat.subcategory_id">
                                         {{ cat.displayName }}
                                     </option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="term">Term (in months):</label>
-                            <input type="number" v-model="product.term" style="width: 100%;" id="term" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
 
                         <div class="form-group">
@@ -144,6 +187,20 @@
                                     <option value="USD">USD</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="max-width: 300px; margin-top: 23px;">Note that if the values below (not the labels) are left blank, they will not be displayed on product pages.</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Term Label:</label>
+                            <input type="text" v-model="product.term_label" style="width: 100%;" id="percentage_label" :disabled="['preview', 'availability'].includes(editing_privilege)" maxlength="255">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="term">Term (in months):</label>
+                            <input type="number" v-model="product.term" style="width: 100%;" id="term" :disabled="['preview', 'availability'].includes(editing_privilege)">
                         </div>
 
                         <div class="form-group">
@@ -226,7 +283,12 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value">
+                                    <div class="verification-container">
+                                        <input type="text" style="margin: 0px; background: none; border: none; color: black;" v-model="col.default_value" @input="validateCustomColumnDefaultValue(index, col.default_value, col.column_type)">
+                                        <span class="verification-check" :id="index+'-check'">✔</span>
+                                        <span class="verification-x" :id="index+'-x'">✖</span>
+                                    </div>
+                                    
                                 </td>
                                 <td>
                                     <select style="margin: 0px; background: none; border: none; color: black;" v-model="col.customer_visible_yn">
@@ -251,6 +313,7 @@
                                     <option v-for="stat in statuses" :value="stat.status_code">{{stat.status_name}} </option>
                                 </select></td>
                                 <td class="button-container" v-if="['all'].includes(editing_privilege)">
+                                    <button class="icon-button" @click="edit_custom_column(index)"><img src="../assets/magnifying-glass-solid.svg" width="15px"></button>
                                     <button class="icon-button" @click="deleteRow(index)"><img src="../assets/trash-solid.svg" width="15px"></button>
                                 </td>
                             </tr>
@@ -293,7 +356,9 @@
                     product_categories: [], 
                     product_subcategories: [], 
                     editing_privilege: null, 
-                    statuses: []
+                    statuses: [], 
+                    editing_custom_column_index: 0, 
+                    temp_custom_column_object: {}
                 };
             },
             methods: {
@@ -393,6 +458,33 @@
                         });
                     });
                 }, 
+                async categoryChangeLabels () {
+                    // this function is invoked on changes to the category
+                    this.product.subcategory_id = null;
+                    if (confirm("Do you want the new category's labels to override your existing ones?\nPress \"Ok\" for yes\nPress \"Cancel\" for no")) {
+                        const new_category = this.product_categories.find(cat => cat.category_id === this.product.category_id);
+                        this.product.term_label = new_category.term_label;
+                        this.product.mon_amt_label = new_category.mon_amt_label;
+                        this.product.percentage_label = new_category.percentage_label;
+                        
+                    }
+                    await this.loadSubcategory();
+                },
+                async subcategoryChangeLabels () {
+                    // this function is invoked on changes to the subcategory
+                    if (confirm("Do you want the new subcategory's labels to override your existing ones?\nPress \"Ok\" for yes\nPress \"Cancel\" for no")) {
+                        const new_subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === this.product.subcategory_id);
+                        if (new_subcategory.term_label !== null) {
+                            this.product.term_label = new_subcategory.term_label;
+                        }
+                        if (new_subcategory.mon_amt_label !== null) {
+                            this.product.mon_amt_label = new_subcategory.mon_amt_label;
+                        }
+                        if (new_subcategory.percentage_label !== null) {
+                            this.product.percentage_label = new_subcategory.percentage_label;
+                        }
+                    }
+                },
                 async loadSubcategory() {
                     if (this.product.category_id == null) {
                         this.product_subcategories = []; 
@@ -523,6 +615,20 @@
                     if (!confirm("Are you sure you want to publish this product?")) {
                         return;
                     }
+
+                    let invalidColumns = "";
+                    for (let i = 0; i < this.product.custom_columns.length; i++) {
+                        let col = this.product.custom_columns[i];
+                        if (!this.validateCustomColumnDefaultValue("bool", col.default_value, col.column_type)) {
+                            invalidColumns += "\n" + col.column_name;
+                        }
+                    }
+                    if (invalidColumns.length !== 0) {
+                        console.log("Activated")
+                        alert("Please correct the default values of the following custom columns:" + invalidColumns);
+                        return;
+                    }
+
                     const response = await fetch(`${API_BASE_URL}/product/draft/${this.page_is_for_product_id}`, {
                         method: "PATCH", 
                         headers: {
@@ -560,7 +666,7 @@
                 }, 
                 addRow() {
                     this.product.custom_columns.push({
-                        "order_no": Math.max(...this.product.custom_columns.map(col => col.order_no))+1,
+                        "order_no": Math.max(0, ...this.product.custom_columns.map(col => col.order_no).filter(n => Number.isFinite(n))) + 1,
                         "column_name": null,
                         "customer_visible_yn": 'N',
                         "customer_populatable_yn": 'N',
@@ -572,6 +678,82 @@
                 }, 
                 deleteRow(index) {
                     this.product.custom_columns.splice(index, 1);
+                }, 
+                validateCustomColumnDefaultValue(index, value, datatype){
+                    
+                    let isValid = false;
+
+                    // Validation logic based on datatype
+                    switch(datatype) {
+                        case 'integer':
+                            isValid = /^-?[0-9]+$/.test(value);
+                            break;
+                        case 'float':
+                            isValid = /^-?[0-9]+(\.[0-9]+)?$/.test(value);
+                            break;
+                        case 'date':
+                            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) {
+                                const date = new Date(value);
+                                isValid = !isNaN(date.getTime());
+                            } else {
+                                isValid = false;
+                            }
+                            break;
+                        case 'datetime':
+                            if (/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/.test(value)) {
+                                const datetime = new Date(value);
+                                isValid = !isNaN(datetime.getTime());
+                            } else {
+                                isValid = false;
+                            }
+                            break;
+                        case 'char':
+                            isValid = value.length <= 1;
+                            break;
+                        case 'varchar':
+                            isValid = value.length <= 255;
+                            break;
+                        case 'text':
+                            isValid = true; // No length constraint for text
+                            break;
+                        default:
+                            isValid = false;
+                            break;
+                    }
+
+                    if (index == "bool") {
+                        return isValid;
+                    }
+
+                    // Get the elements for validation feedback
+                    const Check = document.getElementById('custom-column-validation-check');
+                    const X = document.getElementById('custom-column-validation-x');
+
+                    // Display the validation result
+                    if (value == "" || value == null) {
+                        Check.style.display = "none";
+                        X.style.display = "none";
+                    } else if (isValid) {
+                        Check.style.display = "inline";
+                        X.style.display = "none";
+                    } else {
+                        Check.style.display = "none";
+                        X.style.display = "inline";
+                    }
+                }, 
+                edit_custom_column(index) {
+                    console.log(this.product.custom_columns);
+
+                    const popup = document.getElementById("customColumnPopup");
+                    if (index !== null) {
+                        console.log(this.product.custom_columns[index]);
+                        this.temp_custom_column_object = this.product.custom_columns[index];
+                        popup.style.display = "flex";
+                    }
+                    else {
+                        popup.style.display = "none"; 
+                    }
+                    this.validateCustomColumnDefaultValue(index, this.temp_custom_column_object.default_value, this.temp_custom_column_object.column_type);
                 }
             },
             mounted() {

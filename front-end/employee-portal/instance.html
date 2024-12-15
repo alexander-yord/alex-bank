@@ -101,7 +101,7 @@
                         <div class="column second-column">
                             <div class="card">
                                 <h3 class="card-title">Product Information</h3>
-                                <div><span v-if="product_info.term !== null">Term: {{product_info.term}} month(s) </span> <span v-if="product_info.term !== null && product_info.percentage !== null">|</span> <span v-if="product_info.percentage !== null">{{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}% </span></div> <br>
+                                <div><span v-if="product_info.term !== null">{{product_info.term_label}}: {{product_info.term}} month(s) </span> <span v-if="product_info.term !== null && product_info.percentage !== null">|</span> <span v-if="product_info.percentage !== null">{{product_info.percentage_label}}: {{(100*product_info.percentage).toFixed(2)}}% </span></div> <br>
                                 <div><span v-if="product_info.monetary_amount !== null">{{product_info.mon_amt_label}}: {{product_info.currency}}{{product_info.monetary_amount.toFixed(2)}} </span></div> 
                             </div> <br>
                             <div class="card">
@@ -405,10 +405,29 @@
                 },
                 async changeStatus (new_status) {
                     if (new_status == 'APR') {
-                        if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
-                        || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
-                            alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
-                            return ;
+                        let missingFields = [];
+
+                        // Check each required field
+                        if (this.init_product_det.amount == null && this.product_info.monetary_amount !== null) {
+                            missingFields.push("Amount");
+                        }
+                        if (this.init_product_det.product_start_date == null && this.product_info.term !== null) {
+                            missingFields.push("Product Start Date");
+                        }
+                        if (this.init_product_det.product_end_date == null && this.product_info.term !== null) {
+                            missingFields.push("Product End Date");
+                        }
+                        if (this.init_product_det.yield_ == null && this.product_info.percentage !== null) {
+                            missingFields.push("Yield");
+                        }
+                        if (this.init_product_det.expected_revenue == null) {
+                            missingFields.push("Expected Revenue");
+                        }
+
+                        // If there are missing fields, display an alert
+                        if (missingFields.length > 0) {
+                            alert("You cannot approve a product without valid " + missingFields.join(", ") + ".");
+                            return;
                         }
                     }
                     body = {}

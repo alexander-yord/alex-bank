@@ -140,6 +140,7 @@ class Product(BaseModel):
     term: Optional[int] = None
     percentage: Optional[float] = None
     monetary_amount: Optional[float] = None
+    term_label: Optional[str] = None
     percentage_label: Optional[str] = None
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
@@ -160,6 +161,7 @@ class NewProduct(BaseModel):
     term: Optional[int] = None
     percentage: Optional[float] = None
     monetary_amount: Optional[float] = None
+    term_label: Optional[str] = None
     percentage_label: Optional[str] = None
     mon_amt_label: Optional[str] = None
     available_from: Optional[str] = None
@@ -180,11 +182,13 @@ class AmendProduct(BaseModel):
     term: Optional[Union[int, str]] = Field(None)
     percentage: Optional[Union[float, str]] = Field(None)
     monetary_amount: Optional[Union[float, str]] = Field(None)
+    term_label: Optional[Union[str, str]] = Field(None)
     percentage_label: Optional[Union[str, str]] = Field(None)
     mon_amt_label: Optional[Union[str, str]] = Field(None)
     available_from: Optional[Union[str, str]] = Field(None)
     available_till: Optional[Union[str, str]] = Field(None)
     picture_name: Optional[Union[str, str]] = Field(None)
+    draft_yn: Optional[Union[str, str]] = Field(None)
     draft_owner: Optional[Union[str, str]] = Field(None)
     terms_and_conditions: Optional[Union[str, str]] = Field(None)
 
@@ -199,12 +203,18 @@ class ProductCategory(BaseModel):
     category_name: str
     category_description: str
     catalog_yn: str
+    term_label: str
+    percentage_label: str
+    mon_amt_label: str
 
 
 class AmendProductCategory(BaseModel):
     category_name: Optional[str] = None
     category_description: Optional[str] = None
     catalog_yn: Optional[str] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class ProductSubcategories(BaseModel):
@@ -214,6 +224,9 @@ class ProductSubcategories(BaseModel):
     subcategory_description: str
     catalog_yn: str
     product_count: Optional[int] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class AmendProductSubcategory(BaseModel):
@@ -221,6 +234,9 @@ class AmendProductSubcategory(BaseModel):
     subcategory_name: Optional[str] = None
     subcategory_description: Optional[str] = None
     catalog_yn: Optional[str] = None
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class NewProductSubcategory(BaseModel):
@@ -228,6 +244,9 @@ class NewProductSubcategory(BaseModel):
     subcategory_name: str
     subcategory_description: str
     catalog_yn: str
+    term_label: Optional[str] = None
+    percentage_label: Optional[str] = None
+    mon_amt_label: Optional[str] = None
 
 
 class NewProductInstance(BaseModel):
@@ -263,7 +282,7 @@ class ProductCustomColumns(BaseModel):
     text_value: Optional[str]
     date_value: Optional[str]
     datetime_value: Optional[str]
-
+    available_before: Optional[str]
 
 class ProductInstancePublic(BaseModel):
     product_uid: int
@@ -345,4 +364,12 @@ class ProductCard(BaseModel):
     last_name: Optional[str] = None
     picture_name: Optional[str] = None
 
+
+class CustomColumnValidation(BaseModel):
+    value: str
+    datatype: Literal['integer', 'float', 'char', 'varchar', 'text', 'date', 'datetime']
+
+
+class CustomColumnValidationResult(BaseModel):
+    validation: bool
 

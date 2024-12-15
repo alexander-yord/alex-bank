@@ -86,9 +86,9 @@
                                 </select>
                             </td>
                             <td class="button-container">
-                                <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="update_category()"><img src="../assets/check-solid.svg" width="15px"></button>
-                                <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="edit_category(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
-                                <button v-if="editing_category_id != cat.category_id" class="icon-button" @click="edit_category(cat.category_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
+                                <!-- <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="update_category()"><img src="../assets/check-solid.svg" width="15px"></button>
+                                <button v-if="editing_category_id == cat.category_id" class="icon-button" @click="edit_category(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button> -->
+                                <button v-if="editing_category_id != cat.category_id" class="icon-button" @click="toggle_category_edit(cat.category_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
                             </td>
                         </tr>
                     </table>
@@ -96,6 +96,61 @@
                 </div>
                 <br>
 
+                <div class="popup" id="categoryPopup">
+                    <div class="popup-content">
+                        <h3 style="margin: 0px;">Edit Category (ID: {{editing_category_id}}) <span class="close" @click="toggle_category_edit(null)">&times;</span></h3>
+                        <br>
+                        <form @submit.prevent="update_category">
+                            <label for="">Category Name:</label>
+                            <input type="text" v-model="editing_category.category_name" maxlength="255">
+                            <label>Category Description:</label>
+                            <textarea v-model="editing_category.category_description" maxlength="255"></textarea>
+                            <label>In Catalog:</label>
+                            <select v-model="editing_category.catalog_yn">
+                                <option value="Y">Yes</option>
+                                <option value="N">No</option>
+                            </select>
+                            <label>Label for the Product's Term:</label>
+                            <input type="text" v-model="editing_category.term_label" maxlength="255">
+                            <label>Label for the Percentage Value:</label>
+                            <input type="text" v-model="editing_category.percentage_label" maxlength="255">
+                            <label>Label for the Monetary Amount:</label>
+                            <input type="text" v-model="editing_category.mon_amt_label" maxlength="255">
+                            <button type="submit" @click>Submit</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="popup" id="subcategoryPopup">
+                    <div class="popup-content">
+                        <h3 style="margin: 0px;">Edit Subcategory (ID: {{editing_subcategory_id}}) <span class="close" @click="toggle_subcategory_edit(null)">&times;</span></h3>
+                        <br>
+                        <form @submit.prevent="update_subcategory">
+                            <label for="">Subcategory Name:</label>
+                            <input type="text" v-model="editing_subcategory.subcategory_name" maxlength="255">
+                            <label>Subcategory Description:</label>
+                            <textarea v-model="editing_subcategory.subcategory_description" maxlength="255"></textarea>
+                            <label>Category:</label>
+                            <select v-model="editing_subcategory.category_id">
+                                <option v-for="cat in product_categories" :value="cat.category_id">{{cat.category_name}} </option>
+                            </select>
+                            <label>In Catalog:</label>
+                            <select v-model="editing_subcategory.catalog_yn">
+                                <option value="Y">Yes</option>
+                                <option value="N">No</option>
+                            </select>
+                            <label>Note, if you leave the labels below empty, their values will be inherited by the product category's.</label>
+                            <br> <br>
+                            <label>Label for the Product's Term:</label>
+                            <input type="text" v-model="editing_subcategory.term_label" maxlength="255">
+                            <label>Label for the Percentage Value:</label>
+                            <input type="text" v-model="editing_subcategory.percentage_label" maxlength="255">
+                            <label>Label for the Monetary Amount:</label>
+                            <input type="text" v-model="editing_subcategory.mon_amt_label" maxlength="255">
+                            <button type="submit" @click>Submit</button>
+                        </form>
+                    </div>
+                </div>
                 
                 <div class="card">
                     <h2 style="margin: 0px;">Product Subcategories</h2>
@@ -128,9 +183,9 @@
                                 </select>
                             </td>
                             <td class="button-container">
-                                <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="update_subcategory()"><img src="../assets/check-solid.svg" width="15px"></button>
-                                <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="edit_subcategory(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button>
-                                <button v-if="editing_subcategory_id != subcat.subcategory_id" class="icon-button" @click="edit_subcategory(subcat.subcategory_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
+                                <!-- <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="update_subcategory()"><img src="../assets/check-solid.svg" width="15px"></button>
+                                <button v-if="editing_subcategory_id == subcat.subcategory_id" class="icon-button" @click="edit_subcategory(null)"><img src="../assets/x-solid.svg" style="height: 16px;"></button> -->
+                                <button v-if="editing_subcategory_id != subcat.subcategory_id" class="icon-button" @click="toggle_subcategory_edit(subcat.subcategory_id)"><img src="../assets/pencil-solid.svg" width="15px"></button> 
                                 <button v-if="editing_subcategory_id != subcat.subcategory_id && subcat.product_count == 0" class="icon-button" @click="delete_subcategory(subcat.subcategory_id)"><img src="../assets/trash-solid.svg" width="15px"></button>
                             </td>
                         </tr>
@@ -185,10 +240,10 @@
                     openIndex: null, 
                     product_categories: [], 
                     editing_category_id: null,
-                    original_category: null, // Track the original state of the category
+                    editing_category: {}, 
                     product_subcategories: [], 
                     editing_subcategory_id: null, 
-                    original_subcategory: null, 
+                    editing_subcategory: {}, 
                     new_subcategory: {
                         category_id: null, 
                         subcategory_name: null, 
@@ -243,13 +298,34 @@
                         console.error('Error fetching categories:', error);
                     }
                 },
-                edit_category(category_id) {
-                    const category = this.product_categories.find(cat => cat.category_id === category_id);
-                    if (category) {
-                        this.original_category = { ...category }; // Save a copy of the original category
+                toggle_category_edit(category_id) {
+                    const categoryPopup = document.getElementById("categoryPopup");
+                    if (category_id === null) {
+                        categoryPopup.style.display = 'none';
+                    } 
+                    else {
+                        const category = this.product_categories.find(cat => cat.category_id === category_id);
+                        if (category) {
+                            this.editing_category = { ...category }; // Save a copy of the original category
+                            categoryPopup.style.display = 'flex';
+                        }
                     }
                     this.editing_category_id = category_id;
-                }, 
+                },
+                toggle_subcategory_edit(subcategory_id) {
+                    const subcategoryPopup = document.getElementById("subcategoryPopup");
+                    if (subcategory_id === null) {
+                        subcategoryPopup.style.display = 'none';
+                    } 
+                    else {
+                        const subcategory = this.product_subcategories.find(cat => cat.subcategory_id === subcategory_id);
+                        if (subcategory) {
+                            this.editing_subcategory = { ...subcategory }; // Save a copy of the original category
+                            subcategoryPopup.style.display = 'flex';
+                        }
+                    }
+                    this.editing_subcategory_id = subcategory_id;
+                },
                 edit_subcategory(subcategory_id) {
                     const subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === subcategory_id);
                     if (subcategory) {
@@ -263,13 +339,13 @@
                     }
                     if (!this.editing_category_id) return;
     
-                    const category = this.product_categories.find(cat => cat.category_id === this.editing_category_id);
-                    if (!category) return;
+                    const original_category = this.product_categories.find(cat => cat.category_id === this.editing_category_id);
+                    if (!original_category) return;
     
                     const updates = {};
-                    for (const key in category) {
-                        if (category[key] !== this.original_category[key]) {
-                            updates[key] = category[key];
+                    for (const key in this.editing_category) {
+                        if (this.editing_category[key] !== original_category[key]) {
+                            updates[key] = this.editing_category[key];
                         }
                     }
     
@@ -301,14 +377,20 @@
                         return;
                     }
                     if (!this.editing_subcategory_id) return;
-
-                    const subcategory = this.product_subcategories.find(subcat => subcat.subcategory_id === this.editing_subcategory_id);
-                    if (!subcategory) return;
-
+    
+                    const original_subcategory = this.product_subcategories.find(cat => cat.subcategory_id === this.editing_subcategory_id);
+                    if (!original_subcategory) return;
+    
                     const updates = {};
-                    for (const key in subcategory) {
-                        if (subcategory[key] !== this.original_subcategory[key]) {
-                            updates[key] = subcategory[key];
+                    for (const key in this.editing_subcategory) {
+                        if (this.editing_subcategory[key] !== original_subcategory[key]) {
+                            updates[key] = this.editing_subcategory[key];
+                        }
+                    }
+
+                    for (let key in updates) {
+                        if (updates[key] === null || updates[key] === "") {
+                            updates[key] = "__null__";
                         }
                     }
 
