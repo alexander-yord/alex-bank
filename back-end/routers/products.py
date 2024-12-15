@@ -1151,7 +1151,8 @@ async def get_product_instances(product_uid: int, token: str = Depends(s.oauth2_
         stmt = """
         SELECT pccv.pcc_uid, pccv.pcc_id, pccv.product_uid, pccd.column_name, 
                pccd.customer_populatable_yn, pccd.customer_visible_yn, pccd.column_type,
-               pccv.int_value, pccv.float_value, pccv.varchar_value, pccv.text_value, pccv.date_value, pccv.datetime_value
+               pccv.int_value, pccv.float_value, pccv.varchar_value, pccv.text_value, pccv.date_value, 
+               pccv.datetime_value, pccd.available_before
         FROM product_custom_column_values pccv 
         JOIN product_custom_column_def pccd ON pccd.pcc_id = pccv.pcc_id
         WHERE product_uid = %s
@@ -1174,7 +1175,8 @@ async def get_product_instances(product_uid: int, token: str = Depends(s.oauth2_
                     varchar_value=row[9],
                     text_value=row[10],
                     date_value=str(row[11]),
-                    datetime_value=str(row[12])
+                    datetime_value=str(row[12]),
+                    available_before=str(row[13]) if row[13] else None
                 ))
 
         # Fetch product instance details

@@ -282,7 +282,7 @@ class ProductCustomColumns(BaseModel):
     text_value: Optional[str]
     date_value: Optional[str]
     datetime_value: Optional[str]
-
+    available_before: Optional[str]
 
 class ProductInstancePublic(BaseModel):
     product_uid: int
