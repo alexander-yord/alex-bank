@@ -283,7 +283,7 @@ async def send_verification_email(account_id: int, token: str = Depends(s.oauth2
 
 
 @router.post("/verify")
-async def verify_account(token: str = Depends(s.oauth2_scheme)):
+async def verify_account(token: str):
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
