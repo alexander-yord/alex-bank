@@ -405,10 +405,29 @@
                 },
                 async changeStatus (new_status) {
                     if (new_status == 'APR') {
-                        if (this.init_product_det.amount == null || this.init_product_det.product_start_date == null 
-                        || this.init_product_det.product_end_date == null || this.init_product_det.yield_ == null || this.init_product_det.expected_revenue == null) {
-                            alert("You cannot approve a product without valid amount, start/end date, yield, or expected revenue");
-                            return ;
+                        let missingFields = [];
+
+                        // Check each required field
+                        if (this.init_product_det.amount == null && this.product_info.monetary_amount !== null) {
+                            missingFields.push("Amount");
+                        }
+                        if (this.init_product_det.product_start_date == null && this.product_info.term !== null) {
+                            missingFields.push("Product Start Date");
+                        }
+                        if (this.init_product_det.product_end_date == null && this.product_info.term !== null) {
+                            missingFields.push("Product End Date");
+                        }
+                        if (this.init_product_det.yield_ == null && this.product_info.percentage !== null) {
+                            missingFields.push("Yield");
+                        }
+                        if (this.init_product_det.expected_revenue == null) {
+                            missingFields.push("Expected Revenue");
+                        }
+
+                        // If there are missing fields, display an alert
+                        if (missingFields.length > 0) {
+                            alert("You cannot approve a product without valid " + missingFields.join(", ") + ".");
+                            return;
                         }
                     }
                     body = {}
