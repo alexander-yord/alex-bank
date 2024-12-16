@@ -24,7 +24,7 @@ async def signup(acc_info: s.NewAccount = None):
 
         stmt2 = "SELECT account_id FROM accounts WHERE first_name = %s AND last_name = %s ORDER BY 1 DESC"
         cursor.execute(stmt2, (acc_info.first_name, acc_info.last_name))
-        account_id = cursor.fetchone()[0]
+        account_id = cursor.fetchall()[0][0]
 
         # Generate a new, unique salt
         salt = bcrypt.gensalt()
