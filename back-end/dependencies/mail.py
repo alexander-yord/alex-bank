@@ -2,14 +2,74 @@ from . import database as db, helpers as h, contracts as c
 import configparser
 import sys
 import os
+import io
 import smtplib
+import pyotp
+import qrcode
 from email.message import EmailMessage
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from fastapi import HTTPException
 
 
-def send_verification_email(account_id):
+# Constant String - Styling for all emails
+styling = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Confirmation</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: var(--color-bg-light, rgb(254, 254, 254));
+                color: #222222;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                width: 100%;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                text-align: center;
+                color: #000;
+                border-radius: 5px;
+                padding: 10px 0;
+            }
+            .content {
+                margin: 20px 0;
+            }
+            .footer {
+                text-align: center;
+                font-size: 12px;
+                color: var(--color-grey-dark, #979797);
+                margin-top: 20px;
+            }
+            .status {
+                color: rgb(131, 152, 162);
+                font-weight: bold;
+            }
+            .button {
+                background-color: rgb(131, 152, 162);
+                color: rgb(254, 254, 254);
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 5px;
+                display: inline-block;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    """
+
+
+def send_verification_email(account_id: int):
     if not db.cnx.is_connected():
         db.cnx, db.cursor = db.connect()
 
@@ -24,9 +84,9 @@ def send_verification_email(account_id):
 
     except Exception as err:
         print(err)
-        return ;
+        return
 
-    # Create the email message
+    # Fetch account data
     stmt = "SELECT account_id, first_name, last_name, email, user_role FROM accounts WHERE account_id = %s"
     db.cursor.execute(stmt, (account_id,))
     res = db.cursor.fetchone()
@@ -38,37 +98,101 @@ def send_verification_email(account_id):
         "user_role": res[4]
     }
 
-    token = h.create_jwt_token(account_data.get("account_id"), account_data.get("user_role"), 1800)
+    # Generate OTP key and update database
+    otp_key = pyotp.random_base32()
+    stmt2 = "UPDATE login_credentials SET otp_key = %s WHERE account_id = %s"
+    db.cursor.execute(stmt2, (otp_key, account_id))
+    db.cnx.commit()
 
+    # Generate token, URI, and QR code
+    token = h.create_jwt_stage_token(account_id, 1800)
+    uri = pyotp.totp.TOTP(otp_key).provisioning_uri(name=f"Account{account_id}", issuer_name="AlexBank")
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(uri)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    qr_image_data = io.BytesIO()
+    img.save(qr_image_data, format="PNG")
+    qr_image_data.seek(0)
+
+    # Email content
     html = f"""
-    <html>
-      <body>
-        <p>Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}),<br>
-          This email is from Alex Bank regarding verification of your email. Please note that this token is valid only 30 mins. <br>
-          If you made this request, please click on the link below: </p>
-        <p><a href="https://alex-bank.com/verify.html?token={token}">Verify Your Alex Bank Account</a></p>
-        <p> If you did not make such request, please ignore this email. </p>
-        <br>
-        <p>Sincerely, </p>
-        <p>Alex Bank </p>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Set Up Two-Factor Authentication</h1>
+            </div>
+            <div class="content">
+                <p>
+                  Hi {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}),</p>
+                <p>
+                  Welcome to Alex Bank! To set up Two-Factor Authentication (2FA), please scan the QR code below with your authentication app (e.g., Google Authenticator):
+                </p>
+                <div><img src="cid:qr_code" width=50% alt="QR Code" style="display: block; margin: 0 auto;"></div>
+                
+                <p>Alternatively, use the following URI to set up 2FA manually:</p>
+                <p><code>{uri}</code></p>
+                <p>
+                  
+                <p>
+                  Once you have done that, click on the link below to verify your setup. Note that this link is valid only for 30 minutes:
+                </p>
+                <a href="https://alex-bank.com/verify.html?token={token}" class="button" style="color: rgb(254, 254, 254); margin: 0px;">Verify Your 2FA</a>
+                <p>
+                  If you did not request this, please ignore this email.
+                </p>
+                
+                <p>Sincerely,</p>
+                <p>Alex Bank</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; 2024 Alex Bank. All rights reserved.</p>
+                </div>
+            </div>
       </body>
     </html>
     """
-    body = f"""Hi, {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}), \n"
-    This email is from Alex Bank regarding verification of your email. Please note that this token is valid only 30 mins. If you made this request, please click on the link below: \n
-    https://alex-bank.com/verify.html?token={token} \n
-    If you did not make such request, please ignore this email. \n\nSincerely, \nAlex Bank
+    content = styling + html
+
+    body = f"""
+    Hi {account_data.get("first_name")} {account_data.get("last_name")} (Account ID: {account_data.get("account_id")}),
+
+    Welcome to Alex Bank! To set up Two-Factor Authentication (2FA), please scan the QR code below with your authentication app (e.g., Google Authenticator).
+
+    Alternatively, use the following URI to set up 2FA manually:
+    {uri}
+
+    Once you have done that, click on the link below to verify your setup. Note that this link is valid only for 30 minutes:
+    https://alex-bank.com/verify.html?token={token}
+
+    If you did not request this, please ignore this email.
+
+    Sincerely,  
+    Alex Bank
     """
 
-    msg = MIMEMultipart("alternative")
+    msg = MIMEMultipart("related")
     msg["From"] = smtp_user
     msg["To"] = account_data.get("email")
     msg["Subject"] = f"{account_data.get('first_name')} - Verify Your Email"
 
+    # Attach plain text and HTML content
     part1 = MIMEText(body, "plain")
-    part2 = MIMEText(html, "html")
-    msg.attach(part1)
+    part2 = MIMEText(content, "html")
     msg.attach(part2)
+    msg.attach(part1)
+
+    # Attach QR code directly from memory
+    qr_image = MIMEImage(qr_image_data.read())
+    qr_image.add_header("Content-ID", "<qr_code>")
+    msg.attach(qr_image)
 
     # Send the email
     try:
@@ -220,62 +344,6 @@ def send_contract_email(product_uid: int, email: str = None):
             server.send_message(msg)
     except Exception as e:
         print(f"Failed to send email: {e}")
-
-
-# Constant String - Styling for all emails
-styling = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Application Confirmation</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                background-color: var(--color-bg-light, rgb(254, 254, 254));
-                color: #222222;
-                margin: 0;
-                padding: 0;
-            }
-            .container {
-                width: 100%;
-                max-width: 600px;
-                margin: 0 auto;
-                padding: 20px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }
-            .header {
-                text-align: center;
-                color: #000;
-                border-radius: 5px;
-                padding: 10px 0;
-            }
-            .content {
-                margin: 20px 0;
-            }
-            .footer {
-                text-align: center;
-                font-size: 12px;
-                color: var(--color-grey-dark, #979797);
-                margin-top: 20px;
-            }
-            .status {
-                color: rgb(131, 152, 162);
-                font-weight: bold;
-            }
-            .button {
-                background-color: rgb(131, 152, 162);
-                color: rgb(254, 254, 254);
-                padding: 10px 20px;
-                text-decoration: none;
-                border-radius: 5px;
-                display: inline-block;
-                margin-top: 20px;
-            }
-        </style>
-    </head>
-    """
 
 
 def send_product_status_update_email(product_uid: int, new_status: str):

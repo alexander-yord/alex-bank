@@ -565,6 +565,8 @@ async def get_account_products(account_id: int, token: str = Depends(s.oauth2_sc
 
         return result
 
+    except HTTPException:
+        raise  # Re-raise known HTTP exceptions
     except Exception as err:
         raise HTTPException(500, f"An error occurred: {err}")
 

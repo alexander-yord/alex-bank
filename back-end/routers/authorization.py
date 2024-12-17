@@ -1,5 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Form
-from typing import Annotated
+from fastapi import APIRouter, HTTPException, Depends
 import pyotp
 import mysql.connector
 from dependencies.database import get_db_connection
