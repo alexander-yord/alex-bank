@@ -3,6 +3,7 @@ import datetime
 import jwt
 import configparser, os, sys
 from fastapi import HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from . import schemas as s
 
 cursor = db.cursor
@@ -43,6 +44,7 @@ def create_jwt_token(account_id: int, user_role: str, exp: int = 7200) -> str:
     payload = {
         'account_id': account_id,
         'user_role': user_role,
+        'requires_2fa': False,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=exp)
     }
 
@@ -50,6 +52,20 @@ def create_jwt_token(account_id: int, user_role: str, exp: int = 7200) -> str:
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
     return token
+
+
+def create_jwt_stage_token(account_id: int, exp: int = 300) -> str:
+    payload = {
+        'auth_stage_account_id': account_id,
+        'requires_2fa': True,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=exp)
+    }
+    pass
+
+    # Create the JWT token
+    auth_stage_token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+    return auth_stage_token
 
 
 def verify_token(token: str):
@@ -62,6 +78,40 @@ def verify_token(token: str):
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def verify_stage_token(stage_token: str):
+    try:
+        payload = jwt.decode(stage_token, SECRET_KEY, algorithms=['HS256'])
+        return payload.get("auth_stage_account_id"), payload.get("requires_2fa")
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def login(account_id: int):
+    stmt = "SELECT ac.account_id, ac.first_name, ac.last_name, ac.user_role " \
+           "FROM accounts ac " \
+           "WHERE ac.account_id = %s"
+
+    cursor.execute(stmt, (account_id,))
+    row = cursor.fetchone()
+
+    token = create_jwt_token(row[0], row[3])
+
+    return {
+        "status": "You successfully logged in!",
+        "account_id": row[0],
+        "first_name": row[1],
+        "last_name": row[2],
+        "user_role": row[3],
+        "requires_2fa": False,
+        "access_token": token,
+        "token_type": "bearer"
+    }
 
 
 def verification_emoji(verification_status):
