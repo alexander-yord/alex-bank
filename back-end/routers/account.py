@@ -331,6 +331,11 @@ async def change_account_verification_status(account_id: int, new_verification_c
         # If verification code is 'C', send a verification email
         if new_verification_code == 'C':
             m.send_verification_email(account_id)
+        # If verification code is 'R', remove the OTP key
+        elif new_verification_code == 'R':
+            cursor.execute("UPDATE login_credentials SET otp_key = NULL WHERE account_id = %s",
+                           (account_id,))
+            cnx.commit()
 
         # Update the verification status
         stmt = "UPDATE accounts SET verification = %s WHERE account_id = %s"
