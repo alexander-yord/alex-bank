@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import pyotp
 import mysql.connector
 from dependencies.database import get_db_connection
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from dependencies import database as db, schemas as s, helpers as h
+from fastapi.security import OAuth2PasswordRequestForm
+from dependencies import database as db, helpers as h, schemas as s
 import bcrypt
 import re
 
@@ -12,9 +14,12 @@ router = APIRouter(
     tags=["Authorization"]
 )
 
+limiter = Limiter(key_func=get_remote_address)
+
 
 @router.post("/token")
-async def login(credentials: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+async def login(request: Request, credentials: OAuth2PasswordRequestForm = Depends()):
     """
     This endpoint performs the necessary login. Because of Swagger UI, it accepts either:
     - __username:__ account_id / email, __password:__ the user's password; __Returns:__ either a logged-in user or
