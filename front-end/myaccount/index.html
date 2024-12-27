@@ -32,8 +32,8 @@
             <h1>{{ account_data.first_name }} {{ account_data.last_name }} <abbr v-if="account_data.verification_code == 'Y'" style="font-size: 0.65em;" :title="account_data.verification">{{account_data.verification_emoji}}</abbr></h1>
             <div v-if="['N', 'C', 'R'].includes(account_data.verification_code)"> 
                 {{account_data.verification_emoji}} {{account_data.verification}} | 
-                <a v-if="['N', 'R'].includes(account_data.verification_code)" href="#" @click="verifyAccount('C')">Send Verification Email</a>
-                <a v-if="['C'].includes(account_data.verification_code)" href="#" @click="verifyAccount('C')">Resend Verification Email</a>
+                <a v-if="['N', 'R'].includes(account_data.verification_code)" href="#" @click="verifyAccount('C')">Set Up 2-Factor Authentication</a>
+                <a v-if="['C'].includes(account_data.verification_code)" href="#" @click="verifyAccount('C')">Resend 2-Factor Authentication Set Up Email</a>
                 <br><br>
             </div> 
             <div>Account ID: {{ account_data.account_id }} | {{ account_data.country }}{{ account_data.address ? ', ' + account_data.address : '' }}</div>

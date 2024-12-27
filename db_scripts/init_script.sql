@@ -42,7 +42,7 @@ alter table `product_instances` AUTO_INCREMENT=300000;
 
 -- default admin user
 insert into `accounts` (`first_name`, `last_name`, `country_code`, `user_role`, `verification`, `account_group`)
-values ('Admin', 'Admin', 'BGR', 'A', 'Y', 'EMP');
+values ('Admin', 'Admin', 'BGR', 'A', 'N', 'EMP');
 
 -- default admin user firstpass 
 insert into `login_credentials` (`account_id`, `password`) 

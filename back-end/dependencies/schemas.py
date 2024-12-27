@@ -373,3 +373,7 @@ class CustomColumnValidation(BaseModel):
 class CustomColumnValidationResult(BaseModel):
     validation: bool
 
+
+class Verify2FA(BaseModel):
+    auth_stage_token: str
+    otp_code: str

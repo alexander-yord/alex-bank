@@ -26,14 +26,21 @@
         </nav>
 
         <div class="content">
-            <br>
-            <div style="width:284px;">
-                Hi! Our records indicate that you recently created an account with Alex Bank or you recently updated your email. If this is your email, please 
-            </div> <br>
-            <div style="margin: auto;">
-                <button @click="verify">Verify Email!</button>
+            <div id="2fa-form">
+                <h2>Two-Factor Authentication</h2> <br>
+                <form @submit.prevent="verify">
+                    <label for="2fa-code">Authentication Code:</label> <br>
+                    <input type="text" id="2fa-code" class="two-fa" maxlength="6" pattern="\d{6}" v-model="code" required> <br>
+                    <button type="submit">Log In</button> <br> <br>
+                    <div style="max-width: 300px;">
+                        Open the two factor authentication app on your device to view the authentication code and enter it above to verify your identity. 
+                    </div>
+                </form>
             </div>
-        </div>
+
+            <div class="loader-wrapper" id="loader" style="display: none;">
+                <div class="loader"></div>
+            </div>
 
     </div>
 
@@ -43,7 +50,8 @@
         createApp({
             data () {
                 return {
-                    token: this.getToken()
+                    token: this.getToken(), 
+                    code: ''
                 };
             }, 
             mounted () {
@@ -56,22 +64,54 @@
                     return params.get("token");
                 }, 
                 async verify() {
-                    const response = await fetch(`${API_BASE_URL}/account/verify?token=${this.token}`, {
-                        method: "POST", 
-                        headers: {
-                            "Content-Type": "application/json"
-                        }, 
-                        body: {}
-                    });
-                    const data = await response.json();
-                    if (response.ok) {
-                        alert("Account sucesssfully verified!");
-                        widnow.location.reload();
+                    const url = `${API_BASE_URL}/account/verify`;
+
+                    this.showLoader(true);
+
+                    const payload = {
+                        auth_stage_token: this.token,
+                        otp_code: this.code,
+                    };
+
+                    try {
+                        const response = await fetch(url, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error("2FA verification failed");
+                        }
+
+                        const data = await response.json();
+                        this.completeLogin(data);
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("2FA verification failed");
+                    } finally {
+                        this.showLoader(false);
                     }
-                    else {
-                        alert("Something went wrong!");
+                }, 
+                completeLogin(data) {
+                    sessionStorage.setItem('account_id', data.account_id);
+                    sessionStorage.setItem('first_name', data.first_name);
+                    sessionStorage.setItem('last_name', data.last_name);
+                    sessionStorage.setItem('user_role', data.user_role);
+                    sessionStorage.setItem('token', data.access_token);
+
+                    alert('Login successful');
+
+                    if (sessionStorage.getItem("redirectURL") != null) {
+                        window.location.href = sessionStorage.getItem("redirectURL");
+                    } else {
+                        window.location.href = "../index.html";
                     }
-                    console.log(data);
+                },
+                showLoader(show) {
+                    document.getElementById('loader').style.display = show ? 'flex' : 'none';
                 }
             }
         }).mount('#app');

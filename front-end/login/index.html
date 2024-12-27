@@ -26,16 +26,35 @@
         </nav>
 
         <div class="content">
-            <h1>Log In</h1> <br>
-            <a href="../signup/index.html">Don't have an account? Sign Up</a> <br><br>
+            <div id="username-pass">
+                <h1>Log In</h1> <br>
+                <a href="../signup/index.html">Don't have an account? Sign Up</a> <br><br>
 
-            <form @submit.prevent="LogIn">
-                <label for="account_id">Account ID:</label> <br>
-                <input type="text" id="account_id" v-model="account_id"> <br>
-                <label for="password">Password:</label> <br>
-                <input type="password" id="password" v-model="password"> <br>
-                <button type="submit">Log In </button>
-            </form>
+                <form @submit.prevent="submitLogin">
+                    <label for="account_id">Account ID:</label> <br>
+                    <input type="text" id="account_id" v-model="account_id"> <br>
+                    <label for="password">Password:</label> <br>
+                    <input type="password" id="password" v-model="password"> <br>
+                    <button type="submit">Log In </button>
+                </form>
+            </div>
+            <div id="2fa-form" style="display: none;">
+                <h2>Two-Factor Authentication</h2> <br>
+                <form @submit.prevent="submit2FA">
+                    <label for="2fa-code">Authentication Code:</label> <br>
+                    <input type="text" id="2fa-code" class="two-fa" maxlength="6" pattern="\d{6}" v-model="code" required> <br>
+                    <button type="submit">Log In</button> <br> <br>
+                    <div style="max-width: 300px;">
+                        Open the two factor authentication app on your device to view the authentication code and enter it above to verify your identity. 
+                    </div>
+                </form>
+            </div>
+
+            <div class="loader-wrapper" id="loader" style="display: none;">
+                <div class="loader"></div>
+            </div>
+            
+            
         </div>
 
         <script>
@@ -44,18 +63,22 @@
             data() {
                 return {
                     account_id: '',
-                    password: ''
+                    password: '',
+                    code: '',
+                    auth_stage_token: '', // To hold the token received from initial login
                 };
             },
             methods: {
-                async LogIn() {
+                async submitLogin() {
                     const url = `${API_BASE_URL}/auth/token`;
 
                     // Create form data
                     const formData = new URLSearchParams();
                     formData.append('username', this.account_id);
                     formData.append('password', this.password);
-                    
+
+                    this.showLoader(true);
+
                     try {
                         const response = await fetch(url, {
                             method: 'POST',
@@ -71,25 +94,76 @@
 
                         const data = await response.json();
 
-                        // Save data to session storage
-                        sessionStorage.setItem('account_id', data.account_id);
-                        sessionStorage.setItem('first_name', data.first_name);
-                        sessionStorage.setItem('last_name', data.last_name);
-                        sessionStorage.setItem('user_role', data.user_role);
-                        sessionStorage.setItem('token', data.access_token);
-
-                        alert('Login successful');
-                        if (sessionStorage.getItem("redirectURL") != null) {
-                            window.location.href = sessionStorage.getItem("redirectURL");
+                        if (data.requires_2fa) {
+                            this.auth_stage_token = data.auth_stage_token;
+                            this.toggleLoginForms();
+                        } else {
+                            this.completeLogin(data);
                         }
-                        else {
-                            window.location.href = "../index.html";
-                        }
-
                     } catch (error) {
                         console.error('Error:', error);
                         alert('Login failed');
+                    } finally {
+                        this.showLoader(false);
                     }
+                },
+
+                async submit2FA() {
+                    const url = `${API_BASE_URL}/auth/token`;
+
+                    // Create form data
+                    const formData = new URLSearchParams();
+                    formData.append('username', this.auth_stage_token);
+                    formData.append('password', this.code);
+
+                    this.showLoader(true);
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: formData.toString()
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('2FA verification failed');
+                        }
+
+                        const data = await response.json();
+                        this.completeLogin(data);
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('2FA verification failed');
+                    } finally {
+                        this.showLoader(false);
+                    }
+                },
+
+                completeLogin(data) {
+                    sessionStorage.setItem('account_id', data.account_id);
+                    sessionStorage.setItem('first_name', data.first_name);
+                    sessionStorage.setItem('last_name', data.last_name);
+                    sessionStorage.setItem('user_role', data.user_role);
+                    sessionStorage.setItem('token', data.access_token);
+
+                    alert('Login successful');
+
+                    if (sessionStorage.getItem("redirectURL") != null) {
+                        window.location.href = sessionStorage.getItem("redirectURL");
+                    } else {
+                        window.location.href = "../index.html";
+                    }
+                },
+
+                toggleLoginForms() {
+                    document.getElementById('username-pass').style.display = 'none';
+                    document.getElementById('2fa-form').style.display = 'block';
+                },
+
+                showLoader(show) {
+                    document.getElementById('loader').style.display = show ? 'flex' : 'none';
                 }
             }
         }).mount('#app');

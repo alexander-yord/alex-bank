@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.middleware import SlowAPIMiddleware
 from dependencies import database as db
 from routers import signup, account, frontend, products, authorization, portal
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +31,9 @@ cnx = db.cnx
 cursor = db.cursor
 db.verify_connection()
 
+# Initialize Limiter
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(root_path="/api",
               title="Alex Bank API",
               description=f"""
@@ -46,9 +52,13 @@ Key Points:
 Note: Unauthorized access attempts or misuse of the API may result in account suspension or termination. Please adhere to our usage guidelines and terms of service.
 
 For support and queries, please contact our technical support team.
+
+__IMPORTANT:__ if you have 2FA enabled, to log in, first go to the `/auth/token` endpoint to obtain an `auth_stage_token`. Then, input that into the username field, and your OTP in the password field. 
               """,
               version=api_version
               )
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(authorization.router)
 app.include_router(signup.router)

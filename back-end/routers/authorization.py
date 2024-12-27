@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import Annotated
+from fastapi import APIRouter, HTTPException, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+import pyotp
 import mysql.connector
 from dependencies.database import get_db_connection
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from dependencies import database as db, schemas as s, helpers as h
+from fastapi.security import OAuth2PasswordRequestForm
+from dependencies import database as db, helpers as h, schemas as s
 import bcrypt
 import re
 
@@ -12,54 +14,85 @@ router = APIRouter(
     tags=["Authorization"]
 )
 
+limiter = Limiter(key_func=get_remote_address)
+
 
 @router.post("/token")
-async def login(credentials: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+async def login(request: Request, credentials: OAuth2PasswordRequestForm = Depends()):
+    """
+    This endpoint performs the necessary login. Because of Swagger UI, it accepts either:
+    - __username:__ account_id / email, __password:__ the user's password; __Returns:__ either a logged-in user or
+                    `{
+                        "requires_2fa": True,
+                        "auth_stage_token": auth_stage_token
+                    }`
+    - __username:__ JWT auth_stage_token, __password:__ one-time passcode; __Returns:__ a logged-in user
+    """
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
-        # Determine if the username is an email or an account ID
-        if re.match(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$', credentials.username):
-            # Search by email
-            stmt = """
-            SELECT lc.account_id, lc.password, ac.first_name, ac.last_name, ac.user_role 
-            FROM login_credentials lc 
-            JOIN accounts ac ON ac.account_id = lc.account_id 
-            WHERE ac.email = %s
-            """
-            cursor.execute(stmt, (credentials.username,))
-        else:
-            # Search by account ID
-            stmt = """
-            SELECT lc.account_id, lc.password, ac.first_name, ac.last_name, ac.user_role 
-            FROM login_credentials lc 
-            JOIN accounts ac ON ac.account_id = lc.account_id 
-            WHERE lc.account_id = %s
-            """
-            cursor.execute(stmt, (credentials.username,))
+        if re.match(r'^[A-Za-z0-9-_]+?\.[A-Za-z0-9-_]+?\.[A-Za-z0-9-_]+$', credentials.username):
+            # if the username field is a JWT stage token, then:
+            account_id, requires_2fa = h.verify_stage_token(credentials.username)
 
-        rows = cursor.fetchall()
-        if cursor.rowcount == 0:
-            raise HTTPException(404, "This account ID does not exist.")
+            if requires_2fa:
+                stmt = """
+                SELECT otp_key FROM login_credentials WHERE account_id = %s
+                """
+                cursor.execute(stmt, (account_id,))
+                rows = cursor.fetchall()
+                if cursor.rowcount == 0:
+                    raise HTTPException(status_code=404, detail="No OTP code found for this account")
+                otp_key = rows[0][0]
 
-        account_id, hashed_password, first_name, last_name, user_role = rows[0]
+                totp = pyotp.TOTP(otp_key)
+                if totp.verify(credentials.password):
+                    return h.login(account_id)
+                else:
+                    raise HTTPException(status_code=401, detail="Incorrect OTP code")
 
-        # Validate password
-        if (credentials.password == "qwerty" and hashed_password == "qwerty") or \
-                bcrypt.checkpw(credentials.password.encode('utf-8'), hashed_password.encode('utf-8')):
-            # Generate JWT token
-            token = h.create_jwt_token(account_id, user_role)
-            return {
-                "status": "You successfully logged in!",
-                "account_id": account_id,
-                "first_name": first_name,
-                "last_name": last_name,
-                "user_role": user_role,
-                "access_token": token,
-                "token_type": "bearer"
-            }
-        else:
-            raise HTTPException(status_code=401, detail="Wrong password!")
+        else:  # i.e., if the username field is not a JWT token, then:
+
+            # check if the username is an email
+            if re.match(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$', credentials.username):
+                # Search by email
+                stmt = """
+                SELECT lc.account_id, lc.password, lc.otp_key, ac.verification
+                FROM login_credentials lc
+                JOIN accounts ac ON ac.account_id = lc.account_id
+                WHERE ac.email = %s
+                """
+                cursor.execute(stmt, (credentials.username,))
+            else:
+                # Search by account ID
+                stmt = """
+                SELECT lc.account_id, lc.password, lc.otp_key, ac.verification
+                FROM login_credentials lc
+                JOIN accounts ac ON ac.account_id = lc.account_id
+                WHERE lc.account_id = %s
+                """
+                cursor.execute(stmt, (credentials.username,))
+
+            rows = cursor.fetchall()
+            if cursor.rowcount == 0:
+                raise HTTPException(404, "This account ID does not exist.")
+
+            account_id, hashed_password, otp_key, verification = rows[0]
+
+            # Validate password
+            if (credentials.password == "qwerty" and hashed_password == "qwerty") or \
+                    bcrypt.checkpw(credentials.password.encode('utf-8'), hashed_password.encode('utf-8')):
+                if verification == "Y":
+                    auth_stage_token = h.create_jwt_stage_token(account_id)
+                    return {
+                        "requires_2fa": True,
+                        "auth_stage_token": auth_stage_token
+                    }
+                else:
+                    return h.login(account_id)
+            else:
+                raise HTTPException(status_code=401, detail="Wrong password!")
 
     except mysql.connector.Error as err:
         raise HTTPException(500, f"An error occurred: {err}")

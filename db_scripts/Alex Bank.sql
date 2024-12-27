@@ -24,7 +24,8 @@ CREATE TABLE `verifications` (
 
 CREATE TABLE `login_credentials` (
   `account_id` integer PRIMARY KEY,
-  `password` varchar(255)
+  `password` varchar(255),
+  `otp_key` varchar(255)
 );
 
 CREATE TABLE `currencies` (
