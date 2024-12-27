@@ -50,39 +50,39 @@
                 <div v-if="account_data.verification_code == 'N'" class="container">
                     <ul class="progressbar">
                         <li class="active">Account Created</li>
-                        <li>Account Contacted</li>
-                        <li>Account Verified</li>
+                        <li>2FA Attempted</li>
+                        <li>2FA Enabled</li>
                     </ul>
                 </div>
                 <div v-if="account_data.verification_code == 'C'" class="container">
                     <ul class="progressbar">
                         <li class="active">Account Created</li>
-                        <li class="active">Account Contacted</li>
-                        <li>Account Verified</li>
+                        <li class="active">2FA Attempted</li>
+                        <li>2FA Enabled</li>
                     </ul>
                 </div>
                 <div v-if="account_data.verification_code == 'Y'" class="container">
                     <ul class="progressbar">
                         <li class="active">Account Created</li>
-                        <li class="active">Account Contacted</li>
-                        <li class="active">Account Verified</li>
+                        <li class="active">2FA Attempted</li>
+                        <li class="active">2FA Enabled</li>
                     </ul>
                 </div>
                 <div v-if="account_data.verification_code == 'R'" class="container">
                     <ul class="progressbar">
                         <li class="active">Account Created</li>
-                        <li class="active">Account Contacted</li>
-                        <li class="active">Account Verified</li>
-                        <li class="active-revoked">Verification Revoked</li>
+                        <li class="active">2FA Attempted</li>
+                        <li class="active">2FA Enabled</li>
+                        <li class="active-revoked">2FA Revoked</li>
                     </ul>
                 </div>
                 <br><br> 
                 
                 <div class="button-row">
-                    <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Send Verification Email</button>
-                    <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Verify</button>
+                    <button v-if="['N', 'Y', 'R'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('C')">Send 2FA Email</button>
+                    <button v-if="['N', 'R', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('Y')">Confirm 2FA</button>
                     <button v-if="['N', 'Y', 'C'].includes(account_data.verification_code)" class="action-button" @click="verifyAccount('R')" style="border-color: rgb(204, 82, 82); background: rgb(204, 82, 82);">
-                        Revoke Verification
+                        Revoke 2FA
                     </button>
                 </div>
                 
