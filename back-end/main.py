@@ -46,6 +46,8 @@ Key Points:
 Note: Unauthorized access attempts or misuse of the API may result in account suspension or termination. Please adhere to our usage guidelines and terms of service.
 
 For support and queries, please contact our technical support team.
+
+__IMPORTANT:__ if you have 2FA enabled, to log in, first go to the `/auth/token` endpoint to obtain an `auth_stage_token`. Then, input that into the username field, and your OTP in the password field. 
               """,
               version=api_version
               )

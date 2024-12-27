@@ -15,6 +15,15 @@ router = APIRouter(
 
 @router.post("/token")
 async def login(credentials: OAuth2PasswordRequestForm = Depends()):
+    """
+    This endpoint performs the necessary login. Because of Swagger UI, it accepts either:
+    - __username:__ account_id / email, __password:__ the user's password; __Returns:__ either a logged-in user or
+                    `{
+                        "requires_2fa": True,
+                        "auth_stage_token": auth_stage_token
+                    }`
+    - __username:__ JWT auth_stage_token, __password:__ one-time passcode; __Returns:__ a logged-in user
+    """
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
