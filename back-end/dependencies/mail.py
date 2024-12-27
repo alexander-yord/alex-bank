@@ -181,7 +181,7 @@ def send_verification_email(account_id: int):
     msg = MIMEMultipart("related")
     msg["From"] = smtp_user
     msg["To"] = account_data.get("email")
-    msg["Subject"] = f"{account_data.get('first_name')} - Verify Your Email"
+    msg["Subject"] = f"{account_data.get('first_name')} - Set Up Two-Factor Authentication"
 
     # Attach plain text and HTML content
     part1 = MIMEText(body, "plain")

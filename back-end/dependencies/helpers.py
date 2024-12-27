@@ -60,11 +60,10 @@ def create_jwt_stage_token(account_id: int, exp: int = 300) -> str:
         'requires_2fa': True,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=exp)
     }
-    pass
 
     # Create the JWT token
     auth_stage_token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-
+    print(auth_stage_token)
     return auth_stage_token
 
 

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Header, Query, Depends, Response
 from typing import Annotated, Optional, List
-import re
+import re, pyotp
 import mysql.connector
 from dependencies.database import get_db_connection
 from dependencies import database as db, helpers as h, schemas as s, mail as m
@@ -283,18 +283,39 @@ async def send_verification_email(account_id: int, token: str = Depends(s.oauth2
 
 
 @router.post("/verify")
-async def verify_account(token: str):
+async def verify_account(data: s.Verify2FA):
+    print("Hello")
     cnx = get_db_connection()
     cursor = cnx.cursor()
     try:
-        usr_account_id, usr_account_role = h.verify_token(token)
+        print(data.auth_stage_token)
+        usr_account_id, requires_2fa = h.verify_stage_token(data.auth_stage_token)
 
-        stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
-        cursor.execute(stmt, (usr_account_id,))
-        cnx.commit()
+        if requires_2fa:
+            stmt = """
+            SELECT otp_key FROM login_credentials WHERE account_id = %s
+            """
+            cursor.execute(stmt, (usr_account_id,))
+            rows = cursor.fetchall()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="No OTP code found for this account")
+            otp_key = rows[0][0]
+
+            totp = pyotp.TOTP(otp_key)
+            print(totp)
+            if totp.verify(data.otp_code):
+                stmt = "UPDATE accounts SET verification = 'Y' WHERE account_id = %s"
+                cursor.execute(stmt, (usr_account_id,))
+                cnx.commit()
+                return h.login(usr_account_id)
+            else:
+                raise HTTPException(status_code=401, detail="Incorrect OTP code")
 
         return {"status": "Success"}
 
+    except HTTPException:
+        cnx.rollback()
+        raise
     except Exception as err:
         cnx.rollback()
         raise HTTPException(500, f"An error occurred: {err}")
